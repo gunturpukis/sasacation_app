@@ -15,6 +15,7 @@ class AiBloc extends Bloc<AiEvent, AiState> {
         super(AiInitial()) {
     on<AiChatMessageSent>(_onChatMessage);
     on<AiChatCleared>(_onChatCleared);
+    on<AiStateReset>((event, emit) => emit(AiInitial()));
     on<AiSmartSearchRequested>(_onSmartSearch);
     on<AiDescriptionRequested>(_onGenerateDescription);
     on<AiTripPlanRequested>(_onTripPlan);

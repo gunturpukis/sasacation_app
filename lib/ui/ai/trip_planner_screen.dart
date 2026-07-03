@@ -50,8 +50,37 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             );
           }
           if (state is AiTripPlanLoaded) return _buildResult(state);
+          if (state is AiError) return _buildError(context, state.message);
           return _buildForm();
         },
+      ),
+    );
+  }
+
+  Widget _buildError(BuildContext context, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 56, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(message, textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15)),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _generatePlan, // retry dengan parameter yang sama
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => context.read<AiBloc>().add(AiStateReset()),
+              child: const Text('Ubah Preferensi'),
+            ),
+          ],
+        ),
       ),
     );
   }

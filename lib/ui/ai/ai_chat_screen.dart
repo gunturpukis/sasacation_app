@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
 
 class AiChatScreen extends StatefulWidget {
@@ -79,13 +80,31 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   return _buildWelcome(context);
                 }
                 if (state is AiChatState) {
+                  final itemCount = state.messages.length +
+                      (state.isLoading ? 1 : 0) +
+                      (state.error != null ? 1 : 0);
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: state.messages.length + (state.isLoading ? 1 : 0),
+                    itemCount: itemCount,
                     itemBuilder: (context, index) {
                       if (index == state.messages.length && state.isLoading) {
                         return const _TypingIndicator();
+                      }
+                      if (state.error != null &&
+                          index == state.messages.length + (state.isLoading ? 1 : 0)) {
+                        return _ErrorBubble(
+                          message: state.error!,
+                          onRetry: () {
+                            final lastUser = state.messages.lastWhere(
+                              (m) => m.isUser,
+                              orElse: () => ChatMessage.user(''),
+                            );
+                            if (lastUser.content.isNotEmpty) {
+                              context.read<AiBloc>().add(AiChatMessageSent(content: lastUser.content));
+                            }
+                          },
+                        );
                       }
                       final msg = state.messages[index];
                       return _ChatBubble(
@@ -246,6 +265,40 @@ class _ChatBubble extends StatelessWidget {
             height: 1.4,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBubble extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorBubble({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 18, color: Colors.red.shade400),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message,
+                style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
+            child: const Text('Coba Lagi', style: TextStyle(fontSize: 13)),
+          ),
+        ],
       ),
     );
   }

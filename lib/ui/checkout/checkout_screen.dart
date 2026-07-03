@@ -32,7 +32,14 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
+/// Step checkout: dipisah agar meniru pola Agoda (Review booking -> Payment)
+/// alih-alih menumpuk semua di satu layar. Murni state UI lokal — tidak
+/// mengubah CheckoutBloc/backend sama sekali.
+enum _CheckoutStep { review, payment }
+
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  _CheckoutStep _step = _CheckoutStep.review;
+
   @override
   void initState() {
     super.initState();
@@ -61,18 +68,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Checkout'),
+            title: Text(_step == _CheckoutStep.review ? 'Review Booking' : 'Pembayaran'),
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                // Reset checkout state saat back
+                if (_step == _CheckoutStep.payment) {
+                  // Kembali ke Review, bukan keluar dari checkout
+                  setState(() => _step = _CheckoutStep.review);
+                  return;
+                }
+                // Reset checkout state saat back dari Review
                 context.read<CheckoutBloc>().add(CheckoutReset());
                 context.pop();
               },
             ),
           ),
-          body: _buildBody(context, state),
+          body: Column(
+            children: [
+              if (state is CheckoutSessionLoaded) _StepIndicator(step: _step),
+              Expanded(child: _buildBody(context, state)),
+            ],
+          ),
           bottomNavigationBar: _buildPayButton(context, state),
         );
       },
@@ -130,21 +147,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     }
     if (state is CheckoutSessionLoaded) {
+      if (_step == _CheckoutStep.review) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HotelSummaryCard(session: state.session),
+              const SizedBox(height: 16),
+              _StayDetailsCard(
+                  checkIn: widget.checkIn,
+                  checkOut: widget.checkOut,
+                  nights: widget.nights,
+                  guestCount: widget.guestCount,
+                  notes: widget.notes ?? ''),
+              const SizedBox(height: 16),
+              _PriceBreakdownCard(pricing: state.session.pricing),
+              const SizedBox(height: 100),
+            ],
+          ),
+        );
+      }
+      // Step pembayaran: ringkasan singkat + pilihan metode bayar saja,
+      // supaya fokus user tidak terpecah dengan detail yang sudah dicek di Review.
       return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _HotelSummaryCard(session: state.session),
-            const SizedBox(height: 16),
-            _StayDetailsCard(
-                checkIn: widget.checkIn,
-                checkOut: widget.checkOut,
-                nights: widget.nights,
-                guestCount: widget.guestCount,
-                notes: widget.notes ?? ''),
-            const SizedBox(height: 16),
-            _PriceBreakdownCard(pricing: state.session.pricing),
             const SizedBox(height: 16),
             _PaymentMethodsCard(
               methods: state.session.paymentMethods,
@@ -184,15 +215,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: state.canPay
-                    ? () => ctx.read<CheckoutBloc>().add(CheckoutPaymentConfirmed())
-                    : null,
+                onPressed: _step == _CheckoutStep.review
+                    ? () => setState(() => _step = _CheckoutStep.payment)
+                    : (state.canPay
+                        ? () => ctx.read<CheckoutBloc>().add(CheckoutPaymentConfirmed())
+                        : null),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                  state.canPay ? 'Bayar Sekarang' : 'Pilih Metode Pembayaran',
+                  _step == _CheckoutStep.review
+                      ? 'Lanjutkan ke Pembayaran'
+                      : (state.canPay ? 'Bayar Sekarang' : 'Pilih Metode Pembayaran'),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -200,6 +235,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Indikator 2 langkah (Review -> Payment) di bagian atas checkout.
+class _StepIndicator extends StatelessWidget {
+  final _CheckoutStep step;
+  const _StepIndicator({required this.step});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Row(
+        children: [
+          _StepDot(label: '1. Review', active: true),
+          Expanded(
+            child: Container(
+              height: 2,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              color: step == _CheckoutStep.payment
+                  ? AppTheme.primaryColor
+                  : Colors.grey.shade300,
+            ),
+          ),
+          _StepDot(label: '2. Pembayaran', active: step == _CheckoutStep.payment),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepDot extends StatelessWidget {
+  final String label;
+  final bool active;
+  const _StepDot({required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10, height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: active ? AppTheme.primaryColor : Colors.grey.shade300,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: active ? FontWeight.bold : FontWeight.normal,
+              color: active ? AppTheme.primaryColor : Colors.grey.shade500,
+            )),
+      ],
     );
   }
 }

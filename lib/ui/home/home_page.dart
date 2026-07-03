@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/hotels/featured_hotel_page.dart';
 import 'package:sasacation/ui/widget/category_widget.dart';
 import 'package:sasacation/ui/widget/hero_banner.dart';
+import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,10 +16,53 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(child: HeroBanner()),
+          SliverToBoxAdapter(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const HeroBanner(),
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Sasacation',
+                              style: TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                          GestureDetector(
+                            onTap: () => context.push(AppRouter.wishlist),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.25),
+                                shape: BoxShape.circle,
+                              ),
+                              child: BlocBuilder<WishlistCubit, Set<String>>(
+                                builder: (context, wishlist) => Icon(
+                                  wishlist.isEmpty ? Icons.favorite_border : Icons.favorite,
+                                  color: Colors.white, size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 20, right: 20, bottom: -28,
+                  child: _SearchCard(),
+                ),
+              ],
+            ),
+          ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -54,6 +99,59 @@ class HomeScreen extends StatelessWidget {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
+      ),
+    );
+  }
+}
+
+/// Kartu pencarian mengambang ala Agoda: tap membuka SearchResultsScreen.
+/// Diletakkan di Home (bukan hanya di dalam Explore tab) supaya jalur
+/// booking-first langsung terlihat di layar pertama, sesuai rekomendasi BA.
+class _SearchCard extends StatelessWidget {
+  const _SearchCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(AppRouter.searchResults),
+      child: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(16),
+        shadowColor: Colors.black26,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.search, color: AppTheme.primaryColor, size: 20),
+                  const SizedBox(width: 10),
+                  Text('Mau ke mana? Cari hotel...',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
+                  const SizedBox(width: 6),
+                  Text('Pilih tanggal', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const SizedBox(width: 18),
+                  Icon(Icons.people_outline, size: 15, color: Colors.grey.shade500),
+                  const SizedBox(width: 6),
+                  Text('Jumlah tamu', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

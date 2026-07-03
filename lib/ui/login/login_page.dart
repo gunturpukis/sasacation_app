@@ -8,7 +8,12 @@ import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 /// View: LoginScreen
 /// Email/Password + Google + Apple Sign In (MVVM via AuthBloc)
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// Jika diisi (mis. saat login gate muncul di titik checkout), user akan
+  /// diarahkan kembali ke rute ini setelah berhasil login, bukan ke Home.
+  final String? redirectRoute;
+  final Object? redirectExtra;
+
+  const LoginScreen({super.key, this.redirectRoute, this.redirectExtra});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -34,7 +39,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) context.go(AppRouter.home);
+        if (state is AuthAuthenticated) {
+          if (widget.redirectRoute != null) {
+            context.go(widget.redirectRoute!, extra: widget.redirectExtra);
+          } else {
+            context.go(AppRouter.home);
+          }
+        }
       },
       child: Scaffold(
         body: SafeArea(

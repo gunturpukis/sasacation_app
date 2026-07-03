@@ -6,9 +6,11 @@ class AiRepository {
   // ─── 1. Chat ─────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> sendMessage(List<ChatMessage> messages) async {
     try {
-      final res = await ApiClient.post('/ai/chat', data: {
-        'messages': messages.map((m) => m.toJson()).toList(),
-      });
+      final res = await ApiClient.post('/ai/chat',
+          data: {'messages': messages.map((m) => m.toJson()).toList()},
+          // Ollama lokal bisa butuh puluhan detik untuk generate reply,
+          // jauh lebih lambat dari API cloud — default 10s tidak cukup.
+          timeout: const Duration(seconds: 90));
       return {
         'success': true,
         'reply': res.data['data']['reply'] as String,
@@ -16,7 +18,10 @@ class AiRepository {
     } on DioException catch (e) {
       return {
         'success': false,
-        'message': e.response?.data?['message'] ?? 'AI tidak tersedia saat ini',
+        'message': e.type == DioExceptionType.receiveTimeout ||
+                e.type == DioExceptionType.sendTimeout
+            ? 'AI sedang lama merespons (timeout). Coba lagi sebentar lagi.'
+            : (e.response?.data?['message'] ?? 'AI tidak tersedia saat ini'),
       };
     }
   }
@@ -24,7 +29,8 @@ class AiRepository {
   // ─── 2. Smart Search ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> smartSearch(String query) async {
     try {
-      final res = await ApiClient.post('/ai/search', data: {'query': query});
+      final res = await ApiClient.post('/ai/search',
+          data: {'query': query}, timeout: const Duration(seconds: 60));
       return {
         'success': true,
         'result': SmartSearchResult.fromJson(res.data['data']),
@@ -32,7 +38,10 @@ class AiRepository {
     } on DioException catch (e) {
       return {
         'success': false,
-        'message': e.response?.data?['message'] ?? 'Search gagal',
+        'message': e.type == DioExceptionType.receiveTimeout ||
+                e.type == DioExceptionType.sendTimeout
+            ? 'AI sedang lama merespons (timeout). Coba lagi sebentar lagi.'
+            : (e.response?.data?['message'] ?? 'Search gagal'),
       };
     }
   }
@@ -76,13 +85,17 @@ class AiRepository {
     String? groupType,
   }) async {
     try {
-      final res = await ApiClient.post('/ai/trip-plan', data: {
-        'duration': duration,
-        'budget': budget,
-        'interests': interests,
-        if (startDate != null) 'startDate': startDate,
-        if (groupType != null) 'groupType': groupType,
-      });
+      final res = await ApiClient.post('/ai/trip-plan',
+          data: {
+            'duration': duration,
+            'budget': budget,
+            'interests': interests,
+            if (startDate != null) 'startDate': startDate,
+            if (groupType != null) 'groupType': groupType,
+          },
+          // Itinerary JSON panjang (2048 token) — paling lambat dari semua
+          // fitur AI, kasih ruang timeout paling lega.
+          timeout: const Duration(seconds: 120));
       return {
         'success': true,
         'plan': TripPlan.fromJson(res.data['data']),
@@ -90,7 +103,10 @@ class AiRepository {
     } on DioException catch (e) {
       return {
         'success': false,
-        'message': e.response?.data?['message'] ?? 'Gagal membuat trip plan',
+        'message': e.type == DioExceptionType.receiveTimeout ||
+                e.type == DioExceptionType.sendTimeout
+            ? 'AI sedang lama merespons (timeout). Coba kurangi durasi trip atau coba lagi.'
+            : (e.response?.data?['message'] ?? 'Gagal membuat trip plan'),
       };
     }
   }

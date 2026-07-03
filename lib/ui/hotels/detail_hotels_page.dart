@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/ui/widget/booking_sheets.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
+import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class HotelDetailScreen extends StatefulWidget {
   final String hotelId;
@@ -89,13 +90,19 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                     onPressed: () => context.pop(),
                   ),
                   actions: [
-                    IconButton(
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.favorite_border, color: Colors.black87),
-                      ),
-                      onPressed: () {},
+                    BlocBuilder<WishlistCubit, Set<String>>(
+                      builder: (context, wishlist) {
+                        final saved = wishlist.contains(hotel.id);
+                        return IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                            child: Icon(saved ? Icons.favorite : Icons.favorite_border,
+                                color: saved ? Colors.redAccent : Colors.black87),
+                          ),
+                          onPressed: () => context.read<WishlistCubit>().toggle(hotel.id),
+                        );
+                      },
                     ),
                   ],
                 ),

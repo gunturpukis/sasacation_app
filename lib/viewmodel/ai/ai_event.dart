@@ -10,6 +10,10 @@ class AiChatMessageSent extends AiEvent {
 
 class AiChatCleared extends AiEvent {}
 
+// Reset (dipakai trip planner untuk kembali ke form setelah error, tanpa
+// meminjam semantik "chat cleared" yang sebenarnya untuk fitur lain)
+class AiStateReset extends AiEvent {}
+
 // Smart Search
 class AiSmartSearchRequested extends AiEvent {
   final String query;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/data/model/checkout_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
@@ -13,7 +14,10 @@ import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/login/login_page.dart';
 import 'package:sasacation/ui/main_navigation_page.dart';
 import 'package:sasacation/ui/onboarding/onboarding_page.dart';
+import 'package:sasacation/ui/search/search_results_page.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
+import 'package:sasacation/ui/wishlist/wishlist_page.dart';
+import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppRouter {
@@ -22,6 +26,8 @@ class AppRouter {
   static const String login          = '/login';
   static const String home           = '/home';
   static const String hotelDetail    = '/hotel-detail/:id';
+  static const String searchResults  = '/search-results';
+  static const String wishlist       = '/wishlist';
   static const String myBookings     = '/my-bookings';
   static const String admin          = '/admin';
   // Checkout flow
@@ -31,6 +37,13 @@ class AppRouter {
   static const String aiChat         = '/ai-chat';
   static const String smartSearch    = '/smart-search';
   static const String tripPlanner    = '/trip-planner';
+
+  /// Rute yang boleh diakses tanpa login (guest browsing), meniru pola OTA:
+  /// pengguna bisa melihat-lihat hotel bebas, login baru wajib saat mau
+  /// benar-benar memesan (checkout) atau mengakses data personal.
+  static const Set<String> guestAccessible = {
+    splash, onboarding, login, home, hotelDetail, searchResults, wishlist,
+  };
 }
 
 class Routes {
@@ -51,7 +64,13 @@ class Routes {
       ),
       GoRoute(
         path: AppRouter.login,
-        builder: (_, __) => const LoginScreen(),
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return LoginScreen(
+            redirectRoute: extra?['redirectRoute'] as String?,
+            redirectExtra: extra?['redirectExtra'],
+          );
+        },
       ),
       GoRoute(
         path: AppRouter.home,
@@ -64,6 +83,19 @@ class Routes {
         builder: (_, state) => HotelDetailScreen(
           hotelId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: AppRouter.searchResults,
+        builder: (_, state) => BlocProvider(
+          create: (_) => HotelSearchCubit(),
+          child: SearchResultsScreen(
+            initialQuery: state.uri.queryParameters['q'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRouter.wishlist,
+        builder: (_, __) => const WishlistScreen(),
       ),
 
       // ─── Booking & Checkout flow ──────────────────────────────────────────
@@ -118,14 +150,17 @@ class Routes {
       final hasSeenOnboarding = await _checkOnboardingStatus();
       final loc = state.matchedLocation;
 
-      final isPublic = loc == AppRouter.splash ||
-          loc == AppRouter.onboarding ||
-          loc == AppRouter.login;
+      // hotel-detail dipetakan dengan path parameter (/hotel-detail/:id), jadi
+      // dicek lewat prefix, bukan exact-match seperti rute statis lainnya.
+      final isGuestAccessible = AppRouter.guestAccessible.contains(loc) ||
+          loc.startsWith('/hotel-detail/');
 
       if (!hasSeenOnboarding && loc != AppRouter.onboarding && loc != AppRouter.splash) {
         return AppRouter.onboarding;
       }
-      if (hasSeenOnboarding && !isLoggedIn && !isPublic) {
+      // Hanya rute yang butuh akun (checkout, booking, admin, AI, dst) yang
+      // di-gate. Browsing hotel & pencarian tetap bisa diakses sebagai guest.
+      if (hasSeenOnboarding && !isLoggedIn && !isGuestAccessible) {
         return AppRouter.login;
       }
       if (isLoggedIn && (loc == AppRouter.login || loc == AppRouter.onboarding)) {

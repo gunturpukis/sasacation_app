@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 
 /// View: BookingSheet
 /// Collects stay details (dates, guests) then navigates to CheckoutScreen.
@@ -218,14 +220,29 @@ class _BookingSheetState extends State<BookingSheet> {
 
   void _proceedToCheckout() {
     Navigator.pop(context); // close sheet
-    context.push(AppRouter.checkout, extra: {
+
+    final checkoutExtra = {
       'hotel': widget.hotel,
       'checkIn': checkIn,
       'checkOut': checkOut,
       'nights': nights,
       'guestCount': guestCount,
       'notes': _notesCtrl.text.trim(),
-    });
+    };
+
+    // Login gate kontekstual: browsing & isi form booking bebas tanpa akun,
+    // tapi begitu mau lanjut ke checkout, baru diminta login. Setelah
+    // berhasil login, user diarahkan langsung kembali ke checkout ini.
+    final isLoggedIn = context.read<AuthBloc>().state is AuthAuthenticated;
+    if (!isLoggedIn) {
+      context.push(AppRouter.login, extra: {
+        'redirectRoute': AppRouter.checkout,
+        'redirectExtra': checkoutExtra,
+      });
+      return;
+    }
+
+    context.push(AppRouter.checkout, extra: checkoutExtra);
   }
 
   String _formatDate(DateTime d) {

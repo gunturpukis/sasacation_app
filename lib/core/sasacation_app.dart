@@ -14,6 +14,7 @@ import 'package:sasacation/viewmodel/booking/booking_bloc.dart';
 import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
+import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class LombokApp extends StatelessWidget {
   const LombokApp({super.key});
@@ -40,6 +41,9 @@ class LombokApp extends StatelessWidget {
         ),
         BlocProvider<CheckoutBloc>(
           create: (_) => CheckoutBloc(repo: CheckoutRepository()),
+        ),
+        BlocProvider<WishlistCubit>(
+          create: (_) => WishlistCubit(),
         ),
       ],
       child: MaterialApp.router(
