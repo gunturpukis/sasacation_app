@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../api/api_client.dart';
 import '../model/ai_model.dart';
-
+ 
 class AiRepository {
   // ─── 1. Chat ─────────────────────────────────────────────────────────────
   Future<Map<String, dynamic>> sendMessage(List<ChatMessage> messages) async {
@@ -25,7 +25,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 2. Smart Search ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> smartSearch(String query) async {
     try {
@@ -45,7 +45,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 3. Generate Description ──────────────────────────────────────────────
   Future<Map<String, dynamic>> generateDescription({
     required String type,
@@ -75,7 +75,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 4. Trip Planner ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> generateTripPlan({
     required int duration,
@@ -93,9 +93,10 @@ class AiRepository {
             if (startDate != null) 'startDate': startDate,
             if (groupType != null) 'groupType': groupType,
           },
-          // Itinerary JSON panjang (2048 token) — paling lambat dari semua
-          // fitur AI, kasih ruang timeout paling lega.
-          timeout: const Duration(seconds: 120));
+          // Itinerary JSON panjang — paling lambat dari semua fitur AI.
+          // Terukur bisa 120-150 detik+ pada Ollama lokal (CPU/GPU consumer),
+          // kasih ruang timeout paling lega.
+          timeout: const Duration(seconds: 180));
       return {
         'success': true,
         'plan': TripPlan.fromJson(res.data['data']),
@@ -111,3 +112,4 @@ class AiRepository {
     }
   }
 }
+ 

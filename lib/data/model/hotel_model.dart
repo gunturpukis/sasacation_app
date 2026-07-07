@@ -1,3 +1,6 @@
+import 'package:intl/number_symbols.dart';
+import 'package:sasacation/utils/json_helper.dart';
+
 class HotelModel {
   final String id;
   final String name;
@@ -34,8 +37,10 @@ class HotelModel {
         name: json['name'],
         location: json['location'],
         address: json['address'],
-        price: (json['price'] as num).toDouble(),
-        rating: (json['rating'] as num).toDouble(),
+        // price: (json['price'] as num).toDouble(),
+        // rating: (json['rating'] as num).toDouble(),
+          price: parseDouble(json['price']),
+        rating: parseDouble(json['rating']),
         reviewCount: json['reviewCount'] ?? 0,
         image: json['image'] ?? '',
         images: List<String>.from(json['images'] ?? []),

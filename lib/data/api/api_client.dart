@@ -5,7 +5,8 @@ class ApiClient {
   // FIX: backend jalan di port 5001 (lihat log server: "Sasacation API →
   // http://localhost:5001"), sebelumnya di sini ke-hardcode port 3000 —
   // menyebabkan SEMUA request API gagal connect, termasuk AI Smart Search.
-  static const String baseUrl = 'http://localhost:5001/api'; // iOS simulator / web
+  static const String baseUrl = 'http://localhost:3000/api'; // iOS simulator / web
+  // static const String baseUrl = 'http://192.168.1.44:5001/api'; // iOS simulator / web
   // static const String baseUrl = 'http://10.0.2.2:5001/api'; // Android emulator
   // static const String baseUrl = 'http://YOUR_LAN_IP:5001/api'; // Physical device (WiFi sama dgn komputer)
 

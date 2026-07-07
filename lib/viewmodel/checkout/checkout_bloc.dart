@@ -52,10 +52,23 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     if (current.selectedMethod == null) return;
 
     emit(CheckoutPaymentProcessing());
+
+    final session = current.session;
+    // FIX: kirim SEMUA detail booking yang backend butuhkan, diambil dari
+    // session yang sudah kita simpan sejak initiateCheckout — bukan cuma
+    // sessionId + paymentMethod seperti sebelumnya. Backend PostgreSQL
+    // versi ini stateless, jadi tidak bisa "mengingat" sesi dari initiate.
     final result = await _repo.processPayment(
-      sessionId: current.session.sessionId,
+      hotelId: session.hotel['id'] as String,
+      checkIn: session.checkIn,
+      checkOut: session.checkOut,
+      nights: session.nights,
+      guestCount: session.guestCount,
+      notes: session.notes,
+      totalAmount: session.pricing.total,
       paymentMethod: current.selectedMethod!.id,
     );
+
     if (result['success'] == true) {
       emit(CheckoutPaymentSuccess(result: result['result'] as PaymentResult));
     } else {
