@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "784826171005",
+    "project_id": "sasacation-25b57",
+    "storage_bucket": "sasacation-25b57.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784826171005:android:1905d854ce6e079345bb14",
+        "android_client_info": {
+          "package_name": "com.example.sasacation"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLHtumTlKSUjh2lpVIb3kqWm5t44dLThU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
