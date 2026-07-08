@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/hotels/featured_hotel_page.dart';
+import 'package:sasacation/ui/hotels/nearby_hotel_page.dart';
 import 'package:sasacation/ui/widget/category_widget.dart';
 import 'package:sasacation/ui/widget/hero_banner.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
@@ -96,6 +97,12 @@ class HomeScreen extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverToBoxAdapter(child: FeaturedHotels()),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+              child: NearbyHotels(),
+            ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],

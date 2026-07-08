@@ -30,6 +30,10 @@ class HotelCompositeState extends HotelState {
   final bool isLoadingDetail;
   final String? featuredError;
   final String? detailError;
+  // Fitur geolocation: hotel terdekat dari lokasi user
+  final List<HotelModel>? nearbyHotels;
+  final bool isLoadingNearby;
+  final String? nearbyError;
 
   HotelCompositeState({
     this.featuredHotels,
@@ -38,6 +42,9 @@ class HotelCompositeState extends HotelState {
     this.isLoadingDetail = false,
     this.featuredError,
     this.detailError,
+    this.nearbyHotels,
+    this.isLoadingNearby = false,
+    this.nearbyError,
   });
 
   HotelCompositeState copyWith({
@@ -47,6 +54,9 @@ class HotelCompositeState extends HotelState {
     bool? isLoadingDetail,
     String? featuredError,
     String? detailError,
+    List<HotelModel>? nearbyHotels,
+    bool? isLoadingNearby,
+    String? nearbyError,
   }) =>
       HotelCompositeState(
         featuredHotels: featuredHotels ?? this.featuredHotels,
@@ -55,6 +65,9 @@ class HotelCompositeState extends HotelState {
         isLoadingDetail: isLoadingDetail ?? this.isLoadingDetail,
         featuredError: featuredError ?? this.featuredError,
         detailError: detailError ?? this.detailError,
+        nearbyHotels: nearbyHotels ?? this.nearbyHotels,
+        isLoadingNearby: isLoadingNearby ?? this.isLoadingNearby,
+        nearbyError: nearbyError ?? this.nearbyError,
       );
 }
 

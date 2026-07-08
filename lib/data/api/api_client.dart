@@ -1,14 +1,26 @@
+import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
-  // FIX: backend jalan di port 5001 (lihat log server: "Sasacation API →
-  // http://localhost:5001"), sebelumnya di sini ke-hardcode port 3000 —
-  // menyebabkan SEMUA request API gagal connect, termasuk AI Smart Search.
-  static const String baseUrl = 'http://localhost:3000/api'; // iOS simulator / web
-  // static const String baseUrl = 'http://192.168.1.44:5001/api'; // iOS simulator / web
-  // static const String baseUrl = 'http://10.0.2.2:5001/api'; // Android emulator
-  // static const String baseUrl = 'http://YOUR_LAN_IP:5001/api'; // Physical device (WiFi sama dgn komputer)
+  // FIX: sebelumnya baseUrl hardcode ke 'http://localhost:3000/api' padahal
+  // komentar di baris ini sendiri mengklaim sudah diperbaiki ke port 5001 —
+  // klaim dan kode tidak sinkron. Backend berjalan di PORT=5001 (lihat
+  // .env.example), dan 'localhost' tidak bisa diakses dari Android emulator
+  // (harus 10.0.2.2) maupun dari device fisik (harus IP LAN komputer).
+  //
+  // Sekarang baseUrl dipilih otomatis sesuai platform. Untuk device fisik,
+  // override _physicalDeviceHost dengan IP LAN komputer development Anda.
+  static const int _port = 5001;
+  static const String _physicalDeviceHost = 'YOUR_LAN_IP'; // contoh: 192.168.1.44
+
+  static String get baseUrl {
+    if (kIsWeb) return 'http://localhost:$_port/api';
+    if (Platform.isAndroid) return 'http://10.0.2.2:$_port/api'; // Android emulator
+    if (Platform.isIOS) return 'http://localhost:$_port/api'; // iOS simulator
+    return 'http://$_physicalDeviceHost:$_port/api'; // fallback: device fisik / platform lain
+  }
 
   static final Dio _dio = Dio(
     BaseOptions(

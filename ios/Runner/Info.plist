@@ -26,6 +26,19 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Geolocation: fitur "hotel terdekat dari saya" -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sasacation menggunakan lokasi Anda untuk menampilkan hotel dan destinasi terdekat di Lombok.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Sasacation menggunakan lokasi Anda untuk menampilkan hotel dan destinasi terdekat di Lombok.</string>
+	<!-- Push notification: mengizinkan app menerima notifikasi remote saat di background -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

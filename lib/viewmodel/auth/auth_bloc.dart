@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sasacation/core/notification_service.dart';
 import 'package:sasacation/data/model/user_model.dart';
 import 'package:sasacation/data/repo/auth_repository.dart';
 
@@ -38,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _authRepository.login(email: event.email, password: event.password);
     if (result['success'] == true) {
       emit(AuthAuthenticated(user: result['user'] as UserModel));
+      NotificationService.instance.initialize(registerTokenToBackend: true);
     } else {
       emit(AuthError(message: result['message'] ?? 'Login gagal'));
     }
@@ -49,6 +51,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         name: event.name, email: event.email, password: event.password);
     if (result['success'] == true) {
       emit(AuthAuthenticated(user: result['user'] as UserModel));
+      NotificationService.instance.initialize(registerTokenToBackend: true);
     } else {
       emit(AuthError(message: result['message'] ?? 'Registrasi gagal'));
     }
@@ -59,6 +62,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _authRepository.signInWithGoogle();
     if (result['success'] == true) {
       emit(AuthAuthenticated(user: result['user'] as UserModel));
+      NotificationService.instance.initialize(registerTokenToBackend: true);
     } else {
       emit(AuthError(message: result['message'] ?? 'Google Sign In gagal'));
     }
@@ -69,18 +73,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _authRepository.signInWithApple();
     if (result['success'] == true) {
       emit(AuthAuthenticated(user: result['user'] as UserModel));
+      NotificationService.instance.initialize(registerTokenToBackend: true);
     } else {
       emit(AuthError(message: result['message'] ?? 'Apple Sign In gagal'));
     }
   }
 
   Future<void> _onLogout(AuthLogoutRequested event, Emitter<AuthState> emit) async {
+    await NotificationService.instance.unregisterToken();
     await _authRepository.logout();
     emit(AuthUnauthenticated());
   }
 
   Future<void> _onGetProfile(AuthProfileRequested event, Emitter<AuthState> emit) async {
     final user = await _authRepository.getProfile();
-    emit(user != null ? AuthAuthenticated(user: user) : AuthUnauthenticated());
+    if (user != null) {
+      emit(AuthAuthenticated(user: user));
+      NotificationService.instance.initialize(registerTokenToBackend: true);
+    } else {
+      emit(AuthUnauthenticated());
+    }
   }
 }

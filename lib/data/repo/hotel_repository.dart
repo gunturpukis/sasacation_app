@@ -40,4 +40,26 @@ class HotelRepository {
       return null;
     }
   }
+
+  /// Hotel terdekat dari koordinat [lat]/[lng] (biasanya lokasi GPS user),
+  /// diurutkan dari yang paling dekat. [radiusKm] default 25 km.
+  Future<List<HotelModel>> getNearbyHotels({
+    required double lat,
+    required double lng,
+    double radiusKm = 25,
+    int limit = 20,
+  }) async {
+    try {
+      final res = await ApiClient.get('/hotels/nearby', params: {
+        'lat': lat,
+        'lng': lng,
+        'radius': radiusKm,
+        'limit': limit,
+      });
+      final List data = res.data['data'];
+      return data.map((e) => HotelModel.fromJson(e)).toList();
+    } on DioException {
+      return [];
+    }
+  }
 }

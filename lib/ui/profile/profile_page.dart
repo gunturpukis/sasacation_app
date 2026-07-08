@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/repo/notification_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 
@@ -110,6 +111,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () {}),
                       _divider(),
                       _buildMenuItem(
+                        icon: Icons.notifications_active_outlined,
+                        title: 'Test Push Notification',
+                        onTap: () => _sendTestNotification(context),
+                      ),
+                      _divider(),
+                      _buildMenuItem(
                           icon: Icons.help_outline,
                           title: 'Help & Support',
                           onTap: () {}),
@@ -151,6 +158,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _divider() =>
       Divider(height: 0, thickness: 0.5, color: Colors.grey.shade200);
+
+  /// Memicu push notification test ke device ini sendiri, lewat FCM token
+  /// yang sudah teregistrasi ke backend saat login. Berguna untuk QA
+  /// verifikasi setup Firebase tanpa perlu tool eksternal.
+  Future<void> _sendTestNotification(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Mengirim test notification...')));
+
+    final result = await NotificationRepository().sendTestNotification();
+
+    messenger.showSnackBar(SnackBar(
+      backgroundColor: result['success'] == true ? Colors.green : Colors.red,
+      content: Text(result['message'] ?? 'Selesai'),
+    ));
+  }
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(

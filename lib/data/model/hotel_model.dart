@@ -15,6 +15,11 @@ class HotelModel {
   final List<String> amenities;
   final bool featured;
   final bool available;
+  final double? latitude;
+  final double? longitude;
+  /// Jarak dari lokasi user dalam kilometer. Hanya terisi kalau hotel ini
+  /// datang dari endpoint GET /hotels/nearby (fitur geolocation).
+  final double? distanceKm;
 
   const HotelModel({
     required this.id,
@@ -30,6 +35,9 @@ class HotelModel {
     this.amenities = const [],
     this.featured = false,
     this.available = true,
+    this.latitude,
+    this.longitude,
+    this.distanceKm,
   });
 
   factory HotelModel.fromJson(Map<String, dynamic> json) => HotelModel(
@@ -41,13 +49,20 @@ class HotelModel {
         // rating: (json['rating'] as num).toDouble(),
           price: parseDouble(json['price']),
         rating: parseDouble(json['rating']),
-        reviewCount: json['reviewCount'] ?? 0,
+        // FIX: backend (SELECT * FROM hotels) mengembalikan kolom apa
+        // adanya dari PostgreSQL yaitu `review_count` (snake_case), BUKAN
+        // `reviewCount`. Sebelumnya hanya membaca json['reviewCount'] yang
+        // selalu null dari API asli, sehingga jumlah review selalu tampil 0.
+        reviewCount: parseInt(json['reviewCount'] ?? json['review_count']),
         image: json['image'] ?? '',
         images: List<String>.from(json['images'] ?? []),
         description: json['description'],
         amenities: List<String>.from(json['amenities'] ?? []),
         featured: json['featured'] ?? false,
         available: json['available'] ?? true,
+        latitude: json['latitude'] != null ? parseDouble(json['latitude']) : null,
+        longitude: json['longitude'] != null ? parseDouble(json['longitude']) : null,
+        distanceKm: json['distance_km'] != null ? parseDouble(json['distance_km']) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,5 +79,7 @@ class HotelModel {
         'amenities': amenities,
         'featured': featured,
         'available': available,
+        'latitude': latitude,
+        'longitude': longitude,
       };
 }

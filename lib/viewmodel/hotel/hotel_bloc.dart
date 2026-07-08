@@ -17,6 +17,7 @@ class HotelBloc extends Bloc<HotelEvent, HotelState> {
     on<HotelFeaturedRequested>(_onFeaturedRequested);
     on<HotelListRequested>(_onListRequested);
     on<HotelDetailRequested>(_onDetailRequested);
+    on<HotelNearbyRequested>(_onNearbyRequested);
   }
 
   Future<void> _onFeaturedRequested(
@@ -66,6 +67,28 @@ class HotelBloc extends Bloc<HotelEvent, HotelState> {
       isLoadingDetail: false,
       detailHotel: hotel,
       detailError: hotel == null ? 'Hotel tidak ditemukan' : null,
+    ));
+  }
+
+  Future<void> _onNearbyRequested(
+      HotelNearbyRequested event, Emitter<HotelState> emit) async {
+    final current = state is HotelCompositeState
+        ? state as HotelCompositeState
+        : HotelCompositeState();
+
+    emit(current.copyWith(isLoadingNearby: true, nearbyError: null));
+    final hotels = await _hotelRepository.getNearbyHotels(
+      lat: event.latitude,
+      lng: event.longitude,
+      radiusKm: event.radiusKm,
+    );
+    final updated = state is HotelCompositeState
+        ? state as HotelCompositeState
+        : HotelCompositeState();
+    emit(updated.copyWith(
+      isLoadingNearby: false,
+      nearbyHotels: hotels,
+      nearbyError: hotels.isEmpty ? 'Tidak ada hotel di sekitar lokasi Anda' : null,
     ));
   }
 }
