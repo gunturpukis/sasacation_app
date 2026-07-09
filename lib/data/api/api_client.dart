@@ -13,7 +13,7 @@ class ApiClient {
   // Sekarang baseUrl dipilih otomatis sesuai platform. Untuk device fisik,
   // override _physicalDeviceHost dengan IP LAN komputer development Anda.
   static const int _port = 5001;
-  static const String _physicalDeviceHost = 'YOUR_LAN_IP'; // contoh: 192.168.1.44
+  static const String _physicalDeviceHost = '192.168.0.221'; // contoh: 192.168.1.44
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:$_port/api';

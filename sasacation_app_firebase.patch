@@ -1,0 +1,1088 @@
+diff --git a/android/app/src/main/AndroidManifest.xml b/android/app/src/main/AndroidManifest.xml
+index 8046a6d..4aa0213 100644
+--- a/android/app/src/main/AndroidManifest.xml
++++ b/android/app/src/main/AndroidManifest.xml
+@@ -1,4 +1,11 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
++    <!-- Dibutuhkan oleh Firebase Auth, FCM, dan panggilan API ke backend -->
++    <uses-permission android:name="android.permission.INTERNET" />
++    <!-- Push notification (wajib diminta run-time mulai Android 13 / API 33) -->
++    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
++    <!-- Geolocation: fitur "hotel terdekat dari saya" -->
++    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
++    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+     <application
+         android:label="sasacation"
+         android:name="${applicationName}"
+@@ -25,6 +32,12 @@
+                 <category android:name="android.intent.category.LAUNCHER"/>
+             </intent-filter>
+         </activity>
++        <!-- Channel notifikasi default untuk FCM (dipakai kalau app di-kill,
++             sistem menampilkan notifikasi langsung ke channel ini). Harus
++             sama dengan id channel di NotificationService (sasacation_default). -->
++        <meta-data
++            android:name="com.google.firebase.messaging.default_notification_channel_id"
++            android:value="sasacation_default" />
+         <!-- Don't delete the meta-data below.
+              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+         <meta-data
+diff --git a/ios/Podfile b/ios/Podfile
+index 620e46e..024bf92 100644
+--- a/ios/Podfile
++++ b/ios/Podfile
+@@ -1,5 +1,5 @@
+-# Uncomment this line to define a global platform for your project
+-# platform :ios, '13.0'
++# Firebase SDK (firebase_core/auth/messaging) mensyaratkan minimum iOS 13.
++platform :ios, '13.0'
+ 
+ # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+diff --git a/ios/Runner/Info.plist b/ios/Runner/Info.plist
+index f79531f..14f09d8 100644
+--- a/ios/Runner/Info.plist
++++ b/ios/Runner/Info.plist
+@@ -26,6 +26,19 @@
+ 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
++	<!-- Geolocation: fitur "hotel terdekat dari saya" -->
++	<key>NSLocationWhenInUseUsageDescription</key>
++	<string>Sasacation menggunakan lokasi Anda untuk menampilkan hotel dan destinasi terdekat di Lombok.</string>
++	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
++	<string>Sasacation menggunakan lokasi Anda untuk menampilkan hotel dan destinasi terdekat di Lombok.</string>
++	<!-- Push notification: mengizinkan app menerima notifikasi remote saat di background -->
++	<key>UIBackgroundModes</key>
++	<array>
++		<string>remote-notification</string>
++		<string>fetch</string>
++	</array>
++	<key>FirebaseAppDelegateProxyEnabled</key>
++	<true/>
+ 	<key>UIApplicationSceneManifest</key>
+ 	<dict>
+ 		<key>UIApplicationSupportsMultipleScenes</key>
+diff --git a/lib/core/location_service.dart b/lib/core/location_service.dart
+new file mode 100644
+index 0000000..b5a9d29
+--- /dev/null
++++ b/lib/core/location_service.dart
+@@ -0,0 +1,60 @@
++import 'package:geolocator/geolocator.dart';
++
++/// Hasil pengecekan/pengambilan lokasi, dibungkus supaya UI bisa menampilkan
++/// pesan yang tepat (izin ditolak vs GPS mati vs sukses) tanpa harus
++/// menangani exception Geolocator secara langsung di layer UI.
++class LocationResult {
++  final Position? position;
++  final String? errorMessage;
++  const LocationResult({this.position, this.errorMessage});
++  bool get isSuccess => position != null;
++}
++
++class LocationService {
++  LocationService._();
++  static final LocationService instance = LocationService._();
++
++  /// Minta izin (kalau belum ada) lalu ambil posisi GPS user saat ini.
++  /// Dipakai untuk fitur "Hotel terdekat dari saya".
++  Future<LocationResult> getCurrentLocation() async {
++    if (!await Geolocator.isLocationServiceEnabled()) {
++      return const LocationResult(
++        errorMessage: 'Layanan lokasi (GPS) sedang mati. Aktifkan dulu di pengaturan perangkat.',
++      );
++    }
++
++    LocationPermission permission = await Geolocator.checkPermission();
++    if (permission == LocationPermission.denied) {
++      permission = await Geolocator.requestPermission();
++      if (permission == LocationPermission.denied) {
++        return const LocationResult(
++          errorMessage: 'Izin lokasi ditolak. Sasacation butuh lokasi untuk menampilkan hotel terdekat.',
++        );
++      }
++    }
++
++    if (permission == LocationPermission.deniedForever) {
++      return const LocationResult(
++        errorMessage: 'Izin lokasi ditolak permanen. Aktifkan lewat pengaturan aplikasi di perangkat.',
++      );
++    }
++
++    try {
++      final position = await Geolocator.getCurrentPosition(
++        locationSettings: const LocationSettings(
++          accuracy: LocationAccuracy.high,
++          timeLimit: Duration(seconds: 10),
++        ),
++      );
++      return LocationResult(position: position);
++    } catch (e) {
++      return LocationResult(errorMessage: 'Gagal mengambil lokasi: $e');
++    }
++  }
++
++  /// Jarak lurus antara dua koordinat dalam kilometer (formula sama dengan
++  /// yang dipakai backend di endpoint /hotels/nearby, supaya konsisten).
++  double distanceInKm(double lat1, double lng1, double lat2, double lng2) {
++    return Geolocator.distanceBetween(lat1, lng1, lat2, lng2) / 1000;
++  }
++}
+diff --git a/lib/core/notification_service.dart b/lib/core/notification_service.dart
+new file mode 100644
+index 0000000..3cb0718
+--- /dev/null
++++ b/lib/core/notification_service.dart
+@@ -0,0 +1,133 @@
++import 'dart:io' show Platform;
++
++import 'package:firebase_messaging/firebase_messaging.dart';
++import 'package:flutter/foundation.dart';
++import 'package:flutter_local_notifications/flutter_local_notifications.dart';
++
++import '../data/repo/notification_repository.dart';
++
++/// Handler untuk pesan FCM yang datang saat app di background/terminated.
++/// HARUS berupa top-level function (bukan method di dalam class), ini
++/// syarat dari firebase_messaging supaya bisa dijalankan di isolate terpisah.
++@pragma('vm:entry-point')
++Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
++  // Firebase.initializeApp() dipanggil ulang di sini karena background
++  // handler berjalan di isolate baru yang belum ter-inisialisasi.
++  // (import langsung tanpa circular dependency ke main.dart)
++  debugPrint('📩 [Background] Notifikasi diterima: ${message.notification?.title}');
++}
++
++/// Mengelola seluruh siklus push notification:
++/// - Minta izin notifikasi (Android 13+/iOS)
++/// - Ambil & simpan FCM token, kirim ke backend
++/// - Tampilkan notifikasi lokal ketika app sedang dibuka (foreground)
++/// - Handle ketika user tap notifikasi
++class NotificationService {
++  NotificationService._();
++  static final NotificationService instance = NotificationService._();
++
++  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
++  final FlutterLocalNotificationsPlugin _localNotifications =
++      FlutterLocalNotificationsPlugin();
++  final NotificationRepository _repository = NotificationRepository();
++
++  static const _androidChannel = AndroidNotificationChannel(
++    'sasacation_default',
++    'Sasacation Notifications',
++    description: 'Notifikasi booking, promo, dan info penting Sasacation',
++    importance: Importance.high,
++  );
++
++  bool _initialized = false;
++
++  /// Panggil sekali saat app start (setelah Firebase.initializeApp),
++  /// dan panggil lagi setelah login berhasil supaya token langsung
++  /// terdaftar ke akun yang benar.
++  Future<void> initialize({bool registerTokenToBackend = false}) async {
++    if (!_initialized) {
++      await _requestPermission();
++      await _setupLocalNotifications();
++      FirebaseMessaging.onMessage.listen(_onForegroundMessage);
++      FirebaseMessaging.onMessageOpenedApp.listen(_onNotificationTap);
++      _messaging.onTokenRefresh.listen((newToken) {
++        if (registerTokenToBackend) _repository.registerToken(newToken);
++      });
++      _initialized = true;
++    }
++
++    if (registerTokenToBackend) {
++      await registerCurrentToken();
++    }
++  }
++
++  /// Ambil FCM token perangkat saat ini dan kirim ke backend.
++  /// Panggil ini setelah user berhasil login.
++  Future<void> registerCurrentToken() async {
++    final token = await _messaging.getToken();
++    if (token != null) {
++      await _repository.registerToken(token);
++    }
++  }
++
++  /// Panggil saat logout supaya device berhenti menerima push untuk akun ini.
++  Future<void> unregisterToken() async {
++    await _repository.unregisterToken();
++  }
++
++  Future<void> _requestPermission() async {
++    await _messaging.requestPermission(
++      alert: true,
++      badge: true,
++      sound: true,
++    );
++  }
++
++  Future<void> _setupLocalNotifications() async {
++    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
++    const iosInit = DarwinInitializationSettings(
++      requestAlertPermission: true,
++      requestBadgePermission: true,
++      requestSoundPermission: true,
++    );
++    await _localNotifications.initialize(
++      const InitializationSettings(android: androidInit, iOS: iosInit),
++    );
++
++    if (!kIsWeb && Platform.isAndroid) {
++      await _localNotifications
++          .resolvePlatformSpecificImplementation<
++              AndroidFlutterLocalNotificationsPlugin>()
++          ?.createNotificationChannel(_androidChannel);
++    }
++  }
++
++  /// Saat app sedang dibuka (foreground), FCM tidak otomatis menampilkan
++  /// notifikasi system tray — jadi kita tampilkan manual lewat local
++  /// notifications supaya UX-nya konsisten dengan saat app di background.
++  void _onForegroundMessage(RemoteMessage message) {
++    final notification = message.notification;
++    if (notification == null) return;
++
++    _localNotifications.show(
++      notification.hashCode,
++      notification.title,
++      notification.body,
++      NotificationDetails(
++        android: AndroidNotificationDetails(
++          _androidChannel.id,
++          _androidChannel.name,
++          channelDescription: _androidChannel.description,
++          importance: Importance.high,
++          priority: Priority.high,
++        ),
++        iOS: const DarwinNotificationDetails(),
++      ),
++    );
++  }
++
++  void _onNotificationTap(RemoteMessage message) {
++    // TODO: Arahkan ke halaman terkait berdasarkan message.data,
++    // misalnya ke detail booking: message.data['bookingId'].
++    debugPrint('🔔 Notifikasi ditap, data: ${message.data}');
++  }
++}
+diff --git a/lib/data/api/api_client.dart b/lib/data/api/api_client.dart
+index cff8e0d..026825e 100644
+--- a/lib/data/api/api_client.dart
++++ b/lib/data/api/api_client.dart
+@@ -1,14 +1,26 @@
++import 'dart:io' show Platform;
+ import 'package:dio/dio.dart';
++import 'package:flutter/foundation.dart' show kIsWeb;
+ import 'package:shared_preferences/shared_preferences.dart';
+ 
+ class ApiClient {
+-  // FIX: backend jalan di port 5001 (lihat log server: "Sasacation API →
+-  // http://localhost:5001"), sebelumnya di sini ke-hardcode port 3000 —
+-  // menyebabkan SEMUA request API gagal connect, termasuk AI Smart Search.
+-  static const String baseUrl = 'http://localhost:3000/api'; // iOS simulator / web
+-  // static const String baseUrl = 'http://192.168.1.44:5001/api'; // iOS simulator / web
+-  // static const String baseUrl = 'http://10.0.2.2:5001/api'; // Android emulator
+-  // static const String baseUrl = 'http://YOUR_LAN_IP:5001/api'; // Physical device (WiFi sama dgn komputer)
++  // FIX: sebelumnya baseUrl hardcode ke 'http://localhost:3000/api' padahal
++  // komentar di baris ini sendiri mengklaim sudah diperbaiki ke port 5001 —
++  // klaim dan kode tidak sinkron. Backend berjalan di PORT=5001 (lihat
++  // .env.example), dan 'localhost' tidak bisa diakses dari Android emulator
++  // (harus 10.0.2.2) maupun dari device fisik (harus IP LAN komputer).
++  //
++  // Sekarang baseUrl dipilih otomatis sesuai platform. Untuk device fisik,
++  // override _physicalDeviceHost dengan IP LAN komputer development Anda.
++  static const int _port = 5001;
++  static const String _physicalDeviceHost = 'YOUR_LAN_IP'; // contoh: 192.168.1.44
++
++  static String get baseUrl {
++    if (kIsWeb) return 'http://localhost:$_port/api';
++    if (Platform.isAndroid) return 'http://10.0.2.2:$_port/api'; // Android emulator
++    if (Platform.isIOS) return 'http://localhost:$_port/api'; // iOS simulator
++    return 'http://$_physicalDeviceHost:$_port/api'; // fallback: device fisik / platform lain
++  }
+ 
+   static final Dio _dio = Dio(
+     BaseOptions(
+diff --git a/lib/data/model/hotel_model.dart b/lib/data/model/hotel_model.dart
+index 39f7a68..2d46450 100644
+--- a/lib/data/model/hotel_model.dart
++++ b/lib/data/model/hotel_model.dart
+@@ -15,6 +15,11 @@ class HotelModel {
+   final List<String> amenities;
+   final bool featured;
+   final bool available;
++  final double? latitude;
++  final double? longitude;
++  /// Jarak dari lokasi user dalam kilometer. Hanya terisi kalau hotel ini
++  /// datang dari endpoint GET /hotels/nearby (fitur geolocation).
++  final double? distanceKm;
+ 
+   const HotelModel({
+     required this.id,
+@@ -30,6 +35,9 @@ class HotelModel {
+     this.amenities = const [],
+     this.featured = false,
+     this.available = true,
++    this.latitude,
++    this.longitude,
++    this.distanceKm,
+   });
+ 
+   factory HotelModel.fromJson(Map<String, dynamic> json) => HotelModel(
+@@ -41,13 +49,20 @@ class HotelModel {
+         // rating: (json['rating'] as num).toDouble(),
+           price: parseDouble(json['price']),
+         rating: parseDouble(json['rating']),
+-        reviewCount: json['reviewCount'] ?? 0,
++        // FIX: backend (SELECT * FROM hotels) mengembalikan kolom apa
++        // adanya dari PostgreSQL yaitu `review_count` (snake_case), BUKAN
++        // `reviewCount`. Sebelumnya hanya membaca json['reviewCount'] yang
++        // selalu null dari API asli, sehingga jumlah review selalu tampil 0.
++        reviewCount: parseInt(json['reviewCount'] ?? json['review_count']),
+         image: json['image'] ?? '',
+         images: List<String>.from(json['images'] ?? []),
+         description: json['description'],
+         amenities: List<String>.from(json['amenities'] ?? []),
+         featured: json['featured'] ?? false,
+         available: json['available'] ?? true,
++        latitude: json['latitude'] != null ? parseDouble(json['latitude']) : null,
++        longitude: json['longitude'] != null ? parseDouble(json['longitude']) : null,
++        distanceKm: json['distance_km'] != null ? parseDouble(json['distance_km']) : null,
+       );
+ 
+   Map<String, dynamic> toJson() => {
+@@ -64,5 +79,7 @@ class HotelModel {
+         'amenities': amenities,
+         'featured': featured,
+         'available': available,
++        'latitude': latitude,
++        'longitude': longitude,
+       };
+ }
+diff --git a/lib/data/repo/auth_repository.dart b/lib/data/repo/auth_repository.dart
+index eedea9a..51e8fc1 100644
+--- a/lib/data/repo/auth_repository.dart
++++ b/lib/data/repo/auth_repository.dart
+@@ -1,4 +1,5 @@
+ import 'package:dio/dio.dart';
++import 'package:firebase_auth/firebase_auth.dart' as fb;
+ import 'package:google_sign_in/google_sign_in.dart';
+ import 'package:shared_preferences/shared_preferences.dart';
+ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+@@ -7,72 +8,93 @@ import '../model/user_model.dart';
+ 
+ class AuthRepository {
+   static final _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
++  static final _firebaseAuth = fb.FirebaseAuth.instance;
+ 
+-  // Email login
++  // ── Email/Password (via Firebase Auth) ──────────────────────────────────
+   Future<Map<String, dynamic>> register({required String name, required String email, required String password}) async {
+     try {
+-      final res = await ApiClient.post('/auth/register', data: {'name': name, 'email': email, 'password': password});
+-      await _saveSession(res.data['data']['token'], res.data['data']['user']);
+-      return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
+-    } on DioException catch (e) {
+-      return {'success': false, 'message': _msg(e)};
++      final cred = await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
++      await cred.user?.updateDisplayName(name);
++      return _exchangeFirebaseToken(cred.user);
++    } on fb.FirebaseAuthException catch (e) {
++      return {'success': false, 'message': _firebaseMsg(e)};
+     }
+   }
+ 
+   Future<Map<String, dynamic>> login({required String email, required String password}) async {
+     try {
+-      final res = await ApiClient.post('/auth/login', data: {'email': email, 'password': password});
+-      await _saveSession(res.data['data']['token'], res.data['data']['user']);
+-      return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
+-    } on DioException catch (e) {
+-      return {'success': false, 'message': _msg(e)};
++      final cred = await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
++      return _exchangeFirebaseToken(cred.user);
++    } on fb.FirebaseAuthException catch (e) {
++      return {'success': false, 'message': _firebaseMsg(e)};
+     }
+   }
+ 
+-  // Google Sign In
++  // ── Google Sign In (via Firebase Auth) ───────────────────────────────────
+   Future<Map<String, dynamic>> signInWithGoogle() async {
+     try {
+       final googleUser = await _googleSignIn.signIn();
+       if (googleUser == null) return {'success': false, 'message': 'Login Google dibatalkan'};
+-      final res = await ApiClient.post('/auth/social', data: {
+-        'provider': 'google',
+-        'providerId': googleUser.id,
+-        'email': googleUser.email,
+-        'name': googleUser.displayName ?? googleUser.email,
+-        'avatar': googleUser.photoUrl,
+-      });
+-      await _saveSession(res.data['data']['token'], res.data['data']['user']);
+-      return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
+-    } on DioException catch (e) {
+-      return {'success': false, 'message': _msg(e)};
++
++      final googleAuth = await googleUser.authentication;
++      final credential = fb.GoogleAuthProvider.credential(
++        accessToken: googleAuth.accessToken,
++        idToken: googleAuth.idToken,
++      );
++      final cred = await _firebaseAuth.signInWithCredential(credential);
++      return _exchangeFirebaseToken(cred.user);
++    } on fb.FirebaseAuthException catch (e) {
++      return {'success': false, 'message': _firebaseMsg(e)};
+     } catch (e) {
+       return {'success': false, 'message': 'Google Sign In gagal'};
+     }
+   }
+ 
+-  // Apple Sign In
++  // ── Apple Sign In (via Firebase Auth) ────────────────────────────────────
+   Future<Map<String, dynamic>> signInWithApple() async {
+     try {
+-      final cred = await SignInWithApple.getAppleIDCredential(
++      final appleCred = await SignInWithApple.getAppleIDCredential(
+         scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+       );
+-      final name = [cred.givenName, cred.familyName].where((s) => s?.isNotEmpty == true).join(' ');
+-      final res = await ApiClient.post('/auth/social', data: {
+-        'provider': 'apple',
+-        'providerId': cred.userIdentifier ?? '',
+-        'email': cred.email ?? '${cred.userIdentifier}@privaterelay.appleid.com',
+-        'name': name.isNotEmpty ? name : 'Apple User',
+-      });
+-      await _saveSession(res.data['data']['token'], res.data['data']['user']);
+-      return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
+-    } on DioException catch (e) {
+-      return {'success': false, 'message': _msg(e)};
++
++      final oauthCredential = fb.OAuthProvider('apple.com').credential(
++        idToken: appleCred.identityToken,
++        accessToken: appleCred.authorizationCode,
++      );
++      final cred = await _firebaseAuth.signInWithCredential(oauthCredential);
++
++      // Nama lengkap dari Apple hanya dikirim SEKALI saat otorisasi pertama,
++      // Firebase user object tidak otomatis mengisi displayName untuk Apple.
++      final name = [appleCred.givenName, appleCred.familyName].where((s) => s?.isNotEmpty == true).join(' ');
++      if (name.isNotEmpty && cred.user?.displayName == null) {
++        await cred.user?.updateDisplayName(name);
++      }
++
++      return _exchangeFirebaseToken(cred.user);
++    } on fb.FirebaseAuthException catch (e) {
++      return {'success': false, 'message': _firebaseMsg(e)};
+     } catch (e) {
+       if (e.toString().contains('canceled')) return {'success': false, 'message': 'Login Apple dibatalkan'};
+       return {'success': false, 'message': 'Apple Sign In gagal'};
+     }
+   }
+ 
++  /// Tukar Firebase idToken dengan sesi backend Sasacation (JWT sendiri).
++  /// Backend memverifikasi idToken ini via Firebase Admin SDK di endpoint
++  /// POST /auth/firebase — jadi identitas user (email, uid) tidak bisa
++  /// dipalsukan oleh client.
++  Future<Map<String, dynamic>> _exchangeFirebaseToken(fb.User? user) async {
++    if (user == null) return {'success': false, 'message': 'Login Firebase gagal'};
++    try {
++      final idToken = await user.getIdToken();
++      final res = await ApiClient.post('/auth/firebase', data: {'idToken': idToken});
++      await _saveSession(res.data['data']['token'], res.data['data']['user']);
++      return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
++    } on DioException catch (e) {
++      return {'success': false, 'message': e.response?.data?['message'] ?? 'Gagal menghubungi server'};
++    }
++  }
++
+   Future<UserModel?> getProfile() async {
+     try {
+       final res = await ApiClient.get('/auth/me');
+@@ -92,8 +114,19 @@ class AuthRepository {
+     }
+   }
+ 
++  /// Kirim lokasi GPS terakhir user ke backend (fitur geolocation "hotel terdekat").
++  Future<bool> updateLocation({required double latitude, required double longitude}) async {
++    try {
++      await ApiClient.patch('/auth/location', data: {'latitude': latitude, 'longitude': longitude});
++      return true;
++    } catch (_) {
++      return false;
++    }
++  }
++
+   Future<void> logout() async {
+     await _googleSignIn.signOut().catchError((_) {});
++    await _firebaseAuth.signOut().catchError((_) {});
+     final prefs = await SharedPreferences.getInstance();
+     await prefs.remove('auth_token');
+     await prefs.remove('user_id');
+@@ -113,4 +146,23 @@ class AuthRepository {
+   }
+ 
+   String _msg(DioException e) => e.response?.data?['message'] ?? 'Terjadi kesalahan jaringan';
++
++  String _firebaseMsg(fb.FirebaseAuthException e) {
++    switch (e.code) {
++      case 'user-not-found':
++      case 'wrong-password':
++      case 'invalid-credential':
++        return 'Email atau password salah';
++      case 'email-already-in-use':
++        return 'Email sudah terdaftar';
++      case 'weak-password':
++        return 'Password terlalu lemah (minimal 6 karakter)';
++      case 'invalid-email':
++        return 'Format email tidak valid';
++      case 'too-many-requests':
++        return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
++      default:
++        return e.message ?? 'Autentikasi gagal';
++    }
++  }
+ }
+diff --git a/lib/data/repo/hotel_repository.dart b/lib/data/repo/hotel_repository.dart
+index adbba5d..a77129d 100644
+--- a/lib/data/repo/hotel_repository.dart
++++ b/lib/data/repo/hotel_repository.dart
+@@ -40,4 +40,26 @@ class HotelRepository {
+       return null;
+     }
+   }
++
++  /// Hotel terdekat dari koordinat [lat]/[lng] (biasanya lokasi GPS user),
++  /// diurutkan dari yang paling dekat. [radiusKm] default 25 km.
++  Future<List<HotelModel>> getNearbyHotels({
++    required double lat,
++    required double lng,
++    double radiusKm = 25,
++    int limit = 20,
++  }) async {
++    try {
++      final res = await ApiClient.get('/hotels/nearby', params: {
++        'lat': lat,
++        'lng': lng,
++        'radius': radiusKm,
++        'limit': limit,
++      });
++      final List data = res.data['data'];
++      return data.map((e) => HotelModel.fromJson(e)).toList();
++    } on DioException {
++      return [];
++    }
++  }
+ }
+diff --git a/lib/data/repo/notification_repository.dart b/lib/data/repo/notification_repository.dart
+new file mode 100644
+index 0000000..4629d24
+--- /dev/null
++++ b/lib/data/repo/notification_repository.dart
+@@ -0,0 +1,50 @@
++import 'dart:io' show Platform;
++import 'package:dio/dio.dart';
++import 'package:flutter/foundation.dart' show kIsWeb;
++import '../api/api_client.dart';
++
++class NotificationRepository {
++  String get _platformName {
++    if (kIsWeb) return 'web';
++    if (Platform.isAndroid) return 'android';
++    if (Platform.isIOS) return 'ios';
++    return 'other';
++  }
++
++  Future<void> registerToken(String token) async {
++    try {
++      await ApiClient.post('/notifications/register-token', data: {
++        'token': token,
++        'platform': _platformName,
++      });
++    } catch (_) {
++      // Gagal registrasi token tidak boleh menghentikan alur app (mis. saat
++      // login), cukup gagal senyap — token akan dicoba lagi di sesi berikut.
++    }
++  }
++
++  Future<void> unregisterToken() async {
++    try {
++      await ApiClient.delete('/notifications/token');
++    } catch (_) {}
++  }
++
++  /// Kirim test push notification. Kalau [token] tidak diisi, backend akan
++  /// pakai FCM token yang sudah terdaftar untuk akun yang sedang login.
++  Future<Map<String, dynamic>> sendTestNotification({
++    String? token,
++    String? title,
++    String? body,
++  }) async {
++    try {
++      final res = await ApiClient.post('/notifications/test', data: {
++        if (token != null) 'token': token,
++        'title': title ?? 'Test Notifikasi Sasacation',
++        'body': body ?? 'Ini pesan test push notification 🌴',
++      });
++      return {'success': true, 'message': res.data['message']};
++    } on DioException catch (e) {
++      return {'success': false, 'message': e.response?.data?['message'] ?? 'Gagal mengirim test notification'};
++    }
++  }
++}
+diff --git a/lib/main.dart b/lib/main.dart
+index 6ac76a8..f1a7eb6 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -1,7 +1,24 @@
++import 'package:firebase_core/firebase_core.dart';
++import 'package:firebase_messaging/firebase_messaging.dart';
+ import 'package:flutter/material.dart';
++import 'package:sasacation/core/notification_service.dart';
+ import 'package:sasacation/core/sasacation_app.dart';
++import 'package:sasacation/firebase_options.dart';
++
++Future<void> main() async {
++  WidgetsFlutterBinding.ensureInitialized();
++
++  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
++
++  // Handler untuk push notification yang masuk saat app di background atau
++  // sudah ditutup sepenuhnya. Harus didaftarkan sebelum runApp().
++  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
++
++  // Siapkan notifikasi lokal + minta izin notifikasi. Registrasi token ke
++  // backend BELUM dilakukan di sini karena user mungkin belum login —
++  // token baru dikirim ke backend setelah AuthBloc emit AuthAuthenticated
++  // (lihat lib/viewmodel/auth/auth_bloc.dart).
++  await NotificationService.instance.initialize();
+ 
+-void main() {
+   runApp(const LombokApp());
+ }
+-
+diff --git a/lib/ui/home/home_page.dart b/lib/ui/home/home_page.dart
+index 663afbe..8bf29c5 100644
+--- a/lib/ui/home/home_page.dart
++++ b/lib/ui/home/home_page.dart
+@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
+ import 'package:sasacation/core/apptheme.dart';
+ import 'package:sasacation/route/approuter.dart';
+ import 'package:sasacation/ui/hotels/featured_hotel_page.dart';
++import 'package:sasacation/ui/hotels/nearby_hotel_page.dart';
+ import 'package:sasacation/ui/widget/category_widget.dart';
+ import 'package:sasacation/ui/widget/hero_banner.dart';
+ import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
+@@ -97,6 +98,12 @@ class HomeScreen extends StatelessWidget {
+             padding: const EdgeInsets.symmetric(horizontal: 20),
+             sliver: SliverToBoxAdapter(child: FeaturedHotels()),
+           ),
++          SliverToBoxAdapter(
++            child: Padding(
++              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
++              child: NearbyHotels(),
++            ),
++          ),
+           const SliverToBoxAdapter(child: SizedBox(height: 100)),
+         ],
+       ),
+diff --git a/lib/ui/hotels/nearby_hotel_page.dart b/lib/ui/hotels/nearby_hotel_page.dart
+new file mode 100644
+index 0000000..a1581f5
+--- /dev/null
++++ b/lib/ui/hotels/nearby_hotel_page.dart
+@@ -0,0 +1,162 @@
++import 'package:flutter/material.dart';
++import 'package:flutter_bloc/flutter_bloc.dart';
++import 'package:sasacation/core/apptheme.dart';
++import 'package:sasacation/core/location_service.dart';
++import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
++import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
++
++/// Menampilkan hotel terdekat dari lokasi GPS user saat ini.
++/// Alur: minta izin lokasi → ambil koordinat → dispatch HotelNearbyRequested
++/// → HotelBloc panggil GET /hotels/nearby di backend.
++class NearbyHotels extends StatefulWidget {
++  const NearbyHotels({super.key});
++
++  @override
++  State<NearbyHotels> createState() => _NearbyHotelsState();
++}
++
++class _NearbyHotelsState extends State<NearbyHotels> {
++  bool _permissionDenied = false;
++  String? _errorMessage;
++
++  Future<void> _loadNearby() async {
++    setState(() {
++      _permissionDenied = false;
++      _errorMessage = null;
++    });
++
++    final result = await LocationService.instance.getCurrentLocation();
++    if (!mounted) return;
++
++    if (!result.isSuccess) {
++      setState(() {
++        _permissionDenied = true;
++        _errorMessage = result.errorMessage;
++      });
++      return;
++    }
++
++    context.read<HotelBloc>().add(HotelNearbyRequested(
++          latitude: result.position!.latitude,
++          longitude: result.position!.longitude,
++        ));
++  }
++
++  @override
++  void initState() {
++    super.initState();
++    _loadNearby();
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return Column(
++      crossAxisAlignment: CrossAxisAlignment.start,
++      children: [
++        Row(
++          mainAxisAlignment: MainAxisAlignment.spaceBetween,
++          children: [
++            Row(
++              children: [
++                const Icon(Icons.near_me, color: AppTheme.primaryColor, size: 18),
++                const SizedBox(width: 8),
++                const Text('Hotel Terdekat',
++                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
++              ],
++            ),
++            if (_permissionDenied)
++              TextButton(onPressed: _loadNearby, child: const Text('Coba Lagi')),
++          ],
++        ),
++        const SizedBox(height: 12),
++        SizedBox(height: 260, child: _buildBody()),
++      ],
++    );
++  }
++
++  Widget _buildBody() {
++    if (_permissionDenied) {
++      return Center(
++        child: Padding(
++          padding: const EdgeInsets.symmetric(horizontal: 24),
++          child: Text(
++            _errorMessage ?? 'Izin lokasi dibutuhkan untuk fitur ini',
++            textAlign: TextAlign.center,
++            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
++          ),
++        ),
++      );
++    }
++
++    return BlocBuilder<HotelBloc, HotelState>(
++      builder: (context, state) {
++        if (state is! HotelCompositeState || state.isLoadingNearby) {
++          return const Center(child: CircularProgressIndicator());
++        }
++        final hotels = state.nearbyHotels ?? [];
++        if (hotels.isEmpty) {
++          return Center(
++            child: Text(
++              state.nearbyError ?? 'Tidak ada hotel di sekitar Anda',
++              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
++            ),
++          );
++        }
++        return ListView.builder(
++          scrollDirection: Axis.horizontal,
++          itemCount: hotels.length,
++          itemBuilder: (context, index) {
++            final hotel = hotels[index];
++            return GestureDetector(
++              onTap: () => Navigator.push(
++                context,
++                MaterialPageRoute(builder: (_) => HotelDetailScreen(hotelId: hotel.id)),
++              ),
++              child: Container(
++                width: 220,
++                margin: const EdgeInsets.only(right: 14),
++                child: Card(
++                  clipBehavior: Clip.antiAlias,
++                  child: Column(
++                    crossAxisAlignment: CrossAxisAlignment.start,
++                    children: [
++                      Image.network(
++                        hotel.image,
++                        height: 130, width: double.infinity, fit: BoxFit.cover,
++                        errorBuilder: (_, __, ___) => Container(
++                          height: 130, color: Colors.grey.shade200,
++                          child: const Icon(Icons.image_not_supported, color: Colors.grey),
++                        ),
++                      ),
++                      Padding(
++                        padding: const EdgeInsets.all(10),
++                        child: Column(
++                          crossAxisAlignment: CrossAxisAlignment.start,
++                          children: [
++                            Text(hotel.name,
++                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
++                                maxLines: 1, overflow: TextOverflow.ellipsis),
++                            const SizedBox(height: 4),
++                            if (hotel.distanceKm != null)
++                              Row(
++                                children: [
++                                  Icon(Icons.social_distance, size: 12, color: Colors.grey.shade500),
++                                  const SizedBox(width: 4),
++                                  Text('${hotel.distanceKm!.toStringAsFixed(1)} km dari Anda',
++                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
++                                ],
++                              ),
++                          ],
++                        ),
++                      ),
++                    ],
++                  ),
++                ),
++              ),
++            );
++          },
++        );
++      },
++    );
++  }
++}
+diff --git a/lib/ui/profile/profile_page.dart b/lib/ui/profile/profile_page.dart
+index 8867550..a189ec9 100644
+--- a/lib/ui/profile/profile_page.dart
++++ b/lib/ui/profile/profile_page.dart
+@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
+ import 'package:flutter_bloc/flutter_bloc.dart';
+ import 'package:go_router/go_router.dart';
+ import 'package:sasacation/core/apptheme.dart';
++import 'package:sasacation/data/repo/notification_repository.dart';
+ import 'package:sasacation/route/approuter.dart';
+ import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
+ 
+@@ -109,6 +110,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
+                           title: 'Settings',
+                           onTap: () {}),
+                       _divider(),
++                      _buildMenuItem(
++                        icon: Icons.notifications_active_outlined,
++                        title: 'Test Push Notification',
++                        onTap: () => _sendTestNotification(context),
++                      ),
++                      _divider(),
+                       _buildMenuItem(
+                           icon: Icons.help_outline,
+                           title: 'Help & Support',
+@@ -152,6 +159,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
+   Widget _divider() =>
+       Divider(height: 0, thickness: 0.5, color: Colors.grey.shade200);
+ 
++  /// Memicu push notification test ke device ini sendiri, lewat FCM token
++  /// yang sudah teregistrasi ke backend saat login. Berguna untuk QA
++  /// verifikasi setup Firebase tanpa perlu tool eksternal.
++  Future<void> _sendTestNotification(BuildContext context) async {
++    final messenger = ScaffoldMessenger.of(context);
++    messenger.showSnackBar(const SnackBar(content: Text('Mengirim test notification...')));
++
++    final result = await NotificationRepository().sendTestNotification();
++
++    messenger.showSnackBar(SnackBar(
++      backgroundColor: result['success'] == true ? Colors.green : Colors.red,
++      content: Text(result['message'] ?? 'Selesai'),
++    ));
++  }
++
+   void _showLogoutDialog(BuildContext context) {
+     showDialog(
+       context: context,
+diff --git a/lib/viewmodel/auth/auth_bloc.dart b/lib/viewmodel/auth/auth_bloc.dart
+index 68a4f7c..e186445 100644
+--- a/lib/viewmodel/auth/auth_bloc.dart
++++ b/lib/viewmodel/auth/auth_bloc.dart
+@@ -1,4 +1,5 @@
+ import 'package:flutter_bloc/flutter_bloc.dart';
++import 'package:sasacation/core/notification_service.dart';
+ import 'package:sasacation/data/model/user_model.dart';
+ import 'package:sasacation/data/repo/auth_repository.dart';
+ 
+@@ -38,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+     final result = await _authRepository.login(email: event.email, password: event.password);
+     if (result['success'] == true) {
+       emit(AuthAuthenticated(user: result['user'] as UserModel));
++      NotificationService.instance.initialize(registerTokenToBackend: true);
+     } else {
+       emit(AuthError(message: result['message'] ?? 'Login gagal'));
+     }
+@@ -49,6 +51,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+         name: event.name, email: event.email, password: event.password);
+     if (result['success'] == true) {
+       emit(AuthAuthenticated(user: result['user'] as UserModel));
++      NotificationService.instance.initialize(registerTokenToBackend: true);
+     } else {
+       emit(AuthError(message: result['message'] ?? 'Registrasi gagal'));
+     }
+@@ -59,6 +62,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+     final result = await _authRepository.signInWithGoogle();
+     if (result['success'] == true) {
+       emit(AuthAuthenticated(user: result['user'] as UserModel));
++      NotificationService.instance.initialize(registerTokenToBackend: true);
+     } else {
+       emit(AuthError(message: result['message'] ?? 'Google Sign In gagal'));
+     }
+@@ -69,18 +73,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
+     final result = await _authRepository.signInWithApple();
+     if (result['success'] == true) {
+       emit(AuthAuthenticated(user: result['user'] as UserModel));
++      NotificationService.instance.initialize(registerTokenToBackend: true);
+     } else {
+       emit(AuthError(message: result['message'] ?? 'Apple Sign In gagal'));
+     }
+   }
+ 
+   Future<void> _onLogout(AuthLogoutRequested event, Emitter<AuthState> emit) async {
++    await NotificationService.instance.unregisterToken();
+     await _authRepository.logout();
+     emit(AuthUnauthenticated());
+   }
+ 
+   Future<void> _onGetProfile(AuthProfileRequested event, Emitter<AuthState> emit) async {
+     final user = await _authRepository.getProfile();
+-    emit(user != null ? AuthAuthenticated(user: user) : AuthUnauthenticated());
++    if (user != null) {
++      emit(AuthAuthenticated(user: user));
++      NotificationService.instance.initialize(registerTokenToBackend: true);
++    } else {
++      emit(AuthUnauthenticated());
++    }
+   }
+ }
+diff --git a/lib/viewmodel/hotel/hotel_bloc.dart b/lib/viewmodel/hotel/hotel_bloc.dart
+index 4fccc2d..444151e 100644
+--- a/lib/viewmodel/hotel/hotel_bloc.dart
++++ b/lib/viewmodel/hotel/hotel_bloc.dart
+@@ -17,6 +17,7 @@ class HotelBloc extends Bloc<HotelEvent, HotelState> {
+     on<HotelFeaturedRequested>(_onFeaturedRequested);
+     on<HotelListRequested>(_onListRequested);
+     on<HotelDetailRequested>(_onDetailRequested);
++    on<HotelNearbyRequested>(_onNearbyRequested);
+   }
+ 
+   Future<void> _onFeaturedRequested(
+@@ -68,4 +69,26 @@ class HotelBloc extends Bloc<HotelEvent, HotelState> {
+       detailError: hotel == null ? 'Hotel tidak ditemukan' : null,
+     ));
+   }
++
++  Future<void> _onNearbyRequested(
++      HotelNearbyRequested event, Emitter<HotelState> emit) async {
++    final current = state is HotelCompositeState
++        ? state as HotelCompositeState
++        : HotelCompositeState();
++
++    emit(current.copyWith(isLoadingNearby: true, nearbyError: null));
++    final hotels = await _hotelRepository.getNearbyHotels(
++      lat: event.latitude,
++      lng: event.longitude,
++      radiusKm: event.radiusKm,
++    );
++    final updated = state is HotelCompositeState
++        ? state as HotelCompositeState
++        : HotelCompositeState();
++    emit(updated.copyWith(
++      isLoadingNearby: false,
++      nearbyHotels: hotels,
++      nearbyError: hotels.isEmpty ? 'Tidak ada hotel di sekitar lokasi Anda' : null,
++    ));
++  }
+ }
+diff --git a/lib/viewmodel/hotel/hotel_event.dart b/lib/viewmodel/hotel/hotel_event.dart
+index 5875e78..a111f2b 100644
+--- a/lib/viewmodel/hotel/hotel_event.dart
++++ b/lib/viewmodel/hotel/hotel_event.dart
+@@ -15,3 +15,13 @@ class HotelDetailRequested extends HotelEvent {
+   final String hotelId;
+   HotelDetailRequested({required this.hotelId});
+ }
++
++/// Minta hotel terdekat dari koordinat GPS user saat ini (fitur geolocation).
++/// Koordinat didapat dari LocationService di layer UI sebelum event ini
++/// di-dispatch.
++class HotelNearbyRequested extends HotelEvent {
++  final double latitude;
++  final double longitude;
++  final double radiusKm;
++  HotelNearbyRequested({required this.latitude, required this.longitude, this.radiusKm = 25});
++}
+diff --git a/lib/viewmodel/hotel/hotel_state.dart b/lib/viewmodel/hotel/hotel_state.dart
+index 39621c1..a012201 100644
+--- a/lib/viewmodel/hotel/hotel_state.dart
++++ b/lib/viewmodel/hotel/hotel_state.dart
+@@ -30,6 +30,10 @@ class HotelCompositeState extends HotelState {
+   final bool isLoadingDetail;
+   final String? featuredError;
+   final String? detailError;
++  // Fitur geolocation: hotel terdekat dari lokasi user
++  final List<HotelModel>? nearbyHotels;
++  final bool isLoadingNearby;
++  final String? nearbyError;
+ 
+   HotelCompositeState({
+     this.featuredHotels,
+@@ -38,6 +42,9 @@ class HotelCompositeState extends HotelState {
+     this.isLoadingDetail = false,
+     this.featuredError,
+     this.detailError,
++    this.nearbyHotels,
++    this.isLoadingNearby = false,
++    this.nearbyError,
+   });
+ 
+   HotelCompositeState copyWith({
+@@ -47,6 +54,9 @@ class HotelCompositeState extends HotelState {
+     bool? isLoadingDetail,
+     String? featuredError,
+     String? detailError,
++    List<HotelModel>? nearbyHotels,
++    bool? isLoadingNearby,
++    String? nearbyError,
+   }) =>
+       HotelCompositeState(
+         featuredHotels: featuredHotels ?? this.featuredHotels,
+@@ -55,6 +65,9 @@ class HotelCompositeState extends HotelState {
+         isLoadingDetail: isLoadingDetail ?? this.isLoadingDetail,
+         featuredError: featuredError ?? this.featuredError,
+         detailError: detailError ?? this.detailError,
++        nearbyHotels: nearbyHotels ?? this.nearbyHotels,
++        isLoadingNearby: isLoadingNearby ?? this.isLoadingNearby,
++        nearbyError: nearbyError ?? this.nearbyError,
+       );
+ }
+ 
+diff --git a/pubspec.yaml b/pubspec.yaml
+index de0de9b..19061d6 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -27,6 +27,14 @@ dependencies:
+   url_launcher: ^6.2.5
+   google_sign_in: ^6.2.1
+   sign_in_with_apple: ^6.1.0
++  # Firebase — login (Auth), push notification (Messaging), dan dependency inti
++  firebase_core: ^3.6.0
++  firebase_auth: ^5.3.1
++  firebase_messaging: ^15.1.3
++  flutter_local_notifications: ^18.0.1
++  # Geolocation
++  geolocator: ^13.0.1
++  permission_handler: ^11.3.1
+ 
+ dev_dependencies:
+   flutter_lints: ^6.0.0
