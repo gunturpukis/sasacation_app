@@ -17,6 +17,14 @@ class CheckoutSessionLoaded extends CheckoutState {
 
 class CheckoutPaymentProcessing extends CheckoutState {}
 
+// Halaman Snap sudah dibuka, menunggu user menyelesaikan pembayaran di sana.
+// Bloc otomatis polling status di background setelah state ini di-emit.
+class CheckoutAwaitingPayment extends CheckoutState {
+  final String redirectUrl;
+  final String transactionId;
+  CheckoutAwaitingPayment({required this.redirectUrl, required this.transactionId});
+}
+
 class CheckoutPaymentSuccess extends CheckoutState {
   final PaymentResult result;
   CheckoutPaymentSuccess({required this.result});

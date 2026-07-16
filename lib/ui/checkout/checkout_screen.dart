@@ -6,6 +6,7 @@ import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// View: CheckoutScreen
 /// FIX: menggunakan CheckoutBloc dari root MultiBlocProvider (bukan buat baru)
@@ -57,7 +58,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<CheckoutBloc, CheckoutState>(
       listener: (context, state) {
-        if (state is CheckoutPaymentSuccess) {
+        if (state is CheckoutAwaitingPayment) {
+          _launchPaymentUrl(context, state.redirectUrl);
+        } else if (state is CheckoutPaymentSuccess) {
           context.pushReplacement(AppRouter.bookingConfirm, extra: state.result);
         } else if (state is CheckoutError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -66,23 +69,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
       },
       builder: (context, state) {
+        final isPaymentInFlight = state is CheckoutPaymentProcessing || state is CheckoutAwaitingPayment;
         return Scaffold(
           appBar: AppBar(
             title: Text(_step == _CheckoutStep.review ? 'Review Booking' : 'Pembayaran'),
             centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                if (_step == _CheckoutStep.payment) {
-                  // Kembali ke Review, bukan keluar dari checkout
-                  setState(() => _step = _CheckoutStep.review);
-                  return;
-                }
-                // Reset checkout state saat back dari Review
-                context.read<CheckoutBloc>().add(CheckoutReset());
-                context.pop();
-              },
-            ),
+            // Dikunci selama proses bayar berjalan (termasuk saat polling
+            // menunggu webhook Midtrans) — polling jalan di background bloc
+            // terlepas dari navigasi, jadi mencegah keluar di tengah proses
+            // supaya tidak ada state yang membingungkan/orphan.
+            automaticallyImplyLeading: false,
+            leading: isPaymentInFlight
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      if (_step == _CheckoutStep.payment) {
+                        // Kembali ke Review, bukan keluar dari checkout
+                        setState(() => _step = _CheckoutStep.review);
+                        return;
+                      }
+                      // Reset checkout state saat back dari Review
+                      context.read<CheckoutBloc>().add(CheckoutReset());
+                      context.pop();
+                    },
+                  ),
           ),
           body: Column(
             children: [
@@ -120,6 +131,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             SizedBox(height: 8),
             Text('Mohon tunggu sebentar', style: TextStyle(color: Colors.grey)),
           ],
+        ),
+      );
+    }
+    if (state is CheckoutAwaitingPayment) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              const Text('Menunggu pembayaran...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(
+                'Halaman pembayaran sudah dibuka di browser. Selesaikan pembayaran Anda, lalu kembali ke sini — statusnya akan terupdate otomatis.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => _launchPaymentUrl(ctx, state.redirectUrl),
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Buka Lagi Halaman Pembayaran'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -189,6 +227,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Future<void> _launchPaymentUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal membuka halaman pembayaran'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _buildPayButton(BuildContext ctx, CheckoutState state) {

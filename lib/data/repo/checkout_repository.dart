@@ -3,7 +3,7 @@ import '../api/api_client.dart';
 import '../model/checkout_model.dart';
 
 class CheckoutRepository {
-  // Initiate checkout session — hitung harga, belum simpan ke DB
+  // Initiate checkout session
   Future<Map<String, dynamic>> initiateCheckout({
     required String hotelId,
     required DateTime checkIn,
@@ -31,24 +31,18 @@ class CheckoutRepository {
     }
   }
 
-  /// Proses pembayaran.
-  ///
-  /// FIX: Backend versi PostgreSQL (`/api/checkout/pay`) TIDAK memakai
-  /// session lookup seperti versi lama — dia butuh detail booking lengkap
-  /// dikirim ULANG di body (hotelId, checkIn, checkOut, guestCount, notes,
-  /// totalAmount), karena sesi checkout tidak disimpan di server (stateless).
-  ///
-  /// Sebelumnya method ini hanya mengirim `sessionId` + `paymentMethod`,
-  /// yang menyebabkan backend menolak dengan "Data pembayaran tidak lengkap"
-  /// karena field wajib (hotelId, checkIn, dll) tidak pernah sampai ke server.
+  // Process payment
+  // FIX: sebelumnya kirim `sessionId` yang TIDAK PERNAH dipakai backend
+  // (backend stateless, tidak pernah menyimpan session dari /initiate) —
+  // sekarang kirim data booking langsung sesuai yang backend butuhkan.
+  // Response juga berubah: bukan lagi hasil pembayaran final, tapi info
+  // untuk membuka halaman Midtrans Snap (snapToken/redirectUrl).
   Future<Map<String, dynamic>> processPayment({
     required String hotelId,
     required DateTime checkIn,
     required DateTime checkOut,
-    required int nights,
     required int guestCount,
-    required String notes,
-    required double totalAmount,
+    String? notes,
     required String paymentMethod,
   }) async {
     try {
@@ -56,16 +50,13 @@ class CheckoutRepository {
         'hotelId': hotelId,
         'checkIn': checkIn.toIso8601String(),
         'checkOut': checkOut.toIso8601String(),
-        'nights': nights,
         'guestCount': guestCount,
-        'notes': notes,
-        'totalAmount': totalAmount,
+        if (notes != null) 'notes': notes,
         'paymentMethod': paymentMethod,
       });
       return {
         'success': true,
-        'result': PaymentResult.fromJson(res.data['data']),
-        'message': res.data['message'],
+        'initiated': CheckoutPaymentInitiated.fromJson(res.data['data']),
       };
     } on DioException catch (e) {
       return {
@@ -75,11 +66,34 @@ class CheckoutRepository {
     }
   }
 
+  // Polling status pembayaran setelah user membuka halaman Snap — status
+  // sebenarnya di-update async lewat webhook Midtrans, jadi app perlu
+  // tanya-tanya berkala sampai final ('success'/'failed').
+  Future<Map<String, dynamic>> checkPaymentStatus(String transactionId) async {
+    try {
+      final res = await ApiClient.get('/checkout/status/$transactionId');
+      final data = res.data['data'];
+      final status = data['payment']['status'] as String;
+      return {
+        'success': true,
+        'status': status, // 'pending' | 'success' | 'failed' | 'refunded'
+        'result': status == 'success' ? PaymentResult.fromJson(data) : null,
+      };
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data?['message'] ?? 'Gagal mengecek status pembayaran',
+      };
+    }
+  }
+
   // Get available payment methods
   Future<List<PaymentMethod>> getPaymentMethods() async {
     try {
       final res = await ApiClient.get('/checkout/methods');
-      return (res.data['data'] as List).map((m) => PaymentMethod.fromJson(m)).toList();
+      return (res.data['data'] as List)
+          .map((m) => PaymentMethod.fromJson(m))
+          .toList();
     } catch (_) {
       return [];
     }
