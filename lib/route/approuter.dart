@@ -56,11 +56,11 @@ class Routes {
       // ─── Core ─────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.splash,
-        builder: (_, __) => const SplashScreen(),
+        builder: (_, _) => const SplashScreen(),
       ),
       GoRoute(
         path: AppRouter.onboarding,
-        builder: (_, __) => const OnboardingScreen(),
+        builder: (_, _) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRouter.login,
@@ -74,7 +74,7 @@ class Routes {
       ),
       GoRoute(
         path: AppRouter.home,
-        builder: (_, __) => const MainNavigation(),
+        builder: (_, _) => const MainNavigation(),
       ),
 
       // ─── Hotel ────────────────────────────────────────────────────────────
@@ -95,13 +95,13 @@ class Routes {
       ),
       GoRoute(
         path: AppRouter.wishlist,
-        builder: (_, __) => const WishlistScreen(),
+        builder: (_, _) => const WishlistScreen(),
       ),
 
       // ─── Booking & Checkout flow ──────────────────────────────────────────
       GoRoute(
         path: AppRouter.myBookings,
-        builder: (_, __) => const MyBookingsScreen(),
+        builder: (_, _) => const MyBookingsScreen(),
       ),
       GoRoute(
         path: AppRouter.checkout,
@@ -127,21 +127,21 @@ class Routes {
       // ─── Admin ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.admin,
-        builder: (_, __) => const AdminPanelScreen(),
+        builder: (_, _) => const AdminPanelScreen(),
       ),
 
       // ─── AI ───────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.aiChat,
-        builder: (_, __) => const AiChatScreen(),
+        builder: (_, _) => const AiChatScreen(),
       ),
       GoRoute(
         path: AppRouter.smartSearch,
-        builder: (_, __) => const SmartSearchScreen(),
+        builder: (_, _) => const SmartSearchScreen(),
       ),
       GoRoute(
         path: AppRouter.tripPlanner,
-        builder: (_, __) => const TripPlannerScreen(),
+        builder: (_, _) => const TripPlannerScreen(),
       ),
     ],
 

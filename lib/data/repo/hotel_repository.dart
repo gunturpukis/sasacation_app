@@ -15,9 +15,9 @@ class HotelRepository {
     try {
       final res = await ApiClient.get('/hotels', params: {
         if (featured != null) 'featured': featured.toString(),
-        if (search != null) 'search': search,
-        if (minPrice != null) 'minPrice': minPrice,
-        if (maxPrice != null) 'maxPrice': maxPrice,
+        'search': ?search,
+        'minPrice': ?minPrice,
+        'maxPrice': ?maxPrice,
         'page': page,
         'limit': limit,
       });

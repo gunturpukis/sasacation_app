@@ -38,7 +38,7 @@ class NotificationRepository {
   }) async {
     try {
       final res = await ApiClient.post('/notifications/test', data: {
-        if (token != null) 'token': token,
+        'token': ?token,
         'title': title ?? 'Test Notifikasi Sasacation',
         'body': body ?? 'Ini pesan test push notification 🌴',
       });

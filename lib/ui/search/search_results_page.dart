@@ -412,7 +412,7 @@ class _HotelResultCard extends StatelessWidget {
                   child: Image.network(
                     image,
                     width: 88, height: 88, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 88, height: 88, color: Colors.grey.shade200,
                       child: const Icon(Icons.image_not_supported, color: Colors.grey),
                     ),

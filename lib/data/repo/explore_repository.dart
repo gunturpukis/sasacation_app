@@ -8,8 +8,8 @@ class ExploreRepository {
   Future<List<ExploreItemModel>> getExplore({String? category, String? search}) async {
     try {
       final res = await ApiClient.get('/explore', params: {
-        if (category != null) 'category': category,
-        if (search != null) 'search': search,
+        'category': ?category,
+        'search': ?search,
       });
       final List data = res.data['data'];
       return data.map((e) => ExploreItemModel.fromJson(e)).toList();
@@ -44,7 +44,7 @@ class BookingRepository {
         'checkIn': checkIn.toIso8601String(),
         'checkOut': checkOut.toIso8601String(),
         'guestCount': guestCount,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       });
       return {
         'success': true,

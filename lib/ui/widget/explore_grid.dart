@@ -127,7 +127,7 @@ class ExploreGridCard extends StatelessWidget {
                     height: 140,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       height: 140,
                       color: Colors.grey.shade200,
                       child: const Icon(Icons.image_not_supported, color: Colors.grey),

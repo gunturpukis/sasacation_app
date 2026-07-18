@@ -323,7 +323,7 @@ class CategoryGrid extends StatelessWidget {
                     height: 70,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       height: 70,
                       width: double.infinity,
                       color: Colors.grey.shade200,

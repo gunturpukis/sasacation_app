@@ -17,7 +17,7 @@ class CheckoutRepository {
         'checkIn': checkIn.toIso8601String(),
         'checkOut': checkOut.toIso8601String(),
         'guestCount': guestCount,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       });
       return {
         'success': true,
@@ -51,7 +51,7 @@ class CheckoutRepository {
         'checkIn': checkIn.toIso8601String(),
         'checkOut': checkOut.toIso8601String(),
         'guestCount': guestCount,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
         'paymentMethod': paymentMethod,
       });
       return {

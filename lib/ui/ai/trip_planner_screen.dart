@@ -40,7 +40,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 20),
-                  Text('🤖 Merencanakan itinerary ${_duration} hari...',
+                  Text('🤖 Merencanakan itinerary $_duration hari...',
                       style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 8),
                   Text('Ini mungkin memerlukan 10-15 detik',

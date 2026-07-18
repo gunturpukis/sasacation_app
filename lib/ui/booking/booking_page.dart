@@ -148,7 +148,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               height: 130,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 height: 130,
                 color: Colors.grey.shade200,
                 child: const Icon(Icons.hotel,

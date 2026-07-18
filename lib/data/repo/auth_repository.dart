@@ -105,8 +105,8 @@ class AuthRepository {
   Future<Map<String, dynamic>> updateProfile({String? name, String? avatar}) async {
     try {
       final res = await ApiClient.put('/auth/profile', data: {
-        if (name != null) 'name': name,
-        if (avatar != null) 'avatar': avatar,
+        'name': ?name,
+        'avatar': ?avatar,
       });
       return {'success': true, 'user': UserModel.fromJson(res.data['data']['user'])};
     } on DioException catch (e) {

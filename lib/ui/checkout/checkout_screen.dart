@@ -359,7 +359,7 @@ class _HotelSummaryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             child: Image.network(hotel['image'] ?? '',
                 width: 80, height: 70, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (_, _, _) =>
                     Container(width: 80, height: 70, color: Colors.grey.shade200)),
           ),
           const SizedBox(width: 12),

@@ -67,7 +67,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                       fit: StackFit.expand,
                       children: [
                         Image.network(hotel.image, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300)),
+                            errorBuilder: (_, _, _) => Container(color: Colors.grey.shade300)),
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(

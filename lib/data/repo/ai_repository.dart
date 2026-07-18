@@ -60,9 +60,9 @@ class AiRepository {
         'type': type,
         'name': name,
         'location': location,
-        if (amenities != null) 'amenities': amenities,
-        if (price != null) 'price': price,
-        if (rating != null) 'rating': rating,
+        'amenities': ?amenities,
+        'price': ?price,
+        'rating': ?rating,
       });
       return {
         'success': true,
@@ -90,8 +90,8 @@ class AiRepository {
             'duration': duration,
             'budget': budget,
             'interests': interests,
-            if (startDate != null) 'startDate': startDate,
-            if (groupType != null) 'groupType': groupType,
+            'startDate': ?startDate,
+            'groupType': ?groupType,
           },
           // Itinerary JSON panjang — paling lambat dari semua fitur AI.
           // Terukur bisa 120-150 detik+ pada Ollama lokal (CPU/GPU consumer),

@@ -28,7 +28,7 @@ class DestinationDetailScreen extends StatelessWidget {
                   Image.network(
                     item.image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       color: Colors.grey.shade300,
                       child: const Icon(Icons.image, size: 60, color: Colors.grey),
                     ),
@@ -171,7 +171,7 @@ class DestinationDetailScreen extends StatelessWidget {
                               width: 140,
                               height: 100,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                 width: 140,
                                 color: Colors.grey.shade200,
                                 child: const Icon(Icons.image, color: Colors.grey),
