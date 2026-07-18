@@ -40,8 +40,8 @@ class HeroBanner extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.15),
-                  Colors.black.withOpacity(0.65),
+                  const Color.fromRGBO(0, 0, 0, 0.15),
+                  const Color.fromRGBO(0, 0, 0, 0.65),
                 ],
               ),
             ),
@@ -55,7 +55,7 @@ class HeroBanner extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: const Color.fromRGBO(255, 255, 255, 0.9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -109,7 +109,7 @@ class HeroBanner extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             AppTheme.primaryColor,
-            AppTheme.primaryColor.withOpacity(0.7),
+            AppTheme.primaryColor.withAlpha((0.7 * 255).round()),
           ],
         ),
       ),
