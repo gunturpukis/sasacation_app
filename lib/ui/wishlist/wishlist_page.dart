@@ -73,7 +73,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             borderRadius: BorderRadius.circular(10),
                             child: Image.network(hotel.image,
                                 width: 64, height: 64, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     Container(width: 64, height: 64, color: Colors.grey.shade200)),
                           ),
                           title: Text(hotel.name, style: const TextStyle(fontWeight: FontWeight.bold)),

@@ -1,4 +1,4 @@
-import 'package:intl/number_symbols.dart';
+// import 'package:intl/number_symbols.dart';
 import 'package:sasacation/utils/json_helper.dart';
 
 class HotelModel {
