@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/hotels/featured_hotel_page.dart';
 import 'package:sasacation/ui/hotels/nearby_hotel_page.dart';
 import 'package:sasacation/ui/widget/category_widget.dart';
 import 'package:sasacation/ui/widget/hero_banner.dart';
+import 'package:sasacation/data/model/hotel_model.dart';
+import 'package:sasacation/viewmodel/recommendation/recommendation_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -79,6 +82,14 @@ class HomeScreen extends StatelessWidget {
 
                   // ─── AI Feature Banner ──────────────────────────────────
                   const _AiBanner(),
+                  const SizedBox(height: 28),
+
+                  // ─── Recommended for You ─────────────────────────────────
+                  // Personalized (login: wishlist+history+preferences lewat
+                  // pgvector) atau trending (guest) — lihat recommendationService.js.
+                  // Ini bagian dari Recommendation Engine (#3), bukan Featured
+                  // Hotels yang di bawah (itu kurasi admin/rating global, statis).
+                  const _RecommendedSection(),
                   const SizedBox(height: 28),
 
                   Row(
@@ -279,6 +290,123 @@ class _AiCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Section "Recommended for You" — konsumsi RecommendationCubit yang di-provide
+/// global di sasacation_app.dart. Sengaja TIDAK punya judul dinamis
+/// ("personalized" vs "trending") supaya tidak perlu expose alasan internal
+/// ke user; label "Recommended for You" tetap sama, isinya yang berbeda.
+class _RecommendedSection extends StatelessWidget {
+  const _RecommendedSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<RecommendationCubit, RecommendationState>(
+      builder: (context, state) {
+        // Gagal/kosong/masih initial → section tidak render sama sekali,
+        // bukan spinner atau pesan error. Ini fitur pelengkap; kalau gagal,
+        // Home tetap terasa lengkap tanpa "lubang" yang mengganggu.
+        if (state is! RecommendationLoaded || state.hotels.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.favorite_border, color: AppTheme.primaryColor, size: 18),
+                const SizedBox(width: 8),
+                const Text('Recommended for You',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: state.hotels.length,
+                itemBuilder: (context, index) {
+                  final hotel = state.hotels[index];
+                  return GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => HotelDetailScreen(hotelId: hotel.id)),
+                    ),
+                    child: Container(
+                      width: 160,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius:
+                                const BorderRadius.vertical(top: Radius.circular(16)),
+                            child: Image.network(
+                              hotel.image,
+                              height: 100,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 100,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.hotel, color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(hotel.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600, fontSize: 13),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 2),
+                                Text(hotel.location,
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey.shade600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star, size: 12, color: Colors.amber),
+                                    const SizedBox(width: 2),
+                                    Text(hotel.rating.toStringAsFixed(1),
+                                        style: const TextStyle(fontSize: 11)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
