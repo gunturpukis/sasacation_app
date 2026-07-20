@@ -13,42 +13,56 @@ class ApiClient {
   // Sekarang baseUrl dipilih otomatis sesuai platform. Untuk device fisik,
   // override _physicalDeviceHost dengan IP LAN komputer development Anda.
   static const int _port = 5001;
-  static const String _physicalDeviceHost = '192.168.0.221'; // contoh: 192.168.1.44
+  static const String _physicalDeviceHost =
+      // 'https://unveiled-work-clang.ngrok-free.dev';
+      '192.168.81.79'; // contoh: 192.168.1.44
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:$_port/api';
     if (Platform.isAndroid) return 'http://10.0.2.2:$_port/api'; // Android emulator
-    if (Platform.isIOS) return 'http://localhost:$_port/api'; // iOS simulator
-    return 'http://$_physicalDeviceHost:$_port/api'; // fallback: device fisik / platform lain
+    if (Platform.isIOS) return 'http://$_physicalDeviceHost:$_port/api'; // iOS simulator
+    // return 'http://$_physicalDeviceHost:$_port/api'; // fallback: device fisik / platform lain
+    return 'http://10.0.2.2:$_port/api';
   }
 
-  static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      headers: {'Content-Type': 'application/json'},
-    ),
-  )..interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // Attach JWT token ke setiap request
-          final prefs = await SharedPreferences.getInstance();
-          final token = prefs.getString('auth_token');
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (DioException e, handler) {
-          // Handle 401 - token expired
-          if (e.response?.statusCode == 401) {
-            // TODO: Redirect ke login
-          }
-          return handler.next(e);
-        },
-      ),
-    );
+  static final Dio _dio =
+      Dio(
+          BaseOptions(
+            baseUrl: baseUrl,
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+            headers: {
+              'Content-Type': 'application/json',
+              // 'ngrok-skip-browser-warning': 'true',
+            },
+          ),
+        )
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) async {
+              // Attach JWT token ke setiap request
+              final prefs = await SharedPreferences.getInstance();
+              final token = prefs.getString('auth_token');
+              if (token != null) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+              return handler.next(options);
+            },
+            onError: (DioException e, handler) {
+              // Handle 401 - token expired
+              if (e.response?.statusCode == 401) {
+                // TODO: Redirect ke login
+              }
+              // onError: (DioException e, handler) {
+              print('Dio Error Status: ${e.response?.statusCode}');
+              print('Dio Error Data: ${e.response?.data}');
+              print('Dio Error Message: ${e.message}');
+              // return handler.next(e);
+              // },
+              return handler.next(e);
+            },
+          ),
+        );
 
   static Dio get instance => _dio;
 
@@ -56,17 +70,20 @@ class ApiClient {
   static Future<Response> get(String path, {Map<String, dynamic>? params}) =>
       _dio.get(path, queryParameters: params);
 
-  static Future<Response> post(String path, {dynamic data, Duration? timeout}) =>
-      _dio.post(
-        path,
-        data: data,
-        // Override timeout per-request. Dipakai untuk endpoint AI yang jalan
-        // di atas Ollama lokal (bisa 30-90+ detik), jauh lebih lambat dari
-        // endpoint biasa (auth, hotels, dst) yang tetap pakai timeout default.
-        options: timeout != null
-            ? Options(sendTimeout: timeout, receiveTimeout: timeout)
-            : null,
-      );
+  static Future<Response> post(
+    String path, {
+    dynamic data,
+    Duration? timeout,
+  }) => _dio.post(
+    path,
+    data: data,
+    // Override timeout per-request. Dipakai untuk endpoint AI yang jalan
+    // di atas Ollama lokal (bisa 30-90+ detik), jauh lebih lambat dari
+    // endpoint biasa (auth, hotels, dst) yang tetap pakai timeout default.
+    options: timeout != null
+        ? Options(sendTimeout: timeout, receiveTimeout: timeout)
+        : null,
+  );
 
   static Future<Response> put(String path, {dynamic data}) =>
       _dio.put(path, data: data);

@@ -10,6 +10,11 @@ class AiChatMessageSent extends AiEvent {
 
 class AiChatCleared extends AiEvent {}
 
+// Restore riwayat chat terakhir dari server (dipanggil sekali saat AiBloc
+// dibuat / user login). Terpisah dari AiChatMessageSent karena ini bukan
+// aksi user, murni bootstrap state.
+class AiChatHistoryRequested extends AiEvent {}
+
 // Reset (dipakai trip planner untuk kembali ke form setelah error, tanpa
 // meminjam semantik "chat cleared" yang sebenarnya untuk fitur lain)
 class AiStateReset extends AiEvent {}

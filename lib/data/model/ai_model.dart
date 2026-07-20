@@ -168,6 +168,17 @@ class ChatMessage {
         timestamp: DateTime.now(),
       );
 
+  // Dipakai untuk restore riwayat chat dari backend (chat_messages row:
+  // {role, content, created_at}). Beda dari toJson() yang cuma kirim
+  // {role, content} — created_at cuma dipakai saat baca, tidak pernah dikirim.
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
+        role: json['role'] as String,
+        content: json['content'] as String,
+        timestamp: json['created_at'] != null
+            ? DateTime.parse(json['created_at'] as String)
+            : DateTime.now(),
+      );
+
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
 
   bool get isUser => role == 'user';

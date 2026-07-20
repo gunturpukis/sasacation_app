@@ -14,11 +14,16 @@ class AiChatState extends AiState {
   final List<ChatMessage> messages;
   final bool isLoading;
   final String? error;
+  // Sesi chat yang sedang berjalan di server. null berarti: guest, atau
+  // belum ada pesan terkirim sama sekali di sesi ini (akan dibuat backend
+  // pada request pertama).
+  final String? sessionId;
 
   AiChatState({
     required this.messages,
     this.isLoading = false,
     this.error,
+    this.sessionId,
   });
 }
 
