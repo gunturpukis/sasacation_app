@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../api/api_client.dart';
 import '../model/ai_model.dart';
-
+ 
 class AiRepository {
   // ─── 1. Chat ─────────────────────────────────────────────────────────────
   // PERUBAHAN: sekarang kirim & terima sessionId, supaya backend tahu ini
@@ -17,14 +17,26 @@ class AiRepository {
             'messages': messages.map((m) => m.toJson()).toList(),
             'sessionId': ?sessionId,
           },
-          // Ollama lokal bisa butuh puluhan detik untuk generate reply,
-          // jauh lebih lambat dari API cloud — default 10s tidak cukup.
-          timeout: const Duration(seconds: 90));
+          // FIX: sebelumnya 90 detik, ternyata tidak cukup lagi. Sejak chat
+          // bisa memicu Agent Workflow penuh (deteksi intent + Hotel/
+          // Restaurant/Activity/Budget/Composer Agent — lihat aiController.js),
+          // satu request chat bisa membutuhkan waktu setara trip-plan (yang
+          // sudah butuh 180s) ditambah waktu deteksi intent kalau regex
+          // shortcut tidak kena. 220s dipilih sebagai margin aman, BUKAN
+          // ekspektasi normal — kalau di device Anda ternyata masih sering
+          // timeout di 220s, itu sinyal composer perlu dioptimalkan
+          // (num_predict/topK diperkecil), bukan sekadar naikkan timeout lagi.
+          timeout: const Duration(seconds: 220));
       return {
         'success': true,
         'reply': res.data['data']['reply'] as String,
         // null kalau guest (backend tidak buat sesi untuk user belum login)
         'sessionId': res.data['data']['sessionId'] as String?,
+        // Terisi kalau backend mendeteksi intent trip-planning dari pesan ini
+        // dan langsung menjalankan Agent Workflow (lihat aiController.js #4)
+        'tripPlan': res.data['data']['tripPlan'] != null
+            ? TripPlan.fromJson(res.data['data']['tripPlan'] as Map<String, dynamic>)
+            : null,
       };
     } on DioException catch (e) {
       return {
@@ -36,7 +48,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 1b. Restore riwayat chat terakhir ──────────────────────────────────
   // Dipanggil sekali saat AiBloc dibuat (app startup) supaya chat dengan Sasa
   // tidak "amnesia" tiap buka app. Hanya berlaku untuk user yang login —
@@ -62,7 +74,7 @@ class AiRepository {
       return {'success': false, 'sessionId': null, 'messages': <ChatMessage>[]};
     }
   }
-
+ 
   // ─── 2. Smart Search ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> smartSearch(String query) async {
     try {
@@ -82,7 +94,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 3. Generate Description ──────────────────────────────────────────────
   Future<Map<String, dynamic>> generateDescription({
     required String type,
@@ -112,7 +124,7 @@ class AiRepository {
       };
     }
   }
-
+ 
   // ─── 4. Trip Planner ──────────────────────────────────────────────────────
   Future<Map<String, dynamic>> generateTripPlan({
     required int duration,
@@ -149,3 +161,4 @@ class AiRepository {
     }
   }
 }
+ 

@@ -73,7 +73,10 @@ class AiBloc extends Bloc<AiEvent, AiState> {
     );
 
     if (result['success'] == true) {
-      final assistantReply = ChatMessage.assistant(result['reply'] as String);
+      final assistantReply = ChatMessage.assistant(
+        result['reply'] as String,
+        tripPlan: result['tripPlan'] as TripPlan?,
+      );
       emit(AiChatState(
         messages: [...updatedMessages, assistantReply],
         isLoading: false,

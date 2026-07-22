@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
+import 'package:sasacation/ui/ai/agent_trip_plan_result_screen.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
 
 class AiChatScreen extends StatefulWidget {
@@ -110,6 +111,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       return _ChatBubble(
                         content: msg.content,
                         isUser: msg.isUser,
+                        tripPlan: msg.tripPlan,
                       );
                     },
                   );
@@ -238,31 +240,92 @@ class _AiChatScreenState extends State<AiChatScreen> {
 class _ChatBubble extends StatelessWidget {
   final String content;
   final bool isUser;
-  const _ChatBubble({required this.content, required this.isUser});
+  final TripPlan? tripPlan;
+  const _ChatBubble({required this.content, required this.isUser, this.tripPlan});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isUser ? AppTheme.primaryColor : Colors.grey.shade100,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isUser ? 18 : 4),
+                bottomRight: Radius.circular(isUser ? 4 : 18),
+              ),
+            ),
+            child: Text(
+              content,
+              style: TextStyle(
+                color: isUser ? Colors.white : Colors.black87,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+        // Kartu ini HANYA muncul kalau backend mendeteksi intent trip-planning
+        // dan menjalankan Agent Workflow untuk balasan ini (lihat
+        // ChatMessage.tripPlan di ai_model.dart). Balasan chat biasa tidak
+        // akan pernah menampilkan kartu ini.
+        if (tripPlan != null) _TripPlanCard(plan: tripPlan!),
+      ],
+    );
+  }
+}
+
+class _TripPlanCard extends StatelessWidget {
+  final TripPlan plan;
+  const _TripPlanCard({required this.plan});
 
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isUser ? AppTheme.primaryColor : Colors.grey.shade100,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(18),
-            topRight: const Radius.circular(18),
-            bottomLeft: Radius.circular(isUser ? 18 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 18),
-          ),
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AgentTripPlanResultScreen(plan: plan)),
         ),
-        child: Text(
-          content,
-          style: TextStyle(
-            color: isUser ? Colors.white : Colors.black87,
-            fontSize: 14,
-            height: 1.4,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.25)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.map_outlined, color: AppTheme.primaryColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(plan.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text('${plan.days.length} hari • \$${plan.totalEstimatedCost.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+            ],
           ),
         ),
       ),

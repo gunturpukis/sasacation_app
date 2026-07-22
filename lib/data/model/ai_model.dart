@@ -149,11 +149,22 @@ class ChatMessage {
   final String role; // 'user' | 'assistant'
   final String content;
   final DateTime timestamp;
+  // Terisi HANYA kalau pesan ini hasil Agent-Based Workflow (backend
+  // mendeteksi intent trip-planning dari chat dan langsung menjalankan
+  // Hotel/Restaurant/Activity/Budget/Composer Agent — lihat aiController.js).
+  // CATATAN: field ini TIDAK ikut ter-restore dari chat_messages backend
+  // (yang tersimpan cuma teks reply-nya), jadi kartu itinerary ini cuma
+  // muncul selagi sesi chat masih berjalan, hilang lagi kalau app ditutup
+  // dan riwayat di-restore dari server. Ini keterbatasan yang disengaja
+  // untuk v1 — kalau perlu tripPlan persisten, itu perlu kolom terpisah
+  // di chat_messages, belum dibuat di iterasi ini.
+  final TripPlan? tripPlan;
 
   const ChatMessage({
     required this.role,
     required this.content,
     required this.timestamp,
+    this.tripPlan,
   });
 
   factory ChatMessage.user(String content) => ChatMessage(
@@ -162,10 +173,11 @@ class ChatMessage {
         timestamp: DateTime.now(),
       );
 
-  factory ChatMessage.assistant(String content) => ChatMessage(
+  factory ChatMessage.assistant(String content, {TripPlan? tripPlan}) => ChatMessage(
         role: 'assistant',
         content: content,
         timestamp: DateTime.now(),
+        tripPlan: tripPlan,
       );
 
   // Dipakai untuk restore riwayat chat dari backend (chat_messages row:
