@@ -13,13 +13,15 @@ import 'package:sasacation/ui/hotels/adminpanel/admin_panel_page.dart';
 import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/login/login_page.dart';
 import 'package:sasacation/ui/main_navigation_page.dart';
+import 'package:sasacation/ui/notification/notification_screen.dart';
 import 'package:sasacation/ui/onboarding/onboarding_page.dart';
 import 'package:sasacation/ui/search/search_results_page.dart';
+import 'package:sasacation/ui/settings/setting_screen.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
 import 'package:sasacation/ui/wishlist/wishlist_page.dart';
 import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+ 
 class AppRouter {
   static const String splash         = '/';
   static const String onboarding     = '/onboarding';
@@ -29,6 +31,8 @@ class AppRouter {
   static const String searchResults  = '/search-results';
   static const String wishlist       = '/wishlist';
   static const String myBookings     = '/my-bookings';
+  static const String notifications  = '/notifications';
+  static const String settings       = '/settings';
   static const String admin          = '/admin';
   // Checkout flow
   static const String checkout       = '/checkout';
@@ -37,7 +41,7 @@ class AppRouter {
   static const String aiChat         = '/ai-chat';
   static const String smartSearch    = '/smart-search';
   static const String tripPlanner    = '/trip-planner';
-
+ 
   /// Rute yang boleh diakses tanpa login (guest browsing), meniru pola OTA:
   /// pengguna bisa melihat-lihat hotel bebas, login baru wajib saat mau
   /// benar-benar memesan (checkout) atau mengakses data personal.
@@ -45,10 +49,10 @@ class AppRouter {
     splash, onboarding, login, home, hotelDetail, searchResults, wishlist,
   };
 }
-
+ 
 class Routes {
   static final navigatorKey = GlobalKey<NavigatorState>();
-
+ 
   static final router = GoRouter(
     navigatorKey: navigatorKey,
     initialLocation: AppRouter.splash,
@@ -76,7 +80,7 @@ class Routes {
         path: AppRouter.home,
         builder: (_, _) => const MainNavigation(),
       ),
-
+ 
       // ─── Hotel ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.hotelDetail,
@@ -97,7 +101,15 @@ class Routes {
         path: AppRouter.wishlist,
         builder: (_, _) => const WishlistScreen(),
       ),
-
+      GoRoute(
+        path: AppRouter.notifications,
+        builder: (_, _) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.settings,
+        builder: (_, _) => const SettingsScreen(),
+      ),
+ 
       // ─── Booking & Checkout flow ──────────────────────────────────────────
       GoRoute(
         path: AppRouter.myBookings,
@@ -123,13 +135,13 @@ class Routes {
           result: state.extra as PaymentResult,
         ),
       ),
-
+ 
       // ─── Admin ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.admin,
         builder: (_, _) => const AdminPanelScreen(),
       ),
-
+ 
       // ─── AI ───────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.aiChat,
@@ -144,17 +156,17 @@ class Routes {
         builder: (_, _) => const TripPlannerScreen(),
       ),
     ],
-
+ 
     redirect: (context, state) async {
       final isLoggedIn = await _checkAuthStatus();
       final hasSeenOnboarding = await _checkOnboardingStatus();
       final loc = state.matchedLocation;
-
+ 
       // hotel-detail dipetakan dengan path parameter (/hotel-detail/:id), jadi
       // dicek lewat prefix, bukan exact-match seperti rute statis lainnya.
       final isGuestAccessible = AppRouter.guestAccessible.contains(loc) ||
           loc.startsWith('/hotel-detail/');
-
+ 
       if (!hasSeenOnboarding && loc != AppRouter.onboarding && loc != AppRouter.splash) {
         return AppRouter.onboarding;
       }
@@ -169,14 +181,15 @@ class Routes {
       return null;
     },
   );
-
+ 
   static Future<bool> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('is_logged_in') ?? false;
   }
-
+ 
   static Future<bool> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('has_seen_onboarding') ?? false;
   }
 }
+ 

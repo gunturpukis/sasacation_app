@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-
+import 'package:sasacation/core/apptheme.dart';
+ 
+ 
 class CategoryGrid extends StatelessWidget {
   const CategoryGrid({super.key});
-
+ 
   final List<Map<String, dynamic>> categories = const [
     {
       'icon': Icons.beach_access,
@@ -55,7 +56,7 @@ class CategoryGrid extends StatelessWidget {
       'gradient': [0xFF9F7AEA, 0xFFB794F4],
     },
   ];
-
+ 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
@@ -65,7 +66,7 @@ class CategoryGrid extends StatelessWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1.0,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -74,7 +75,7 @@ class CategoryGrid extends StatelessWidget {
       },
     );
   }
-
+ 
   Widget _buildAnimatedCategoryCard(BuildContext context, Map<String, dynamic> category) {
     return TweenAnimationBuilder(
       tween: Tween<double>(begin: 0, end: 1),
@@ -94,75 +95,40 @@ class CategoryGrid extends StatelessWidget {
           _showCategoryDetail(context, category);
         },
         child: Container(
+          // SEBELUM: gradient tebal per-kategori + border berwarna.
+          // SEKARANG: flat pastel background — sesuai mockup "Popular
+          // Categories" yang jauh lebih minim, fokus warnanya di icon.
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(category['color']).withOpacity(0.1),
-                Color(category['color']).withOpacity(0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Color(category['color']).withOpacity(0.2),
-              width: 1,
-            ),
+            color: Color(category['color']).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Animated Icon Container
+              // Icon container — solid, tanpa gradient/shadow berat lagi
               Container(
-                height: 50,
-                width: 50,
+                height: 44,
+                width: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(category['color']),
-                      Color(category['gradient'][1]),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(category['color']).withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: Color(category['color']).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 child: Icon(
                   category['icon'],
-                  color: Colors.white,
-                  size: 28,
+                  color: Color(category['color']),
+                  size: 22,
                 ),
               ),
-              const SizedBox(height: 12),
-              // Category Label
+              const SizedBox(height: 10),
+              // Category Label — deskripsi kecil DIHAPUS dari tampilan grid
+              // (bukan dari data) supaya card lebih lega sesuai mockup;
+              // deskripsi lengkap tetap tampil di bottom sheet saat di-tap.
               Text(
                 category['label'],
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(category['color']),
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Description (small)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  category['description'],
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.grey.shade500,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  color: AppTheme.onSurface,
                 ),
               ),
             ],
@@ -171,7 +137,7 @@ class CategoryGrid extends StatelessWidget {
       ),
     );
   }
-
+ 
   void _showCategoryDetail(BuildContext context, Map<String, dynamic> category) {
     showModalBottomSheet(
       context: context,
@@ -294,7 +260,7 @@ class CategoryGrid extends StatelessWidget {
       ),
     );
   }
-
+ 
   Widget _buildFeaturedItems(BuildContext context, String category) {
     final List<Map<String, dynamic>> items = _getFeaturedItems(category);
     
@@ -367,7 +333,7 @@ class CategoryGrid extends StatelessWidget {
       ),
     );
   }
-
+ 
   String _getFullDescription(String category) {
     switch (category) {
       case 'Beaches':
@@ -386,7 +352,7 @@ class CategoryGrid extends StatelessWidget {
         return 'Explore amazing places and experiences in Lombok';
     }
   }
-
+ 
   List<Map<String, dynamic>> _getFeaturedItems(String category) {
     final Map<String, List<Map<String, dynamic>>> featuredData = {
       'Beaches': [

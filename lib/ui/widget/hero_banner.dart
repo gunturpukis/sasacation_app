@@ -40,8 +40,10 @@ class HeroBanner extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color.fromRGBO(0, 0, 0, 0.15),
-                  const Color.fromRGBO(0, 0, 0, 0.65),
+                  // const Color.fromRGBO(0, 0, 0, 0.15),
+                  // const Color.fromRGBO(0, 0, 0, 0.65),
+                  Colors.black.withOpacity(0.15),
+                  Colors.black.withOpacity(0.65),
                 ],
               ),
             ),
@@ -53,9 +55,13 @@ class HeroBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(255, 255, 255, 0.9),
+                    // color: const Color.fromRGBO(255, 255, 255, 0.9),
+                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -84,7 +90,10 @@ class HeroBanner extends StatelessWidget {
                     const SizedBox(width: 4),
                     const Text(
                       '4.9',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     const Text(

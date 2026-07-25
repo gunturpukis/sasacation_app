@@ -3,9 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
-
+ 
 /// View: SearchResultsScreen
 /// Halaman perantara baru antara Home dan Hotel Detail, meniru pola Agoda:
 /// search -> hasil pencarian dengan filter & sort -> detail hotel.
@@ -14,27 +15,27 @@ import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 class SearchResultsScreen extends StatefulWidget {
   final String? initialQuery;
   const SearchResultsScreen({super.key, this.initialQuery});
-
+ 
   @override
   State<SearchResultsScreen> createState() => _SearchResultsScreenState();
 }
-
+ 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   late final TextEditingController _searchCtrl;
-
+ 
   @override
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController(text: widget.initialQuery ?? '');
     context.read<HotelSearchCubit>().search(query: widget.initialQuery);
   }
-
+ 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,40 +50,53 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       ),
     );
   }
-
+ 
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 16, 12),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back, color: AppTheme.onSurface),
             onPressed: () => context.pop(),
           ),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(14),
+                color: AppTheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppTheme.radiusButton),
               ),
               child: TextField(
                 controller: _searchCtrl,
                 textInputAction: TextInputAction.search,
+                style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Cari hotel atau lokasi...',
-                  prefixIcon: Icon(Icons.search, size: 20),
+                  prefixIcon: Icon(Icons.search, size: 20, color: AppTheme.primary),
                 ),
                 onSubmitted: (q) => context.read<HotelSearchCubit>().search(query: q),
               ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: GestureDetector(
+              onTap: () => _openFilterSheet(context),
+              child: const Icon(Icons.tune, color: Colors.white, size: 18),
             ),
           ),
         ],
       ),
     );
   }
-
+ 
   Widget _buildFilterChips(BuildContext context) {
     return BlocBuilder<HotelSearchCubit, HotelSearchState>(
       builder: (context, state) {
@@ -120,7 +134,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       },
     );
   }
-
+ 
   Widget _buildResultList(BuildContext context) {
     return BlocBuilder<HotelSearchCubit, HotelSearchState>(
       builder: (context, state) {
@@ -164,6 +178,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         price: hotel.price,
                         rating: hotel.rating,
                         reviewCount: hotel.reviewCount,
+                        amenities: hotel.amenities,
                         isSaved: saved,
                         onSave: () => context.read<WishlistCubit>().toggle(hotel.id),
                         onTap: () => context.push(
@@ -180,13 +195,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       },
     );
   }
-
+ 
   void _openFilterSheet(BuildContext context) {
     final cubit = context.read<HotelSearchCubit>();
     double minRating = cubit.state.minRating;
     final minCtrl = TextEditingController(text: cubit.state.minPrice?.toStringAsFixed(0) ?? '');
     final maxCtrl = TextEditingController(text: cubit.state.maxPrice?.toStringAsFixed(0) ?? '');
-
+ 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -273,7 +288,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       ),
     );
   }
-
+ 
   void _openSortSheet(BuildContext context) {
     final cubit = context.read<HotelSearchCubit>();
     showModalBottomSheet(
@@ -298,14 +313,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
 }
-
+ 
 class _SortTile extends StatelessWidget {
   final String label;
   final HotelSortOption option;
   final HotelSearchCubit cubit;
   final BuildContext sheetContext;
   const _SortTile(this.label, this.option, this.cubit, this.sheetContext);
-
+ 
   @override
   Widget build(BuildContext context) {
     final selected = cubit.state.sort == option;
@@ -319,53 +334,54 @@ class _SortTile extends StatelessWidget {
     );
   }
 }
-
+ 
 class _FilterChip extends StatelessWidget {
   final String label;
   final IconData? icon;
   final bool filled;
   final VoidCallback onTap;
   const _FilterChip({required this.label, this.icon, this.filled = false, required this.onTap});
-
+ 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: filled ? AppTheme.primaryColor : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: filled ? AppTheme.primaryColor : Colors.grey.shade300),
+          color: filled ? AppTheme.primaryContainer : AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+          border: filled ? null : Border.all(color: AppTheme.outlineVariant.withOpacity(0.5)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 15, color: filled ? Colors.white : Colors.black87),
+              Icon(icon, size: 15, color: filled ? Colors.white : AppTheme.onSurfaceVariant),
               const SizedBox(width: 6),
             ],
             Text(label,
                 style: TextStyle(
                     fontSize: 12.5,
-                    color: filled ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w500)),
+                    color: filled ? Colors.white : AppTheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600)),
           ],
         ),
       ),
     );
   }
 }
-
+ 
 class _HotelResultCard extends StatelessWidget {
   final String name, location, image;
   final double price, rating;
   final int reviewCount;
+  final List<String> amenities;
   final bool isSaved;
   final VoidCallback onSave;
   final VoidCallback onTap;
-
+ 
   const _HotelResultCard({
     required this.name,
     required this.location,
@@ -373,106 +389,119 @@ class _HotelResultCard extends StatelessWidget {
     required this.price,
     required this.rating,
     required this.reviewCount,
+    this.amenities = const [],
     required this.isSaved,
     required this.onSave,
     required this.onTap,
   });
-
-  Color get _ratingColor {
-    if (rating >= 4.5) return const Color(0xFF1B8A5A);
-    if (rating >= 4.0) return AppTheme.primaryColor;
-    return Colors.orange.shade700;
-  }
-
-  String get _ratingLabel {
-    if (rating >= 4.5) return 'Istimewa';
-    if (rating >= 4.0) return 'Sangat baik';
-    if (rating >= 3.0) return 'Baik';
-    return 'Cukup';
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade200),
-          borderRadius: BorderRadius.circular(14),
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          boxShadow: AppTheme.softCardShadow,
         ),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusCard)),
                   child: Image.network(
                     image,
-                    width: 88, height: 88, fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      width: 88, height: 88, color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 180,
+                      color: AppTheme.surfaceContainerHigh,
+                      child: const Icon(Icons.image_not_supported_outlined, color: AppTheme.outline),
                     ),
                   ),
                 ),
+                Positioned(bottom: 10, left: 10, child: PillBadge.rating(rating, glass: true)),
                 Positioned(
-                  top: 4, right: 4,
+                  top: 10,
+                  right: 10,
                   child: GestureDetector(
                     onTap: onSave,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.85),
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(
-                        isSaved ? Icons.favorite : Icons.favorite_border,
-                        size: 15,
-                        color: isSaved ? Colors.redAccent : Colors.grey.shade600,
+                        isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        size: 16,
+                        color: isSaved ? AppTheme.loveColor : AppTheme.onSurfaceVariant,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 3),
-                  Text(location,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _ratingColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text('${rating.toStringAsFixed(1)} $_ratingLabel · $reviewCount ulasan',
-                        style: TextStyle(fontSize: 10.5, color: _ratingColor, fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 6),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '\$${price.toStringAsFixed(0)} ',
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                                text: '\$${price.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                    color: AppTheme.secondary, fontWeight: FontWeight.w700, fontSize: 15)),
+                          ],
                         ),
-                        TextSpan(
-                          text: '/ malam',
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.onSurfaceVariant),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                      ),
+                    ],
+                  ),
+                  if (amenities.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: amenities.take(2).map((a) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                            ),
+                            child: Text(a,
+                                style: const TextStyle(fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                          )).toList(),
+                    ),
+                  ],
                 ],
               ),
             ),

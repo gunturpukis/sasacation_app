@@ -5,37 +5,37 @@ import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
-
+ 
 /// View: BookingSheet
 /// Collects stay details (dates, guests) then navigates to CheckoutScreen.
 /// Payment is handled entirely in CheckoutScreen + PaymentResult page.
 class BookingSheet extends StatefulWidget {
   final HotelModel hotel;
   const BookingSheet({super.key, required this.hotel});
-
+ 
   @override
   State<BookingSheet> createState() => _BookingSheetState();
 }
-
+ 
 class _BookingSheetState extends State<BookingSheet> {
   int guestCount = 1;
   int nights = 1;
   DateTime checkIn = DateTime.now().add(const Duration(days: 1));
   late DateTime checkOut;
   final _notesCtrl = TextEditingController();
-
+ 
   @override
   void initState() {
     super.initState();
     checkOut = checkIn.add(const Duration(days: 1));
   }
-
+ 
   @override
   void dispose() {
     _notesCtrl.dispose();
     super.dispose();
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     final totalPrice = widget.hotel.price.toInt() * nights;
@@ -56,10 +56,8 @@ class _BookingSheetState extends State<BookingSheet> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Book Your Stay',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text(widget.hotel.name,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                    Text('Book Your Stay', style: Theme.of(context).textTheme.headlineMedium),
+                    Text(widget.hotel.name, style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
                 IconButton(
@@ -68,13 +66,13 @@ class _BookingSheetState extends State<BookingSheet> {
               ],
             ),
             const SizedBox(height: 20),
-
+ 
             // Date range selector
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(14),
+                color: AppTheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppTheme.radiusButton),
               ),
               child: Row(
                 children: [
@@ -98,8 +96,7 @@ class _BookingSheetState extends State<BookingSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('CHECK-IN',
-                              style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                          Text('CHECK-IN', style: Theme.of(context).textTheme.labelSmall),
                           const SizedBox(height: 4),
                           Text(_formatDate(checkIn),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -111,17 +108,16 @@ class _BookingSheetState extends State<BookingSheet> {
                     margin: const EdgeInsets.symmetric(horizontal: 8),
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.arrow_forward, color: AppTheme.primaryColor, size: 16),
+                    child: const Icon(Icons.arrow_forward, color: AppTheme.primary, size: 16),
                   ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('CHECK-OUT',
-                            style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                        Text('CHECK-OUT', style: Theme.of(context).textTheme.labelSmall),
                         const SizedBox(height: 4),
                         Text(_formatDate(checkOut),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -132,7 +128,7 @@ class _BookingSheetState extends State<BookingSheet> {
               ),
             ),
             const SizedBox(height: 16),
-
+ 
             // Counters
             _Counter(
               label: 'Malam',
@@ -152,7 +148,7 @@ class _BookingSheetState extends State<BookingSheet> {
               onIncrement: () => setState(() => guestCount++),
             ),
             const SizedBox(height: 16),
-
+ 
             // Notes
             TextField(
               controller: _notesCtrl,
@@ -161,17 +157,22 @@ class _BookingSheetState extends State<BookingSheet> {
                 labelText: 'Catatan khusus (opsional)',
                 hintText: 'Mis: kamar di lantai atas, dekat kolam...',
                 prefixIcon: const Icon(Icons.note_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: AppTheme.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusButton),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 20),
-
+ 
             // Price summary
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
+                color: AppTheme.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -180,19 +181,18 @@ class _BookingSheetState extends State<BookingSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('\$${widget.hotel.price.toStringAsFixed(0)} × $nights malam',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                      const Text('+ pajak & biaya layanan',
-                          style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      Text('+ pajak & biaya layanan',
+                          style: TextStyle(color: AppTheme.outline, fontSize: 11)),
                     ],
                   ),
                   Text('\$$totalPrice',
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary)),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-
+ 
             // Proceed to checkout button
             SizedBox(
               width: double.infinity,
@@ -201,26 +201,23 @@ class _BookingSheetState extends State<BookingSheet> {
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Lanjut ke Checkout',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                style: AppTheme.heroButtonStyle,
               ),
             ),
             const SizedBox(height: 8),
             Center(
               child: Text('Tidak dikenakan biaya sekarang',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  style: TextStyle(color: AppTheme.outline, fontSize: 12)),
             ),
           ],
         ),
       ),
     );
   }
-
+ 
   void _proceedToCheckout() {
     Navigator.pop(context); // close sheet
-
+ 
     final checkoutExtra = {
       'hotel': widget.hotel,
       'checkIn': checkIn,
@@ -229,7 +226,7 @@ class _BookingSheetState extends State<BookingSheet> {
       'guestCount': guestCount,
       'notes': _notesCtrl.text.trim(),
     };
-
+ 
     // Login gate kontekstual: browsing & isi form booking bebas tanpa akun,
     // tapi begitu mau lanjut ke checkout, baru diminta login. Setelah
     // berhasil login, user diarahkan langsung kembali ke checkout ini.
@@ -241,23 +238,23 @@ class _BookingSheetState extends State<BookingSheet> {
       });
       return;
     }
-
+ 
     context.push(AppRouter.checkout, extra: checkoutExtra);
   }
-
+ 
   String _formatDate(DateTime d) {
     const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 }
-
+ 
 class _Counter extends StatelessWidget {
   final String label;
   final IconData icon;
   final int value;
   final VoidCallback? onDecrement;
   final VoidCallback onIncrement;
-
+ 
   const _Counter({
     required this.label,
     required this.icon,
@@ -265,12 +262,12 @@ class _Counter extends StatelessWidget {
     required this.onDecrement,
     required this.onIncrement,
   });
-
+ 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey.shade600, size: 20),
+        Icon(icon, color: AppTheme.onSurfaceVariant, size: 20),
         const SizedBox(width: 10),
         Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
         const Spacer(),
@@ -293,14 +290,14 @@ class _Counter extends StatelessWidget {
     );
   }
 }
-
+ 
 class _CircleButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final bool active;
-
+ 
   const _CircleButton({required this.icon, required this.onPressed, required this.active});
-
+ 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -310,10 +307,11 @@ class _CircleButton extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? AppTheme.primaryColor : Colors.grey.shade200,
+          color: active ? AppTheme.primaryContainer : AppTheme.surfaceContainerHigh,
         ),
-        child: Icon(icon, size: 16, color: active ? Colors.white : Colors.grey.shade400),
+        child: Icon(icon, size: 16, color: active ? Colors.white : AppTheme.outline),
       ),
     );
   }
 }
+ 

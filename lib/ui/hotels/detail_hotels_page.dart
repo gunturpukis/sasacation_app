@@ -3,29 +3,49 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/ui/widget/booking_sheets.dart';
+import 'package:sasacation/ui/widget/glass_icon_button.dart';
+import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
-
+ 
+/// HotelDetailScreen — restyle mengikuti mockup `destination_details`.
+///
+/// PERUBAHAN STRUKTUR:
+/// - Tombol back/wishlist di AppBar sekarang GlassIconButton (blur di atas
+///   foto) menggantikan Container putih solid.
+/// - Section baru: "Experience indicators" (chip horizontal, ambil dari 2
+///   amenity teratas), "Gallery" (bento grid dari hotel.images, HANYA
+///   tampil kalau hotel.images.length >= 3 — lihat catatan di bawah).
+/// - Bottom booking bar diselaraskan ke style mockup (radius, warna).
+///
+/// CATATAN JUJUR — bagian mockup yang SENGAJA tidak diimplementasi:
+/// - "Guest Reviews" (avatar reviewer + kutipan) di mockup itu data per-
+///   review (nama, tanggal, teks ulasan). HotelModel cuma punya
+///   `reviewCount` (angka), tidak ada data ulasan individual. Menambahkan
+///   section ini berarti mengarang data — saya skip, bukan bug.
+/// - Peta lokasi (yang sudah ada sebelumnya, placeholder "Peta lokasi
+///   hotel") saya PERTAHANKAN apa adanya — mockup tidak eksplisit
+///   menunjukkan peta, dan mengimplementasikan peta sungguhan (Google Maps
+///   SDK) di luar scope restyle visual.
 class HotelDetailScreen extends StatefulWidget {
   final String hotelId;
   const HotelDetailScreen({super.key, required this.hotelId});
-
+ 
   @override
   State<HotelDetailScreen> createState() => _HotelDetailScreenState();
 }
-
+ 
 class _HotelDetailScreenState extends State<HotelDetailScreen> {
   @override
   void initState() {
     super.initState();
     context.read<HotelBloc>().add(HotelDetailRequested(hotelId: widget.hotelId));
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HotelBloc, HotelState>(
       builder: (context, state) {
-        // FIX: baca dari HotelCompositeState
         if (state is HotelCompositeState) {
           if (state.isLoadingDetail) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -37,12 +57,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 64, color: AppTheme.error),
                     const SizedBox(height: 16),
                     Text(state.detailError!),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => context.read<HotelBloc>()
+                      onPressed: () => context
+                          .read<HotelBloc>()
                           .add(HotelDetailRequested(hotelId: widget.hotelId)),
                       child: const Text('Coba Lagi'),
                     ),
@@ -55,52 +76,87 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
           if (hotel == null) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
-
+ 
           return Scaffold(
+            backgroundColor: AppTheme.surface,
             body: CustomScrollView(
               slivers: [
                 SliverAppBar(
-                  expandedHeight: 350,
+                  expandedHeight: 340,
                   pinned: true,
+                  backgroundColor: AppTheme.surface,
                   flexibleSpace: FlexibleSpaceBar(
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.network(hotel.image, fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(color: Colors.grey.shade300)),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
-                            ),
+                        Image.network(hotel.image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: AppTheme.surfaceContainerHigh)),
+                        Container(decoration: const BoxDecoration(gradient: AppTheme.imageOverlayGradient)),
+                        Positioned(
+                          left: 20,
+                          right: 20,
+                          bottom: 20,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  if (hotel.featured) ...[
+                                    const PillBadge(
+                                      label: 'PREMIUM ESCAPE',
+                                      backgroundColor: AppTheme.primaryContainer,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Icon(Icons.star_rounded, size: 16, color: AppTheme.ratingColor),
+                                  const SizedBox(width: 2),
+                                  Text('${hotel.rating.toStringAsFixed(1)} (${hotel.reviewCount} reviews)',
+                                      style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(hotel.name,
+                                  style: const TextStyle(
+                                      fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white)),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.white70),
+                                  const SizedBox(width: 2),
+                                  Expanded(
+                                    child: Text(hotel.address ?? hotel.location,
+                                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    title: Text(hotel.name,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  leading: IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.arrow_back, color: Colors.black87),
+                  leading: Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: GlassIconButton(
+                      icon: Icons.arrow_back,
+                      iconColor: AppTheme.onSurface,
+                      onTap: () => context.pop(),
                     ),
-                    onPressed: () => context.pop(),
                   ),
                   actions: [
                     BlocBuilder<WishlistCubit, Set<String>>(
                       builder: (context, wishlist) {
                         final saved = wishlist.contains(hotel.id);
-                        return IconButton(
-                          icon: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                            child: Icon(saved ? Icons.favorite : Icons.favorite_border,
-                                color: saved ? Colors.redAccent : Colors.black87),
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GlassIconButton(
+                            icon: saved ? Icons.favorite : Icons.favorite_border,
+                            iconColor: saved ? AppTheme.loveColor : AppTheme.onSurface,
+                            onTap: () => context.read<WishlistCubit>().toggle(hotel.id),
                           ),
-                          onPressed: () => context.read<WishlistCubit>().toggle(hotel.id),
                         );
                       },
                     ),
@@ -108,92 +164,94 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(AppTheme.spacingMarginMobile),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.star, color: AppTheme.primaryColor, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(hotel.rating.toStringAsFixed(1),
-                                      style: const TextStyle(
-                                          color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
+                        // ─── Experience indicator chips ────────────────────
+                        if (hotel.amenities.isNotEmpty)
+                          SizedBox(
+                            height: 64,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: hotel.amenities.take(3).map((a) => Padding(
+                                    padding: const EdgeInsets.only(right: 12),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.surfaceContainerLow,
+                                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primary.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                                            ),
+                                            child: Icon(_amenityIcon(a), size: 18, color: AppTheme.primary),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(a, style: Theme.of(context).textTheme.bodyMedium),
+                                        ],
+                                      ),
+                                    ),
+                                  )).toList(),
                             ),
-                            const SizedBox(width: 12),
-                            const Text('Excellent', style: TextStyle(fontWeight: FontWeight.w500)),
-                            const SizedBox(width: 8),
-                            Text('(${hotel.reviewCount} ulasan)',
-                                style: const TextStyle(color: Colors.grey)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(hotel.name,
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(hotel.address ?? hotel.location,
-                                  style: TextStyle(color: Colors.grey.shade600)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        const Divider(),
-                        const SizedBox(height: 24),
-                        const Text('Tentang Hotel',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
+                          ),
+                        const SizedBox(height: AppTheme.spacingSectionGap),
+ 
+                        // ─── About ──────────────────────────────────────────
+                        Text('About the Experience', style: Theme.of(context).textTheme.headlineMedium),
+                        const SizedBox(height: 10),
                         Text(
                           hotel.description ??
                               'Nikmati pengalaman menginap yang tak terlupakan di ${hotel.name}. '
                               'Dengan fasilitas lengkap dan layanan prima, hotel ini menawarkan kenyamanan terbaik.',
-                          style: TextStyle(height: 1.6, color: Colors.grey.shade700),
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.onSurfaceVariant),
                         ),
-                        const SizedBox(height: 24),
-                        const Text('Fasilitas',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppTheme.spacingSectionGap),
+ 
+                        // ─── What's Included ────────────────────────────────
+                        Text("What's Included", style: Theme.of(context).textTheme.headlineMedium),
+                        const SizedBox(height: 12),
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
-                          children: hotel.amenities.isNotEmpty
-                              ? hotel.amenities
-                                  .map((a) => AmenityChip(icon: _amenityIcon(a), label: a))
-                                  .toList()
-                              : const [
-                                  AmenityChip(icon: Icons.wifi, label: 'Free WiFi'),
-                                  AmenityChip(icon: Icons.pool, label: 'Pool'),
-                                  AmenityChip(icon: Icons.restaurant, label: 'Restaurant'),
-                                ],
+                          children: (hotel.amenities.isNotEmpty
+                                  ? hotel.amenities
+                                  : const ['Free WiFi', 'Pool', 'Restaurant'])
+                              .map((a) => AmenityChip(icon: _amenityIcon(a), label: a))
+                              .toList(),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppTheme.spacingSectionGap),
+ 
+                        // ─── Gallery bento — hanya kalau gambar cukup ──────
+                        if (hotel.images.length >= 3) ...[
+                          Text('The Property', style: Theme.of(context).textTheme.headlineMedium),
+                          const SizedBox(height: 12),
+                          _GalleryBento(images: hotel.images),
+                          const SizedBox(height: AppTheme.spacingSectionGap),
+                        ],
+ 
+                        // Peta lokasi — dipertahankan apa adanya (placeholder),
+                        // lihat catatan di atas class.
                         Container(
-                          height: 180,
+                          height: 160,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(16),
+                            color: AppTheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.map, size: 48, color: Colors.grey),
-                                SizedBox(height: 12),
-                                Text('Peta lokasi hotel'),
+                                Icon(Icons.map_outlined, size: 40, color: AppTheme.outline),
+                                const SizedBox(height: 10),
+                                Text('Peta lokasi hotel',
+                                    style: Theme.of(context).textTheme.bodyMedium),
                               ],
                             ),
                           ),
@@ -206,12 +264,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               ],
             ),
             bottomNavigationBar: Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+                color: AppTheme.surface.withOpacity(0.95),
+                boxShadow: AppTheme.floatingShadow,
               ),
               child: SafeArea(
+                top: false,
                 child: Row(
                   children: [
                     Expanded(
@@ -219,11 +278,11 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Harga per malam', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          const SizedBox(height: 4),
+                          Text('Price per night', style: Theme.of(context).textTheme.labelSmall),
+                          const SizedBox(height: 2),
                           Text('\$${hotel.price.toStringAsFixed(0)}',
                               style: const TextStyle(
-                                  fontSize: 26, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                                  fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.primary)),
                         ],
                       ),
                     ),
@@ -235,18 +294,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                             context: context,
                             isScrollControlled: true,
                             shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusSheet)),
                             ),
                             builder: (_) => BookingSheet(hotel: hotel),
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        ),
-                        child: const Text('Book Now',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: AppTheme.heroButtonStyle,
+                        child: const Text('Book Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -259,7 +313,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       },
     );
   }
-
+ 
   IconData _amenityIcon(String amenity) {
     final a = amenity.toLowerCase();
     if (a.contains('wifi')) return Icons.wifi;
@@ -275,29 +329,111 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     return Icons.check_circle_outline;
   }
 }
-
+ 
+/// Gallery bento grid — mengikuti mockup: 1 gambar besar (2x2) di kiri,
+/// 1 gambar lebar di kanan-atas, 2 gambar kecil kanan-bawah (yang terakhir
+/// diberi overlay "+N" kalau ada gambar lebih banyak dari yang ditampilkan).
+class _GalleryBento extends StatelessWidget {
+  final List<String> images;
+  const _GalleryBento({required this.images});
+ 
+  @override
+  Widget build(BuildContext context) {
+    final extra = images.length - 4;
+    return SizedBox(
+      height: 256,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+              child: Image.network(images[0], fit: BoxFit.cover, height: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(color: AppTheme.surfaceContainerHigh)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                    child: Image.network(images[1], fit: BoxFit.cover, width: double.infinity,
+                        errorBuilder: (_, __, ___) => Container(color: AppTheme.surfaceContainerHigh)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          child: images.length > 2
+                              ? Image.network(images[2], fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(color: AppTheme.surfaceContainerHigh))
+                              : Container(color: AppTheme.surfaceContainerHigh),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          child: images.length > 3
+                              ? Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.network(images[3], fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(color: AppTheme.surfaceContainerHigh)),
+                                    if (extra > 0)
+                                      Container(
+                                        color: Colors.black.withOpacity(0.4),
+                                        child: Center(
+                                          child: Text('+$extra',
+                                              style: const TextStyle(
+                                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                        ),
+                                      ),
+                                  ],
+                                )
+                              : Container(color: AppTheme.surfaceContainerHighest),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+ 
 class AmenityChip extends StatelessWidget {
   final IconData icon;
   final String label;
   const AmenityChip({super.key, required this.icon, required this.label});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2), width: 1),
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(color: AppTheme.outlineVariant.withOpacity(0.4)),
+        boxShadow: AppTheme.softCardShadow,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppTheme.primaryColor),
+          Icon(icon, size: 16, color: AppTheme.primary),
           const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.w500)),
+          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.primary, fontWeight: FontWeight.w500)),
         ],
       ),
     );

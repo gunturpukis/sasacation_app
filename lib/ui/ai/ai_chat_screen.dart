@@ -4,18 +4,30 @@ import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/ui/ai/agent_trip_plan_result_screen.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
-
+ 
+/// AiChatScreen — restyle mengikuti mockup `sasa_ai_chatbot`.
+///
+/// PERUBAHAN WARNA PENTING (bukan sekadar reskin token):
+/// SEBELUM: bubble USER = teal (primaryColor), bubble ASSISTANT = abu-abu.
+/// SEKARANG (sesuai mockup): bubble ASSISTANT = teal (brand-forward),
+/// bubble USER = abu-abu netral. Ini pola yang disengaja di mockup —
+/// jawaban Sasa yang ditonjolkan warnanya, bukan pesan user.
+///
+/// CATATAN: tombol "+" (attach) di sebelah kiri input bar pada mockup
+/// SENGAJA tidak saya tambahkan — tidak ada fitur attach/upload apa pun di
+/// balik AiRepository saat ini, menambah tombol itu cuma akan jadi UI mati.
+ 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
-
+ 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
 }
-
+ 
 class _AiChatScreenState extends State<AiChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
-
+ 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -27,7 +39,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       }
     });
   }
-
+ 
   void _sendMessage(String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
@@ -35,28 +47,30 @@ class _AiChatScreenState extends State<AiChatScreen> {
     context.read<AiBloc>().add(AiChatMessageSent(content: trimmed));
     _scrollToBottom();
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surface,
       appBar: AppBar(
         title: Row(
           children: [
             Container(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
+              decoration: const BoxDecoration(
+                color: AppTheme.primaryContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+              child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Sasa', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('AI Travel Assistant', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                const Text('Sasa AI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('TRAVEL ASSISTANT',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primary)),
               ],
             ),
           ],
@@ -125,7 +139,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
     );
   }
-
+ 
   Widget _buildWelcome(BuildContext context) {
     final suggestions = [
       '🏖️ Rekomendasikan pantai terbaik di Lombok',
@@ -142,35 +156,33 @@ class _AiChatScreenState extends State<AiChatScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.auto_awesome, size: 40, color: AppTheme.primaryColor),
+            child: Icon(Icons.smart_toy_outlined, size: 40, color: AppTheme.primary),
           ),
           const SizedBox(height: 16),
-          const Text('Halo! Saya Sasa 👋',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text('Halo! Saya Sasa 👋', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
             'AI travel assistant kamu untuk menjelajahi Lombok. Tanya apa saja!',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600),
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           ...suggestions.map((s) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: InkWell(
                   onTap: () => _sendMessage(s.substring(2)),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-                      borderRadius: BorderRadius.circular(12),
-                      color: AppTheme.primaryColor.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                      color: AppTheme.surfaceContainerLow,
                     ),
-                    child: Text(s, style: const TextStyle(fontSize: 14)),
+                    child: Text(s, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.onSurface)),
                   ),
                 ),
               )),
@@ -178,13 +190,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
     );
   }
-
+ 
   Widget _buildInputBar() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 8),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        color: AppTheme.surfaceContainerLowest,
+        border: Border(top: BorderSide(color: AppTheme.outlineVariant.withOpacity(0.3))),
       ),
       child: Row(
         children: [
@@ -195,13 +207,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: _sendMessage,
               decoration: InputDecoration(
-                hintText: 'Tanya tentang wisata Lombok...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintText: 'Ask Sasa anything...',
+                filled: true,
+                fillColor: AppTheme.surfaceContainerLow,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                  borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
             ),
           ),
@@ -210,7 +223,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             builder: (context, state) {
               final isLoading = state is AiChatState && state.isLoading;
               return CircleAvatar(
-                backgroundColor: AppTheme.primaryColor,
+                backgroundColor: AppTheme.secondaryContainer,
                 child: isLoading
                     ? const SizedBox(
                         width: 20,
@@ -218,7 +231,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                        icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                         onPressed: () => _sendMessage(_controller.text),
                       ),
               );
@@ -228,7 +241,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
     );
   }
-
+ 
   @override
   void dispose() {
     _controller.dispose();
@@ -236,13 +249,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
     super.dispose();
   }
 }
-
+ 
 class _ChatBubble extends StatelessWidget {
   final String content;
   final bool isUser;
   final TripPlan? tripPlan;
   const _ChatBubble({required this.content, required this.isUser, this.tripPlan});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -255,7 +268,9 @@ class _ChatBubble extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isUser ? AppTheme.primaryColor : Colors.grey.shade100,
+              // SEBELUM: isUser -> teal, !isUser -> abu-abu.
+              // SEKARANG (sesuai mockup): dibalik — balasan Sasa yang teal.
+              color: isUser ? AppTheme.surfaceContainerLow : AppTheme.primaryContainer,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(18),
                 topRight: const Radius.circular(18),
@@ -266,7 +281,7 @@ class _ChatBubble extends StatelessWidget {
             child: Text(
               content,
               style: TextStyle(
-                color: isUser ? Colors.white : Colors.black87,
+                color: isUser ? AppTheme.onSurface : Colors.white,
                 fontSize: 14,
                 height: 1.4,
               ),
@@ -282,11 +297,11 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 }
-
+ 
 class _TripPlanCard extends StatelessWidget {
   final TripPlan plan;
   const _TripPlanCard({required this.plan});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -302,13 +317,14 @@ class _TripPlanCard extends StatelessWidget {
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.25)),
+            color: AppTheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+            boxShadow: AppTheme.softCardShadow,
           ),
           child: Row(
             children: [
-              Icon(Icons.map_outlined, color: AppTheme.primaryColor),
+              Icon(Icons.map_outlined, color: AppTheme.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -320,11 +336,11 @@ class _TripPlanCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text('${plan.days.length} hari • \$${plan.totalEstimatedCost.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                        style: TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+              Icon(Icons.chevron_right, color: AppTheme.outline),
             ],
           ),
         ),
@@ -332,29 +348,27 @@ class _TripPlanCard extends StatelessWidget {
     );
   }
 }
-
+ 
 class _ErrorBubble extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
   const _ErrorBubble({required this.message, required this.onRetry});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red.shade200),
+        color: AppTheme.errorContainer,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, size: 18, color: Colors.red.shade400),
+          const Icon(Icons.error_outline, size: 18, color: AppTheme.error),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message,
-                style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+            child: Text(message, style: const TextStyle(color: AppTheme.onErrorContainer, fontSize: 13)),
           ),
           TextButton(
             onPressed: onRetry,
@@ -366,10 +380,10 @@ class _ErrorBubble extends StatelessWidget {
     );
   }
 }
-
+ 
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
-
+ 
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -378,7 +392,7 @@ class _TypingIndicator extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: AppTheme.primaryContainer,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),
@@ -389,13 +403,17 @@ class _TypingIndicator extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_awesome, size: 14, color: AppTheme.primaryColor),
+            const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
             const SizedBox(width: 8),
-            Text('Sasa sedang mengetik...',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+            const Text('Sasa sedang mengetik...', style: TextStyle(color: Colors.white, fontSize: 13)),
           ],
         ),
       ),
     );
   }
 }
+ 
