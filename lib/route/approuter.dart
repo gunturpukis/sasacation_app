@@ -15,9 +15,11 @@ import 'package:sasacation/ui/login/login_page.dart';
 import 'package:sasacation/ui/main_navigation_page.dart';
 import 'package:sasacation/ui/notification/notification_screen.dart';
 import 'package:sasacation/ui/onboarding/onboarding_page.dart';
+import 'package:sasacation/ui/payment/payment_history_screen.dart';
 import 'package:sasacation/ui/search/search_results_page.dart';
 import 'package:sasacation/ui/settings/setting_screen.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
+import 'package:sasacation/ui/sustainibility/sustainibility_screen.dart';
 import 'package:sasacation/ui/wishlist/wishlist_page.dart';
 import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,6 +35,8 @@ class AppRouter {
   static const String myBookings     = '/my-bookings';
   static const String notifications  = '/notifications';
   static const String settings       = '/settings';
+  static const String paymentHistory = '/payment-history';
+  static const String sustainability = '/sustainability';
   static const String admin          = '/admin';
   // Checkout flow
   static const String checkout       = '/checkout';
@@ -108,6 +112,14 @@ class Routes {
       GoRoute(
         path: AppRouter.settings,
         builder: (_, _) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.paymentHistory,
+        builder: (_, _) => const PaymentHistoryScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.sustainability,
+        builder: (_, _) => const SustainabilityScreen(),
       ),
  
       // ─── Booking & Checkout flow ──────────────────────────────────────────

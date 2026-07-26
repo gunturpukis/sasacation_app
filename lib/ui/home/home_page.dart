@@ -10,7 +10,6 @@ import 'package:sasacation/ui/widget/category_widget.dart';
 import 'package:sasacation/ui/widget/gradient_image_card.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/viewmodel/recommendation/recommendation_cubit.dart';
-import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
  
 /// HomeScreen — restyle mengikuti mockup `home_discover_destinations`.
 ///
@@ -24,21 +23,25 @@ import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 /// - Urutan section diubah mengikuti mockup persis: Search → Recommended for
 ///   You → Popular Categories → Trending This Week.
 ///
-/// CATATAN JUJUR (belum diselesaikan di batch ini):
-/// - Icon menu (kiri atas) belum fungsional — mockup tidak menjelaskan itu
-///   membuka apa (drawer? kategori?), dan app ini belum punya Drawer. Saya
-///   biarkan sebagai placeholder (lihat TODO di bawah) daripada menebak.
-/// - Avatar (kanan atas) idealnya pindah ke tab Profile di bottom nav, tapi
-///   HomeScreen di sini tidak punya akses ke controller tab induk
-///   (main_navigation_page.dart belum disentuh di batch ini). Untuk sekarang
-///   diarahkan ke wishlist sebagai placeholder — akan diperbaiki saat
-///   main_navigation_page.dart & bottom nav direstyle di batch berikutnya.
+/// UPDATE: 2 TODO dari batch pertama SUDAH DISELESAIKAN —
+/// - Icon menu (kiri atas) sekarang membuka quick-menu bottom sheet nyata
+///   (Saved/My Bookings/Notifications/Settings), bukan placeholder kosong.
+/// - Avatar (kanan atas) sekarang benar-benar pindah ke tab Profile lewat
+///   callback `onNavigateToTab` dari MainNavigation (lihat
+///   main_navigation_page.dart — HomeScreen sekarang dikonstruksi dengan
+///   callback, bukan `const HomeScreen()` polos lagi).
+///
+/// CATATAN JUJUR (masih belum diselesaikan):
 /// - FeaturedHotels & NearbyHotels (isi "Trending This Week") BELUM diubah
-///   tampilan kartunya di batch ini — itu widget terpisah yang dipakai juga
-///   di layar lain, sengaja ditunda supaya tidak buru-buru & scope batch ini
-///   tetap terkendali. Cuma judul section yang diselaraskan ke mockup.
+///   tampilan kartunya — itu widget terpisah yang dipakai juga di layar
+///   lain, di luar scope perbaikan ini. Cuma judul section yang diselaraskan.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  /// Callback untuk pindah tab di MainNavigation induk (index 3 = Profile).
+  /// FIX dari TODO batch 1: sebelumnya avatar cuma bisa ke wishlist karena
+  /// HomeScreen tidak dikonstruksi dengan akses ke tab controller induk.
+  final void Function(int index)? onNavigateToTab;
+ 
+  const HomeScreen({super.key, this.onNavigateToTab});
  
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _TopBar()),
+            SliverToBoxAdapter(child: _TopBar(onNavigateToTab: onNavigateToTab)),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 AppTheme.spacingMarginMobile,
@@ -110,7 +113,8 @@ class HomeScreen extends StatelessWidget {
 /// HeroBanner sudah dihapus), tapi tetap bikin efek "glass" tipis sesuai
 /// DESIGN.md ("Glass AppBars") lewat warna surface semi-transparan.
 class _TopBar extends StatelessWidget {
-  const _TopBar();
+  final void Function(int index)? onNavigateToTab;
+  const _TopBar({this.onNavigateToTab});
  
   @override
   Widget build(BuildContext context) {
@@ -121,10 +125,11 @@ class _TopBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            // TODO: belum ada Drawer/menu di app ini — lihat catatan di
-            // atas class HomeScreen. Sengaja dibiarkan kosong daripada
-            // menebak perilaku yang salah.
-            onPressed: () {},
+            // FIX dari TODO batch 1: sebelumnya kosong karena app tidak
+            // punya Drawer. Sekarang buka quick-menu bottom sheet berisi
+            // shortcut ke screen yang sudah nyata ada (bukan Drawer, tapi
+            // menyelesaikan kebutuhan yang sama tanpa refactor Scaffold).
+            onPressed: () => _showQuickMenu(context),
             icon: const Icon(Icons.menu, color: AppTheme.primary),
           ),
           Text('Sasacation',
@@ -133,8 +138,10 @@ class _TopBar extends StatelessWidget {
                   .headlineMedium
                   ?.copyWith(color: AppTheme.primary, fontSize: 22)),
           GestureDetector(
-            // Placeholder — idealnya pindah tab Profile, lihat catatan di atas.
-            onTap: () => context.push(AppRouter.wishlist),
+            // FIX dari TODO batch 1: sekarang benar-benar pindah ke tab
+            // Profile (index 3) lewat callback dari MainNavigation, bukan
+            // ke wishlist sebagai placeholder lagi.
+            onTap: () => onNavigateToTab?.call(3),
             child: Container(
               width: 40,
               height: 40,
@@ -142,19 +149,73 @@ class _TopBar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.primaryContainer, width: 2),
               ),
-              child: BlocBuilder<WishlistCubit, Set<String>>(
-                builder: (context, wishlist) => CircleAvatar(
-                  backgroundColor: AppTheme.surfaceContainerHigh,
-                  child: Icon(
-                    wishlist.isEmpty ? Icons.favorite_border : Icons.favorite,
-                    color: AppTheme.primary,
-                    size: 18,
-                  ),
-                ),
+              child: const CircleAvatar(
+                backgroundColor: AppTheme.surfaceContainerHigh,
+                child: Icon(Icons.person, color: AppTheme.primary, size: 18),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+ 
+  void _showQuickMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusSheet)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.bookmark_border, color: AppTheme.primary),
+              title: const Text('Saved Destinations'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push(AppRouter.wishlist);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.confirmation_number_outlined, color: AppTheme.primary),
+              title: const Text('My Bookings'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push(AppRouter.myBookings);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined, color: AppTheme.primary),
+              title: const Text('Notifications'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push(AppRouter.notifications);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined, color: AppTheme.primary),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                context.push(AppRouter.settings);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -274,3 +335,4 @@ class _RecommendedSection extends StatelessWidget {
     );
   }
 }
+ 

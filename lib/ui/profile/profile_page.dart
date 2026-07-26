@@ -230,7 +230,7 @@
 //     );
 //   }
 // }
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -368,7 +368,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _divider(),
                       _buildMenuItem(
+                        icon: Icons.receipt_long_outlined,
+                        title: 'Payment History',
+                        onTap: () => context.push(AppRouter.paymentHistory),
+                      ),
+                      _divider(),
+                      _buildMenuItem(
                           icon: Icons.favorite_border, title: 'Saved Places', onTap: () {}),
+                      _divider(),
+                      _buildMenuItem(
+                        icon: Icons.eco_outlined,
+                        title: 'Komitmen Sasacation',
+                        onTap: () => context.push(AppRouter.sustainability),
+                      ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.settings_outlined,

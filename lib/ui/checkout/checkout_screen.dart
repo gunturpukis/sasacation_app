@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +8,7 @@ import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+ 
 /// View: CheckoutScreen
 /// FIX: menggunakan CheckoutBloc dari root MultiBlocProvider (bukan buat baru)
 /// Dispatch CheckoutInitiated saat initState.
@@ -18,7 +19,7 @@ class CheckoutScreen extends StatefulWidget {
   final int nights;
   final int guestCount;
   final String? notes;
-
+ 
   const CheckoutScreen({
     super.key,
     required this.hotel,
@@ -28,19 +29,19 @@ class CheckoutScreen extends StatefulWidget {
     required this.guestCount,
     this.notes,
   });
-
+ 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
-
+ 
 /// Step checkout: dipisah agar meniru pola Agoda (Review booking -> Payment)
 /// alih-alih menumpuk semua di satu layar. Murni state UI lokal — tidak
 /// mengubah CheckoutBloc/backend sama sekali.
 enum _CheckoutStep { review, payment }
-
+ 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   _CheckoutStep _step = _CheckoutStep.review;
-
+ 
   @override
   void initState() {
     super.initState();
@@ -53,7 +54,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       notes: widget.notes,
     ));
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<CheckoutBloc, CheckoutState>(
@@ -64,7 +65,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           context.pushReplacement(AppRouter.bookingConfirm, extra: state.result);
         } else if (state is CheckoutError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(content: Text(state.message), backgroundColor: AppTheme.error),
           );
         }
       },
@@ -106,7 +107,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       },
     );
   }
-
+ 
   Widget _buildBody(BuildContext ctx, CheckoutState state) {
     if (state is CheckoutLoading || state is CheckoutInitial) {
       return const Center(
@@ -115,7 +116,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 12),
-            Text('Menyiapkan checkout...', style: TextStyle(color: Colors.grey)),
+            Text('Menyiapkan checkout...', style: TextStyle(color: AppTheme.outline)),
           ],
         ),
       );
@@ -129,7 +130,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             SizedBox(height: 16),
             Text('Memproses pembayaran...', style: TextStyle(fontSize: 16)),
             SizedBox(height: 8),
-            Text('Mohon tunggu sebentar', style: TextStyle(color: Colors.grey)),
+            Text('Mohon tunggu sebentar', style: TextStyle(color: AppTheme.outline)),
           ],
         ),
       );
@@ -148,13 +149,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Text(
                 'Halaman pembayaran sudah dibuka di browser. Selesaikan pembayaran Anda, lalu kembali ke sini — statusnya akan terupdate otomatis.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 13),
               ),
               const SizedBox(height: 20),
               OutlinedButton.icon(
                 onPressed: () => _launchPaymentUrl(ctx, state.redirectUrl),
                 icon: const Icon(Icons.open_in_new, size: 18),
                 label: const Text('Buka Lagi Halaman Pembayaran'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  side: const BorderSide(color: AppTheme.primaryContainer),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusButton)),
+                ),
               ),
             ],
           ),
@@ -166,7 +172,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.error_outline, size: 64, color: AppTheme.error),
             const SizedBox(height: 16),
             Text(state.message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
@@ -228,7 +234,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     return const SizedBox.shrink();
   }
-
+ 
   Future<void> _launchPaymentUrl(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
@@ -239,14 +245,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     }
   }
-
+ 
   Widget _buildPayButton(BuildContext ctx, CheckoutState state) {
     if (state is! CheckoutSessionLoaded) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, -4))],
+        color: AppTheme.surfaceContainerLowest,
+        boxShadow: AppTheme.floatingShadow,
       ),
       child: SafeArea(
         child: Column(
@@ -257,7 +263,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.w500)),
                 Text('\$${state.session.pricing.total.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary)),
               ],
             ),
             const SizedBox(height: 12),
@@ -269,10 +275,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     : (state.canPay
                         ? () => ctx.read<CheckoutBloc>().add(CheckoutPaymentConfirmed())
                         : null),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                style: AppTheme.heroButtonStyle,
                 child: Text(
                   _step == _CheckoutStep.review
                       ? 'Lanjutkan ke Pembayaran'
@@ -287,12 +290,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 }
-
+ 
 /// Indikator 2 langkah (Review -> Payment) di bagian atas checkout.
 class _StepIndicator extends StatelessWidget {
   final _CheckoutStep step;
   const _StepIndicator({required this.step});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -305,8 +308,8 @@ class _StepIndicator extends StatelessWidget {
               height: 2,
               margin: const EdgeInsets.symmetric(horizontal: 6),
               color: step == _CheckoutStep.payment
-                  ? AppTheme.primaryColor
-                  : Colors.grey.shade300,
+                  ? AppTheme.primary
+                  : AppTheme.outlineVariant,
             ),
           ),
           _StepDot(label: '2. Pembayaran', active: step == _CheckoutStep.payment),
@@ -315,12 +318,12 @@ class _StepIndicator extends StatelessWidget {
     );
   }
 }
-
+ 
 class _StepDot extends StatelessWidget {
   final String label;
   final bool active;
   const _StepDot({required this.label, required this.active});
-
+ 
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -330,7 +333,7 @@ class _StepDot extends StatelessWidget {
           width: 10, height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: active ? AppTheme.primaryColor : Colors.grey.shade300,
+            color: active ? AppTheme.primary : AppTheme.outlineVariant,
           ),
         ),
         const SizedBox(width: 6),
@@ -338,13 +341,13 @@ class _StepDot extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: active ? FontWeight.bold : FontWeight.normal,
-              color: active ? AppTheme.primaryColor : Colors.grey.shade500,
+              color: active ? AppTheme.primary : AppTheme.outline,
             )),
       ],
     );
   }
 }
-
+ 
 // Sub-widgets
 class _HotelSummaryCard extends StatelessWidget {
   final session;
@@ -356,11 +359,11 @@ class _HotelSummaryCard extends StatelessWidget {
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             child: Image.network(hotel['image'] ?? '',
                 width: 80, height: 70, fit: BoxFit.cover,
                 errorBuilder: (_, _, _) =>
-                    Container(width: 80, height: 70, color: Colors.grey.shade200)),
+                    Container(width: 80, height: 70, color: AppTheme.surfaceContainerHigh)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -371,14 +374,14 @@ class _HotelSummaryCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const SizedBox(height: 4),
                 Row(children: [
-                  const Icon(Icons.location_on, size: 13, color: Colors.grey),
+                  const Icon(Icons.location_on, size: 13, color: AppTheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(hotel['location'] ?? '',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
                 ]),
                 const SizedBox(height: 4),
                 Row(children: [
-                  const Icon(Icons.star, size: 13, color: Colors.amber),
+                  const Icon(Icons.star, size: 13, color: AppTheme.ratingColor),
                   const SizedBox(width: 4),
                   Text('${hotel['rating']}',
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -391,7 +394,7 @@ class _HotelSummaryCard extends StatelessWidget {
     );
   }
 }
-
+ 
 class _StayDetailsCard extends StatelessWidget {
   final DateTime checkIn, checkOut;
   final int nights, guestCount;
@@ -417,7 +420,7 @@ class _StayDetailsCard extends StatelessWidget {
     );
   }
 }
-
+ 
 class _PriceBreakdownCard extends StatelessWidget {
   final pricing;
   const _PriceBreakdownCard({required this.pricing});
@@ -437,7 +440,7 @@ class _PriceBreakdownCard extends StatelessWidget {
             children: [
               const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text('\$${pricing.total.toStringAsFixed(0)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryColor)),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary)),
             ],
           ),
         ],
@@ -445,13 +448,13 @@ class _PriceBreakdownCard extends StatelessWidget {
     );
   }
 }
-
+ 
 class _PaymentMethodsCard extends StatelessWidget {
   final List methods;
   final selected;
   final Function(dynamic) onSelect;
   const _PaymentMethodsCard({required this.methods, required this.selected, required this.onSelect});
-
+ 
   @override
   Widget build(BuildContext context) {
     final groups = {
@@ -471,7 +474,7 @@ class _PaymentMethodsCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8, top: 4),
                 child: Text(entry.key,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontSize: 12, color: AppTheme.outline, fontWeight: FontWeight.w600)),
               ),
               ...entry.value.map((m) => _MethodTile(
                     method: m,
@@ -486,13 +489,13 @@ class _PaymentMethodsCard extends StatelessWidget {
     );
   }
 }
-
+ 
 class _MethodTile extends StatelessWidget {
   final method;
   final bool isSelected;
   final VoidCallback onTap;
   const _MethodTile({required this.method, required this.isSelected, required this.onTap});
-
+ 
   IconData _icon(String id) {
     switch (id) {
       case 'credit_card': return Icons.credit_card;
@@ -501,39 +504,39 @@ class _MethodTile extends StatelessWidget {
       default: return Icons.account_balance_wallet;
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.06) : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? AppTheme.primary.withOpacity(0.06) : AppTheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryColor : Colors.grey.shade200,
+            color: isSelected ? AppTheme.primaryContainer : AppTheme.outlineVariant,
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(_icon(method.id),
-                color: isSelected ? AppTheme.primaryColor : Colors.grey.shade600, size: 22),
+                color: isSelected ? AppTheme.primary : AppTheme.onSurfaceVariant, size: 22),
             const SizedBox(width: 12),
             Expanded(child: Text(method.label,
                 style: TextStyle(fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal))),
-            if (isSelected) const Icon(Icons.check_circle, color: AppTheme.primaryColor, size: 20),
+            if (isSelected) const Icon(Icons.check_circle, color: AppTheme.primary, size: 20),
           ],
         ),
       ),
     );
   }
 }
-
+ 
 class _Card extends StatelessWidget {
   final String? title;
   final Widget child;
@@ -543,9 +546,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: AppTheme.softCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,7 +563,7 @@ class _Card extends StatelessWidget {
     );
   }
 }
-
+ 
 class _Row extends StatelessWidget {
   final String label, value;
   const _Row(this.label, this.value);
@@ -571,10 +574,11 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+          Text(label, style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 14)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         ],
       ),
     );
   }
 }
+ 
