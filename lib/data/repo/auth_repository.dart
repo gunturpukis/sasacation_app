@@ -125,8 +125,8 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
-    await _googleSignIn.signOut().catchError((_) {});
-    await _firebaseAuth.signOut().catchError((_) {});
+    await _googleSignIn.signOut().catchError((_) => null);
+    await _firebaseAuth.signOut().catchError((_) => null);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_id');

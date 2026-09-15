@@ -259,6 +259,17 @@ class TripActivity {
         notes: json['notes'] ?? '',
         itemId: json['itemId']?.toString(),
       );
+
+  Map<String, dynamic> toJson() => {
+        'time': time,
+        'name': name,
+        'type': type,
+        'location': location,
+        'duration': duration,
+        'estimatedCost': estimatedCost,
+        'notes': notes,
+        'itemId': itemId,
+      };
 }
 
 class TripDay {
@@ -285,6 +296,14 @@ class TripDay {
             .toList(),
         dailyCost: parseDouble(json['dailyCost']),
       );
+
+  Map<String, dynamic> toJson() => {
+        'day': day,
+        'date': date,
+        'title': title,
+        'activities': activities.map((a) => a.toJson()).toList(),
+        'dailyCost': dailyCost,
+      };
 }
 
 class TripPlan {

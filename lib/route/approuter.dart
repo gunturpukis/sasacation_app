@@ -10,62 +10,70 @@ import 'package:sasacation/ui/booking/booking_page.dart';
 import 'package:sasacation/ui/checkout/booking_confirm_screen.dart';
 import 'package:sasacation/ui/checkout/checkout_screen.dart';
 import 'package:sasacation/ui/hotels/adminpanel/admin_panel_page.dart';
-import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/login/login_page.dart';
 import 'package:sasacation/ui/main_navigation_page.dart';
-import 'package:sasacation/ui/notification/notification_screen.dart';
-import 'package:sasacation/ui/onboarding/onboarding_page.dart';
+import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/payment/payment_history_screen.dart';
 import 'package:sasacation/ui/search/search_results_page.dart';
+import 'package:sasacation/ui/sustainibility/sustainibility_screen.dart';
+import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
+import 'package:sasacation/ui/trip/trip_detail_screen.dart';
+import 'package:sasacation/ui/trip/trip_management_screen.dart';
+import 'package:sasacation/ui/wishlist/wishlist_page.dart';
+import 'package:sasacation/ui/notification/notification_screen.dart';
 import 'package:sasacation/ui/settings/setting_screen.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
-import 'package:sasacation/ui/sustainibility/sustainibility_screen.dart';
-import 'package:sasacation/ui/wishlist/wishlist_page.dart';
-import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
+import 'package:sasacation/ui/onboarding/onboarding_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
- 
+
 class AppRouter {
-  static const String splash         = '/';
-  static const String onboarding     = '/onboarding';
-  static const String login          = '/login';
-  static const String home           = '/home';
-  static const String hotelDetail    = '/hotel-detail/:id';
-  static const String searchResults  = '/search-results';
-  static const String wishlist       = '/wishlist';
-  static const String myBookings     = '/my-bookings';
-  static const String notifications  = '/notifications';
-  static const String settings       = '/settings';
+  static const String splash = '/';
+  static const String onboarding = '/onboarding';
+  static const String login = '/login';
+  static const String home = '/home';
+  static const String hotelDetail = '/hotel-detail/:id';
+  static const String searchResults = '/search-results';
+  static const String wishlist = '/wishlist';
+  static const String myBookings = '/my-bookings';
+  static const String notifications = '/notifications';
+  static const String settings = '/settings';
   static const String paymentHistory = '/payment-history';
-  static const String sustainability = '/sustainability';
-  static const String admin          = '/admin';
+  static const String sustainability = '/sustainibility';
+  static const String admin = '/admin';
   // Checkout flow
-  static const String checkout       = '/checkout';
+  static const String checkout = '/checkout';
   static const String bookingConfirm = '/booking-confirm';
   // AI
-  static const String aiChat         = '/ai-chat';
-  static const String smartSearch    = '/smart-search';
-  static const String tripPlanner    = '/trip-planner';
- 
+  static const String aiChat = '/ai-chat';
+  static const String smartSearch = '/smart-search';
+  static const String tripPlanner = '/trip-planner';
+  // Trip Management
+  static const String tripManagement = '/trip-management';
+  static const String tripDetail = '/trip-detail/:id';
+
   /// Rute yang boleh diakses tanpa login (guest browsing), meniru pola OTA:
   /// pengguna bisa melihat-lihat hotel bebas, login baru wajib saat mau
   /// benar-benar memesan (checkout) atau mengakses data personal.
   static const Set<String> guestAccessible = {
-    splash, onboarding, login, home, hotelDetail, searchResults, wishlist,
+    splash,
+    onboarding,
+    login,
+    home,
+    hotelDetail,
+    searchResults,
+    wishlist,
   };
 }
- 
+
 class Routes {
   static final navigatorKey = GlobalKey<NavigatorState>();
- 
+
   static final router = GoRouter(
     navigatorKey: navigatorKey,
     initialLocation: AppRouter.splash,
     routes: [
       // ─── Core ─────────────────────────────────────────────────────────────
-      GoRoute(
-        path: AppRouter.splash,
-        builder: (_, _) => const SplashScreen(),
-      ),
+      GoRoute(path: AppRouter.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(
         path: AppRouter.onboarding,
         builder: (_, _) => const OnboardingScreen(),
@@ -80,17 +88,13 @@ class Routes {
           );
         },
       ),
-      GoRoute(
-        path: AppRouter.home,
-        builder: (_, _) => const MainNavigation(),
-      ),
- 
+      GoRoute(path: AppRouter.home, builder: (_, _) => const MainNavigation()),
+
       // ─── Hotel ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.hotelDetail,
-        builder: (_, state) => HotelDetailScreen(
-          hotelId: state.pathParameters['id']!,
-        ),
+        builder: (_, state) =>
+            HotelDetailScreen(hotelId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: AppRouter.searchResults,
@@ -113,7 +117,30 @@ class Routes {
         path: AppRouter.settings,
         builder: (_, _) => const SettingsScreen(),
       ),
+      // ─── AI ────────────────────────────────────────────────────────────────
       GoRoute(
+        path: AppRouter.aiChat,
+        builder: (_, _) => const AiChatScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.smartSearch,
+        builder: (_, _) => const SmartSearchScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.tripPlanner,
+        builder: (_, _) => const TripPlannerScreen(),
+      ),
+      // ─── Trip Management ───────────────────────────────────────────────────
+      GoRoute(
+        path: AppRouter.tripManagement,
+        builder: (_, _) => const TripManagementScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.tripDetail,
+        builder: (_, state) =>
+            TripDetailScreen(tripId: state.pathParameters['id']!),
+      ),
+       GoRoute(
         path: AppRouter.paymentHistory,
         builder: (_, _) => const PaymentHistoryScreen(),
       ),
@@ -153,9 +180,7 @@ class Routes {
         path: AppRouter.admin,
         builder: (_, _) => const AdminPanelScreen(),
       ),
- 
-      // ─── AI ───────────────────────────────────────────────────────────────
-      GoRoute(
+    GoRoute(
         path: AppRouter.aiChat,
         builder: (_, _) => const AiChatScreen(),
       ),
@@ -204,4 +229,3 @@ class Routes {
     return prefs.getBool('has_seen_onboarding') ?? false;
   }
 }
- 

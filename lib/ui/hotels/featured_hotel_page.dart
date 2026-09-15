@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
-
+ 
 class FeaturedHotels extends StatefulWidget {
   const FeaturedHotels({super.key});
-
+ 
   @override
   State<FeaturedHotels> createState() => _FeaturedHotelsState();
 }
-
+ 
 class _FeaturedHotelsState extends State<FeaturedHotels> {
   @override
   void initState() {
     super.initState();
     context.read<HotelBloc>().add(HotelFeaturedRequested());
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -33,7 +34,7 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
               return Center(child: Text(state.featuredError!));
             }
             final hotels = state.featuredHotels ?? [];
-            if (hotels.isEmpty) return const Center(child: CircularProgressIndicator());
+            if (hotels.isEmpty) return const Center(child: Text('Tidak ada hotel featured'));
             return ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: hotels.length,
@@ -55,10 +56,14 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
                             children: [
                               ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                child: Image.network(
-                                  hotel.image,
+                                child: CachedNetworkImage(
+                                  imageUrl: hotel.image,
                                   height: 160, width: double.infinity, fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Container(
+                                  placeholder: (_, __) => Container(
+                                    height: 160, color: Colors.grey.shade200,
+                                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                  ),
+                                  errorWidget: (_, __, ___) => Container(
                                     height: 160, color: Colors.grey.shade200,
                                     child: const Icon(Icons.image_not_supported, color: Colors.grey),
                                   ),
@@ -120,3 +125,4 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
     );
   }
 }
+ 

@@ -86,7 +86,7 @@ class AppTheme {
   // "extremely soft, low-opacity shadows (Black 5%, Blur 10px, Offset Y=2)"
   static List<BoxShadow> get softCardShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha: 0.05),
           blurRadius: 10,
           offset: const Offset(0, 2),
         ),
@@ -95,7 +95,7 @@ class AppTheme {
   // Untuk elemen "floating"/sticky (search bar, bottom bar) — elevasi lebih tinggi
   static List<BoxShadow> get floatingShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withValues(alpha: 0.08),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
@@ -152,7 +152,7 @@ class AppTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: surface.withOpacity(0.8),
+        backgroundColor: surface.withValues(alpha: 0.8),
         foregroundColor: onSurface,
         titleTextStyle: textTheme.headlineMedium?.copyWith(color: primary),
       ),

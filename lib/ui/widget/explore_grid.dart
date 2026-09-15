@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
-import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/explore/destination_detail_screen.dart';
 import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
