@@ -86,7 +86,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       if (_currentPage == _onboardingData.length - 1) {
                         await _saveOnboardingStatus();
                         if (mounted) {
-                          context.go(AppRouter.login);
+                          // Guest mode: langsung ke home, login menyusul
+                          // saat dibutuhkan (checkout/tab personal).
+                          context.go(AppRouter.home);
                         }
                       } else {
                         _pageController.nextPage(
@@ -103,7 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     child: Text(
                       _currentPage == _onboardingData.length - 1
-                          ? 'Get Started'
+                          ? 'Jelajahi sebagai Tamu'
                           : 'Next',
                       style: const TextStyle(
                         fontSize: 16,
@@ -119,9 +121,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: () async {
                       // Simpan status bahwa user skip onboarding
                       await _saveOnboardingStatus();
-                      // Langsung ke login
+                      // Guest mode: langsung ke home sebagai tamu
                       if (mounted) {
-                        context.go(AppRouter.login);
+                        context.go(AppRouter.home);
                       }
                     },
                     child: const Text(

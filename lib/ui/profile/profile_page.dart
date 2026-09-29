@@ -233,7 +233,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/repo/notification_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
@@ -248,11 +250,12 @@ import 'package:sasacation/viewmodel/booking/booking_bloc.dart';
 /// - "Gold Member" (badge tier loyalty) DISKIP TOTAL — tidak ada sistem
 ///   membership/tier apa pun di backend. Menampilkan itu berarti mengarang
 ///   status yang tidak dimiliki user.
-/// - Preview "Upcoming Trips" dengan status "Action Required" di mockup
-///   DISKIP — BookingModel cuma punya status confirmed/completed/cancelled,
-///   tidak ada konsep "Action Required". Menu "Booking History" tetap ada
-///   dan mengarah ke MyBookingsScreen yang sudah punya data booking lengkap
-///   apa adanya, bukan diduplikasi di sini dengan data yang disederhanakan.
+/// - Preview "Upcoming Trips" DIAMBIL dan dibuat REAL — 2 booking confirmed
+///   terdekat (diurut check-in) dengan foto, badge hitung mundur, harga, dan
+///   tombol ke MyBookings. Status "Action Required" di mockup tidak ada
+///   padanannya di BookingModel (cuma confirmed/completed/cancelled), jadi
+///   hanya CONFIRMED yang ditampilkan apa adanya; section disembunyikan
+///   kalau tidak ada trip mendatang (tidak mengarang data).
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
  
@@ -347,6 +350,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
                 const SizedBox(height: 24),
+
+                // Preview "Upcoming Trips" mengikuti mockup — datanya REAL dari
+                // BookingBloc (booking confirmed yang belum checkout). Status
+                // "Action Required" di mockup tidak ada padanannya di
+                // BookingModel, jadi hanya CONFIRMED yang ditampilkan apa adanya.
+                BlocBuilder<BookingBloc, BookingState>(
+                  builder: (context, bookingState) {
+                    if (bookingState is! BookingListLoaded) {
+                      return const SizedBox.shrink();
+                    }
+                    final now = DateTime.now();
+                    final upcoming = bookingState.bookings
+                        .where((b) =>
+                            b.isConfirmed && b.checkOut.isAfter(now))
+                        .toList()
+                      ..sort((a, b) => a.checkIn.compareTo(b.checkIn));
+                    if (upcoming.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Upcoming Trips',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            TextButton(
+                              onPressed: () =>
+                                  context.push(AppRouter.myBookings),
+                              child: const Text('Lihat semua',
+                                  style: TextStyle(fontSize: 13)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ...upcoming
+                            .take(2)
+                            .map((b) => _UpcomingTripCard(booking: b)),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  },
+                ),
  
                 Container(
                   decoration: BoxDecoration(
@@ -357,9 +402,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       _buildMenuItem(
-                          icon: Icons.person_outline,
-                          title: 'Personal Information',
-                          onTap: () {}),
+                        icon: Icons.person_outline,
+                        title: 'Personal Information',
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Edit profil segera hadir di versi berikutnya'),
+                          ),
+                        ),
+                      ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.confirmation_number_outlined,
@@ -374,7 +424,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _divider(),
                       _buildMenuItem(
-                          icon: Icons.favorite_border, title: 'Saved Places', onTap: () {}),
+                        icon: Icons.favorite_border,
+                        title: 'Saved Places',
+                        onTap: () => context.push(AppRouter.wishlist),
+                      ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.eco_outlined,
@@ -401,7 +454,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _divider(),
                       _buildMenuItem(
-                          icon: Icons.help_outline, title: 'Help Center', onTap: () {}),
+                        icon: Icons.help_outline,
+                        title: 'Help Center',
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Pusat bantuan segera hadir di versi berikutnya'),
+                          ),
+                        ),
+                      ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.logout,
@@ -477,6 +537,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu preview trip mendatang — mengikuti mockup `my_profile_trips`
+/// (foto, badge status, harga, tombol aksi). Maks 2 kartu, selebihnya lewat
+/// "Lihat semua" ke MyBookingsScreen.
+class _UpcomingTripCard extends StatelessWidget {
+  final BookingModel booking;
+  const _UpcomingTripCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = DateFormat('d MMM yyyy');
+    final daysLeft = booking.checkIn.difference(DateTime.now()).inDays;
+    final badgeLabel =
+        daysLeft > 0 ? 'Dalam $daysLeft Hari' : 'CONFIRMED';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        boxShadow: AppTheme.softCardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppTheme.radiusCard)),
+                child: Image.network(
+                  booking.hotelImage,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 150,
+                    color: AppTheme.surfaceContainerHigh,
+                    child: const Icon(Icons.image_not_supported_outlined,
+                        color: AppTheme.outline),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryContainer,
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusFull),
+                  ),
+                  child: Text(badgeLabel,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(booking.hotelName,
+                              style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${fmt.format(booking.checkIn)} – ${fmt.format(booking.checkOut)} • ${booking.nights} malam',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('\$${booking.totalPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => context.push(AppRouter.myBookings),
+                    child: const Text('Lihat Booking'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

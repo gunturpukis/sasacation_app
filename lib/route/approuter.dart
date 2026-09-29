@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/data/model/checkout_model.dart';
+import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
+import 'package:sasacation/ui/ai/agent_trip_plan_result_screen.dart';
 import 'package:sasacation/ui/ai/ai_chat_screen.dart';
 import 'package:sasacation/ui/ai/smart_search_screen.dart';
 import 'package:sasacation/ui/ai/trip_planner_screen.dart';
+import 'package:sasacation/ui/explore/destination_detail_screen.dart';
 import 'package:sasacation/ui/booking/booking_page.dart';
 import 'package:sasacation/ui/checkout/booking_confirm_screen.dart';
 import 'package:sasacation/ui/checkout/checkout_screen.dart';
@@ -38,7 +42,9 @@ class AppRouter {
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String paymentHistory = '/payment-history';
-  static const String sustainability = '/sustainibility';
+  static const String sustainability = '/sustainability';
+  // Alias lama (typo) — dipertahankan agar deep-link lama tidak 404.
+  static const String legacySustainability = '/sustainibility';
   static const String admin = '/admin';
   // Checkout flow
   static const String checkout = '/checkout';
@@ -47,19 +53,34 @@ class AppRouter {
   static const String aiChat = '/ai-chat';
   static const String smartSearch = '/smart-search';
   static const String tripPlanner = '/trip-planner';
+  static const String tripPlanResult = '/ai/trip-plan-result';
+  // Explore
+  static const String destinationDetail = '/destination-detail';
   // Trip Management
   static const String tripManagement = '/trip-management';
   static const String tripDetail = '/trip-detail/:id';
 
+  static String tripDetailPath(String id) =>
+      tripDetail.replaceFirst(':id', id);
+  static String hotelDetailPath(String id) =>
+      hotelDetail.replaceFirst(':id', id);
+
   /// Rute yang boleh diakses tanpa login (guest browsing), meniru pola OTA:
   /// pengguna bisa melihat-lihat hotel bebas, login baru wajib saat mau
-  /// benar-benar memesan (checkout) atau mengakses data personal.
+  /// benar-benar memesan (checkout) atau mengakses data personal (booking,
+  /// notifikasi, AI, trip).
+  /// CATATAN: wishlist guest-accessible karena state-nya lokal
+  /// (WishlistCubit, tanpa akun) dan toggle hati di search tidak di-gate —
+  /// meng-gate halamannya saja akan membuat favorit yang disimpan tamu
+  /// tidak bisa dilihat.
+  /// `/hotel-detail/:id` tidak dicantumkan di sini karena
+  /// `matchedLocation` berisi path konkret (`/hotel-detail/123`), bukan pola
+  /// dengan parameter — pengecekannya lewat `startsWith` di `redirect`.
   static const Set<String> guestAccessible = {
     splash,
     onboarding,
     login,
     home,
-    hotelDetail,
     searchResults,
     wishlist,
   };
@@ -95,6 +116,26 @@ class Routes {
         path: AppRouter.hotelDetail,
         builder: (_, state) =>
             HotelDetailScreen(hotelId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: AppRouter.destinationDetail,
+        builder: (_, state) {
+          final item = state.extra as ExploreItemModel?;
+          if (item == null) {
+            return const _MissingExtraScreen(message: 'Data destinasi tidak ditemukan.');
+          }
+          return DestinationDetailScreen(item: item);
+        },
+      ),
+      GoRoute(
+        path: AppRouter.tripPlanResult,
+        builder: (_, state) {
+          final plan = state.extra as TripPlan?;
+          if (plan == null) {
+            return const _MissingExtraScreen(message: 'Data trip plan tidak ditemukan.');
+          }
+          return AgentTripPlanResultScreen(plan: plan);
+        },
       ),
       GoRoute(
         path: AppRouter.searchResults,
@@ -148,7 +189,12 @@ class Routes {
         path: AppRouter.sustainability,
         builder: (_, _) => const SustainabilityScreen(),
       ),
- 
+      // Kompatibilitas: path lama dengan typo tetap bisa dibuka.
+      GoRoute(
+        path: AppRouter.legacySustainability,
+        builder: (_, _) => const SustainabilityScreen(),
+      ),
+
       // ─── Booking & Checkout flow ──────────────────────────────────────────
       GoRoute(
         path: AppRouter.myBookings,
@@ -157,7 +203,17 @@ class Routes {
       GoRoute(
         path: AppRouter.checkout,
         builder: (_, state) {
-          final data = state.extra as Map<String, dynamic>;
+          final data = state.extra as Map<String, dynamic>?;
+          if (data == null ||
+              data['hotel'] is! HotelModel ||
+              data['checkIn'] is! DateTime ||
+              data['checkOut'] is! DateTime ||
+              data['nights'] is! int ||
+              data['guestCount'] is! int) {
+            return const _MissingExtraScreen(
+              message: 'Data checkout tidak lengkap. Silakan mulai dari halaman hotel.',
+            );
+          }
           return CheckoutScreen(
             hotel: data['hotel'] as HotelModel,
             checkIn: data['checkIn'] as DateTime,
@@ -170,27 +226,21 @@ class Routes {
       ),
       GoRoute(
         path: AppRouter.bookingConfirm,
-        builder: (_, state) => BookingConfirmScreen(
-          result: state.extra as PaymentResult,
-        ),
+        builder: (_, state) {
+          final result = state.extra as PaymentResult?;
+          if (result == null) {
+            return const _MissingExtraScreen(
+              message: 'Data konfirmasi pembayaran tidak ditemukan.',
+            );
+          }
+          return BookingConfirmScreen(result: result);
+        },
       ),
- 
+
       // ─── Admin ────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.admin,
         builder: (_, _) => const AdminPanelScreen(),
-      ),
-    GoRoute(
-        path: AppRouter.aiChat,
-        builder: (_, _) => const AiChatScreen(),
-      ),
-      GoRoute(
-        path: AppRouter.smartSearch,
-        builder: (_, _) => const SmartSearchScreen(),
-      ),
-      GoRoute(
-        path: AppRouter.tripPlanner,
-        builder: (_, _) => const TripPlannerScreen(),
       ),
     ],
  
@@ -227,5 +277,37 @@ class Routes {
   static Future<bool> _checkOnboardingStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('has_seen_onboarding') ?? false;
+  }
+}
+
+/// Layar fallback saat route dibuka tanpa `extra` yang wajib.
+/// Mencegah crash `state.extra as ...` jika user deep-link langsung.
+class _MissingExtraScreen extends StatelessWidget {
+  final String message;
+  const _MissingExtraScreen({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Halaman tidak tersedia')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(message, textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => context.go(AppRouter.home),
+                child: const Text('Kembali ke Beranda'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

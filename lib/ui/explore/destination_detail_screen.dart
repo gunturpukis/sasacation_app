@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Detail screen untuk destinasi wisata dan restoran.
 /// Menggunakan ExploreItemModel yang sudah punya field
@@ -11,6 +12,23 @@ class DestinationDetailScreen extends StatelessWidget {
   const DestinationDetailScreen({super.key, required this.item});
 
   bool get _isRestaurant => item.type == 'restaurant';
+
+  Future<void> _onPrimaryAction(BuildContext context) async {
+    if (_isRestaurant) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fitur reservasi akan segera hadir!')),
+      );
+      return;
+    }
+    final query = Uri.encodeComponent('${item.name} ${item.location}');
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +92,9 @@ class DestinationDetailScreen extends StatelessWidget {
                   ),
                   child: const Icon(Icons.favorite_border, color: Colors.black87),
                 ),
-                onPressed: () {},
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${item.name} disimpan ke favorit (segera hadir penuh)')),
+                ),
               ),
             ],
           ),
@@ -253,16 +273,7 @@ class DestinationDetailScreen extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: buka Maps / reservasi
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_isRestaurant
-                            ? 'Fitur reservasi akan segera hadir!'
-                            : 'Membuka petunjuk arah...'),
-                      ),
-                    );
-                  },
+                  onPressed: () => _onPrimaryAction(context),
                   icon: Icon(_isRestaurant ? Icons.restaurant : Icons.directions),
                   label: Text(
                     _isRestaurant ? 'Reservasi' : 'Petunjuk Arah',

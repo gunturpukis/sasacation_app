@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/data/model/trip_model.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 
 class TripPlannerScreen extends StatefulWidget {
@@ -37,7 +38,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Lihat Trip yang Disimpan',
-            onPressed: () => context.goNamed('trip-management'),
+            onPressed: () => context.push(AppRouter.tripManagement),
           ),
         ],
       ),
@@ -791,7 +792,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
         );
 
         // Navigate to trip management to see the saved trip
-        context.goNamed('trip-management');
+        context.push(AppRouter.tripManagement);
       }
     } catch (e) {
       if (mounted) {

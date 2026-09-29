@@ -140,7 +140,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Reset password belum tersedia — hubungi admin untuk bantuan',
+                          ),
+                        ),
+                      ),
                       child: const Text('Lupa Password?'),
                     ),
                   ),
@@ -230,6 +236,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+
+                // Guest mode: jalan keluar sebagai tamu — penting karena
+                // layar ini juga dipakai sebagai login gate dari route yang
+                // butuh akun. Tamu yang memilih ini kembali browsing bebas.
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.go(AppRouter.home),
+                    icon: const Icon(Icons.explore_outlined, size: 18),
+                    label: const Text('Lanjutkan sebagai Tamu'),
+                  ),
                 ),
                 const SizedBox(height: 20),
               ],

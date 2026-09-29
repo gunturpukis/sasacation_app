@@ -7,6 +7,7 @@ import 'package:sasacation/ui/widget/glass_icon_button.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
+import 'package:url_launcher/url_launcher.dart';
  
 /// HotelDetailScreen — restyle mengikuti mockup `destination_details`.
 ///
@@ -236,23 +237,44 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           const SizedBox(height: AppTheme.spacingSectionGap),
                         ],
  
-                        // Peta lokasi — dipertahankan apa adanya (placeholder),
-                        // lihat catatan di atas class.
-                        Container(
-                          height: 160,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.map_outlined, size: 40, color: AppTheme.outline),
-                                const SizedBox(height: 10),
-                                Text('Peta lokasi hotel',
-                                    style: Theme.of(context).textTheme.bodyMedium),
-                              ],
+                        // Peta lokasi — placeholder visual yang bisa diketuk
+                        // untuk membuka Google Maps (tanpa Maps SDK).
+                        InkWell(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          onTap: () async {
+                            final query = Uri.encodeComponent(
+                                '${hotel.name} ${hotel.location}');
+                            final url = Uri.parse(
+                                'https://www.google.com/maps/search/?api=1&query=$query');
+                            final opened = await launchUrl(
+                                url, mode: LaunchMode.externalApplication);
+                            if (!opened && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Tidak dapat membuka Google Maps')),
+                              );
+                            }
+                          },
+                          child: Container(
+                            height: 160,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLow,
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusLg),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.map_outlined,
+                                      size: 40, color: AppTheme.outline),
+                                  const SizedBox(height: 10),
+                                  Text('Peta lokasi hotel — ketuk untuk buka Maps',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                                ],
+                              ),
                             ),
                           ),
                         ),

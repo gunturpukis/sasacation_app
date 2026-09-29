@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
-import 'package:sasacation/ui/explore/destination_detail_screen.dart';
-import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 
 class ExploreGrid extends StatelessWidget {
@@ -84,16 +84,14 @@ class ExploreGridCard extends StatelessWidget {
   const ExploreGridCard({super.key, required this.item});
 
   void _onTap(BuildContext context) {
-    // FIX: navigasi ke detail yang sesuai berdasarkan type
+    // Navigasi via GoRouter agar deep-link & auth redirect tetap jalan.
     switch (item.type) {
       case 'hotel':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => HotelDetailScreen(hotelId: item.id)));
+        context.push(AppRouter.hotelDetailPath(item.id));
         break;
       case 'destination':
       case 'restaurant':
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => DestinationDetailScreen(item: item)));
+        context.push(AppRouter.destinationDetail, extra: item);
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(

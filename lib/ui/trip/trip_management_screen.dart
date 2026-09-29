@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/trip_model.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 
@@ -97,8 +98,7 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: () =>
-                          context.go('/ai/trip-planner'),
+                      onPressed: () => context.push(AppRouter.tripPlanner),
                       icon: const Icon(Icons.auto_awesome),
                       label: const Text('Buat Itinerary Pertama'),
                     ),
@@ -138,8 +138,9 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                         trip: trip,
                         onDelete: () =>
                             context.read<TripBloc>().add(TripDeleteRequested(tripId: trip.id)),
-                        onTap: () =>
-                            context.push('/trip/detail/${trip.id}'),
+                        onTap: () => context.push(
+                          AppRouter.tripDetailPath(trip.id),
+                        ),
                       );
                     },
                     childCount: trips.length,

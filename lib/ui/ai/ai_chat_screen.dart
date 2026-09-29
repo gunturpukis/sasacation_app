@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
-import 'package:sasacation/ui/ai/agent_trip_plan_result_screen.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
  
 /// AiChatScreen — restyle mengikuti mockup `sasa_ai_chatbot`.
@@ -308,10 +309,7 @@ class _TripPlanCard extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => AgentTripPlanResultScreen(plan: plan)),
-        ),
+        onTap: () => context.push(AppRouter.tripPlanResult, extra: plan),
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),

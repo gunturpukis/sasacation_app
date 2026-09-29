@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
  
 /// View: SearchResultsScreen
 /// Halaman perantara baru antara Home dan Hotel Detail, meniru pola Agoda:
@@ -22,14 +24,51 @@ class SearchResultsScreen extends StatefulWidget {
  
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   late final TextEditingController _searchCtrl;
- 
+  List<String> _recents = [];
+
+  static const _recentsKey = 'recent_searches';
+  static const _maxRecents = 5;
+
   @override
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController(text: widget.initialQuery ?? '');
+    _searchCtrl.addListener(() => setState(() {}));
     context.read<HotelSearchCubit>().search(query: widget.initialQuery);
+    _loadRecents();
   }
- 
+
+  Future<void> _loadRecents() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _recents = prefs.getStringList(_recentsKey) ?? []);
+  }
+
+  /// Riwayat tersimpan lokal (SharedPreferences) — tanpa backend.
+  Future<void> _saveRecent(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final updated = [q, ..._recents.where((e) => e.toLowerCase() != q.toLowerCase())]
+        .take(_maxRecents)
+        .toList();
+    await prefs.setStringList(_recentsKey, updated);
+    if (!mounted) return;
+    setState(() => _recents = updated);
+  }
+
+  Future<void> _clearRecents() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_recentsKey);
+    if (!mounted) return;
+    setState(() => _recents = []);
+  }
+
+  void _submitSearch(String q) {
+    _saveRecent(q);
+    context.read<HotelSearchCubit>().search(query: q);
+  }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -76,7 +115,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   hintText: 'Cari hotel atau lokasi...',
                   prefixIcon: Icon(Icons.search, size: 20, color: AppTheme.primary),
                 ),
-                onSubmitted: (q) => context.read<HotelSearchCubit>().search(query: q),
+                onSubmitted: _submitSearch,
               ),
             ),
           ),
@@ -154,9 +193,17 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             ),
           );
         }
+        // "AI Pick": rekomendasi rating tertinggi dari hasil nyata —
+        // bukan dari backend AI, tapi deterministik dari data yang ada.
+        final queryEmpty = _searchCtrl.text.trim().isEmpty;
+        final showRecents = queryEmpty && _recents.isNotEmpty;
+        final HotelModel? aiPick = (!queryEmpty && results.length >= 2)
+            ? results.reduce((a, b) => a.rating >= b.rating ? a : b)
+            : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (showRecents) _buildRecents(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Text('${results.length} properti ditemukan',
@@ -182,7 +229,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         isSaved: saved,
                         onSave: () => context.read<WishlistCubit>().toggle(hotel.id),
                         onTap: () => context.push(
-                          AppRouter.hotelDetail.replaceFirst(':id', hotel.id),
+                          AppRouter.hotelDetailPath(hotel.id),
                         ),
                       );
                     },
@@ -190,9 +237,123 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 },
               ),
             ),
+            if (aiPick != null) _buildAiPick(context, aiPick),
           ],
         );
       },
+    );
+  }
+
+  /// Riwayat pencarian lokal — mengikuti desain ("Recent Searches" + Clear All).
+  Widget _buildRecents() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Terakhir dicari',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16)),
+              TextButton(
+                onPressed: _clearRecents,
+                child: const Text('Hapus Semua', style: TextStyle(fontSize: 13)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ..._recents.map((q) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  onTap: () {
+                    _searchCtrl.text = q;
+                    _submitSearch(q);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      boxShadow: AppTheme.softCardShadow,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                          ),
+                          child: const Icon(Icons.history,
+                              size: 18, color: AppTheme.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(q,
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                        ),
+                        const Icon(Icons.chevron_right,
+                            size: 18, color: AppTheme.outline),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  /// Kartu "AI Pick for You" mengikuti desain — isinya hotel rating tertinggi
+  /// dari hasil pencarian nyata (deterministik, tanpa backend AI).
+  Widget _buildAiPick(BuildContext context, HotelModel hotel) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.secondaryContainer.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border:
+            Border.all(color: AppTheme.secondaryContainer.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+            ),
+            child: const Text('AI Pick for You',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 10),
+          Text(hotel.name, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            'Rating tertinggi (${hotel.rating.toStringAsFixed(1)}) untuk pencarianmu saat ini.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () =>
+                  context.push(AppRouter.hotelDetailPath(hotel.id)),
+              style: AppTheme.heroButtonStyle,
+              child: const Text('Lihat Detail',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
     );
   }
  

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
@@ -6,6 +7,7 @@ import 'package:sasacation/ui/booking/booking_page.dart';
 import 'package:sasacation/ui/explore/explore_page.dart';
 import 'package:sasacation/ui/home/home_page.dart';
 import 'package:sasacation/ui/profile/profile_page.dart';
+import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
  
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -22,11 +24,80 @@ class _MainNavigationState extends State<MainNavigation> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(onNavigateToTab: (index) => setState(() => _currentIndex = index)),
+      HomeScreen(onNavigateToTab: _onTabTapped),
       const ExploreScreen(),
       const MyBookingsScreen(),
       const ProfileScreen(),
     ];
+  }
+
+  /// Tab Bookings (2) & Profile (3) butuh akun. Tamu yang mengetuknya
+  /// mendapat prompt login (pola OTA) alih-alih error API mentah — tanpa
+  /// ini, gate di level route bisa dilewati lewat tab karena tab-tab ini
+  /// hidup di dalam `/home` yang guest-accessible.
+  void _onTabTapped(int index) {
+    final isLoggedIn =
+        context.read<AuthBloc>().state is AuthAuthenticated;
+    if (!isLoggedIn && (index == 2 || index == 3)) {
+      _showLoginGate(context);
+      return;
+    }
+    setState(() => _currentIndex = index);
+  }
+
+  void _showLoginGate(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppTheme.radiusSheet)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Icon(Icons.lock_outline,
+                size: 44, color: AppTheme.primary),
+            const SizedBox(height: 12),
+            Text('Masuk untuk melanjutkan',
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text(
+              'Riwayat booking dan profil tersimpan di akunmu. Masuk atau daftar untuk mengaksesnya.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  context.push(AppRouter.login);
+                },
+                child: const Text('Masuk / Daftar'),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(sheetContext),
+              child: const Text('Lanjut sebagai tamu'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
  
   @override
@@ -56,9 +127,9 @@ class _MainNavigationState extends State<MainNavigation> {
         notchMargin: 8,
         color: AppTheme.surfaceContainerLowest,
         elevation: 10,
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _onTabTapped,
           type: BottomNavigationBarType.fixed,
           selectedItemColor: AppTheme.primary,
           unselectedItemColor: AppTheme.outline,

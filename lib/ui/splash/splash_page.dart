@@ -34,14 +34,14 @@ class _SplashScreenState extends State<SplashScreen>
     // FIX: baca SharedPreferences — tidak hardcode
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
 
     if (!mounted) return;
     if (!hasSeenOnboarding) {
       context.go(AppRouter.onboarding);
-    } else if (!isLoggedIn) {
-      context.go(AppRouter.login);
     } else {
+      // Guest mode: tamu tanpa akun langsung ke home (browsing bebas).
+      // Login baru diminta di titik yang butuh akun (checkout, tab
+      // Bookings/Profile) lewat login gate kontekstual.
       context.go(AppRouter.home);
     }
   }

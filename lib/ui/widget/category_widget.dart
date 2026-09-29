@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
- 
- 
+import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
+
+
 class CategoryGrid extends StatelessWidget {
-  const CategoryGrid({super.key});
+  /// Dipanggil setelah filter kategori diterapkan — induk (HomeScreen)
+  /// menggunakannya untuk pindah ke tab Explore (index 1).
+  final void Function(String category)? onExploreCategory;
+
+  const CategoryGrid({super.key, this.onExploreCategory});
  
   final List<Map<String, dynamic>> categories = const [
     {
@@ -22,6 +27,18 @@ class CategoryGrid extends StatelessWidget {
       'description': 'Luxury resorts & villas',
       'route': '/explore?category=hotels',
       'gradient': [0xFF008080, 0xFF00A896],
+    },
+    // Taksonomi diselaraskan dengan FilterChips di Explore (yang sudah punya
+    // 'Destinations') — grid sebelumnya tidak memilikinya. Figma hanya
+    // menampilkan 3 kategori generik; 7 kategori di sini adalah superset yang
+    // didukung backend explore.
+    {
+      'icon': Icons.place,
+      'label': 'Destinations',
+      'color': 0xFFEC4899,
+      'description': 'Iconic spots across Lombok',
+      'route': '/explore?category=destinations',
+      'gradient': [0xFFEC4899, 0xFFF472B6],
     },
     {
       'icon': Icons.restaurant,
@@ -231,9 +248,15 @@ class CategoryGrid extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    final label = category['label'] as String;
                     Navigator.pop(context);
-                    // Navigate to explore with category filter
-                    context.push('/explore', extra: {'category': category['label'].toLowerCase()});
+                    // Terapkan filter ke ExploreBloc lalu pindah ke tab Explore.
+                    // Route '/explore' tidak ada (Explore adalah tab di /home),
+                    // jadi navigasi GoRouter ke sana akan 404.
+                    context
+                        .read<ExploreBloc>()
+                        .add(ExploreCategoryChanged(category: label));
+                    onExploreCategory?.call(label);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(category['color']),
@@ -340,6 +363,8 @@ class CategoryGrid extends StatelessWidget {
         return 'Discover pristine white sand beaches, crystal clear waters, and stunning coastal views. Perfect for swimming, surfing, and relaxation.';
       case 'Hotels':
         return 'Experience luxury accommodation with world-class amenities. From beachfront resorts to cozy villas with stunning ocean views.';
+      case 'Destinations':
+        return 'Iconic landmarks and must-visit spots across Lombok, from waterfalls to viewpoints and historic sites.';
       case 'Culinary':
         return 'Savor authentic Sasak cuisine and fresh seafood. Taste traditional dishes like Ayam Taliwang and Plecing Kangkung.';
       case 'Islands':
@@ -364,6 +389,11 @@ class CategoryGrid extends StatelessWidget {
         {'name': 'Qunci Villas', 'location': 'Mangsit', 'image': 'https://images.unsplash.com/photo-1571896349842-33c89424de2d'},
         {'name': 'Oberoi Resort', 'location': 'Tanjung', 'image': 'https://images.unsplash.com/photo-1540541338287-41700207dee6'},
         {'name': 'Katamaran Resort', 'location': 'Senggigi', 'image': 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4'},
+      ],
+      'Destinations': [
+        {'name': 'Bukit Merese', 'location': 'South Lombok', 'image': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4'},
+        {'name': 'Sendang Gile', 'location': 'Senaru', 'image': 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9'},
+        {'name': 'Sade Village', 'location': 'Central Lombok', 'image': 'https://images.unsplash.com/photo-1528181304801-259f2e4b7a6f'},
       ],
       'Culinary': [
         {'name': 'Taliwang Khas', 'location': 'Mataram', 'image': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'},

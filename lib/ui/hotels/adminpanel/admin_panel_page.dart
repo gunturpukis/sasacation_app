@@ -19,8 +19,8 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.hotel,
             title: 'Manage Hotels',
             description: 'Add, edit, or remove hotels',
-            color: AppTheme.primaryColor,
-            onTap: () {},
+            color: AppTheme.primaryContainer,
+            onTap: () => _showComingSoon(context, 'Manage Hotels'),
           ),
           const SizedBox(height: 16),
           _buildAdminCard(
@@ -28,8 +28,8 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.place,
             title: 'Manage Destinations',
             description: 'Add, edit, or remove tourist destinations',
-            color: Colors.orange,
-            onTap: () {},
+            color: AppTheme.secondaryContainer,
+            onTap: () => _showComingSoon(context, 'Manage Destinations'),
           ),
           const SizedBox(height: 16),
           _buildAdminCard(
@@ -37,8 +37,8 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.restaurant,
             title: 'Manage Culinary',
             description: 'Add, edit, or remove restaurants',
-            color: Colors.green,
-            onTap: () {},
+            color: AppTheme.successColor,
+            onTap: () => _showComingSoon(context, 'Manage Culinary'),
           ),
           const SizedBox(height: 16),
           _buildAdminCard(
@@ -46,8 +46,8 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.directions_car,
             title: 'Manage Transport',
             description: 'Add, edit, or remove transport options',
-            color: Colors.purple,
-            onTap: () {},
+            color: AppTheme.primary,
+            onTap: () => _showComingSoon(context, 'Manage Transport'),
           ),
           const SizedBox(height: 16),
           _buildAdminCard(
@@ -55,8 +55,8 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.upload_file,
             title: 'Bulk Upload',
             description: 'Upload multiple items at once',
-            color: Colors.teal,
-            onTap: () {},
+            color: AppTheme.tertiaryContainer,
+            onTap: () => _showComingSoon(context, 'Bulk Upload'),
           ),
           const SizedBox(height: 16),
           _buildAdminCard(
@@ -64,11 +64,17 @@ class AdminPanelScreen extends StatelessWidget {
             icon: Icons.analytics,
             title: 'Analytics',
             description: 'View booking statistics and reports',
-            color: Colors.indigo,
-            onTap: () {},
+            color: AppTheme.tertiary,
+            onTap: () => _showComingSoon(context, 'Analytics'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature segera hadir di versi berikutnya')),
     );
   }
 

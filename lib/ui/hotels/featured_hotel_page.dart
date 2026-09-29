@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
-import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
  
 class FeaturedHotels extends StatefulWidget {
@@ -41,10 +42,7 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
               itemBuilder: (context, index) {
                 final hotel = hotels[index];
                 return GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => HotelDetailScreen(hotelId: hotel.id)),
-                  ),
+                  onTap: () => context.push(AppRouter.hotelDetailPath(hotel.id)),
                   child: Container(
                     width: 280,
                     margin: const EdgeInsets.only(right: 16),

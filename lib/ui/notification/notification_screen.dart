@@ -21,6 +21,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final _repo = NotificationRepository();
   List<NotificationModel> _notifications = [];
   bool _loading = true;
+  String _filter = 'Semua';
+
+  /// Kategori mengikuti desain (All/Budget/Weather/Travel) tapi dipetakan ke
+  /// tipe nyata yang dikirim backend — tanpa mengarang kategori kosong.
+  String _categoryFor(String type) {
+    if (type.startsWith('payment')) return 'Pembayaran';
+    if (type.startsWith('booking')) return 'Booking';
+    return 'Info';
+  }
  
   @override
   void initState() {
@@ -38,14 +47,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
  
   IconData _iconFor(String type) {
-    switch (type) {
-      case 'payment_success':
-        return Icons.payments_outlined;
-      case 'booking_cancelled':
-        return Icons.cancel_outlined;
-      default:
-        return Icons.notifications_outlined;
-    }
+    if (type.startsWith('payment')) return Icons.payments_outlined;
+    if (type == 'booking_cancelled') return Icons.cancel_outlined;
+    if (type.startsWith('booking')) return Icons.confirmation_number_outlined;
+    return Icons.notifications_outlined;
   }
  
   String _timeAgo(DateTime dt) {
@@ -79,82 +84,201 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final n = _notifications[index];
-                      return GestureDetector(
-                        onTap: () {
-                          if (!n.isRead) {
-                            _repo.markAsRead(n.id);
-                            setState(() {
-                              _notifications[index] = NotificationModel(
-                                id: n.id,
-                                title: n.title,
-                                body: n.body,
-                                type: n.type,
-                                data: n.data,
-                                readAt: DateTime.now(),
-                                createdAt: n.createdAt,
-                              );
-                            });
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: n.isRead ? AppTheme.surfaceContainerLowest : AppTheme.primary.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                            boxShadow: AppTheme.softCardShadow,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                                ),
-                                child: Icon(_iconFor(n.type), size: 20, color: AppTheme.primary),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(n.title,
-                                        style: TextStyle(
-                                            fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w700,
-                                            fontSize: 14)),
-                                    const SizedBox(height: 3),
-                                    Text(n.body, style: Theme.of(context).textTheme.bodyMedium),
-                                    const SizedBox(height: 6),
-                                    Text(_timeAgo(n.createdAt),
-                                        style: TextStyle(fontSize: 11, color: AppTheme.outline)),
-                                  ],
-                                ),
-                              ),
-                              if (!n.isRead)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(top: 4),
-                                  decoration: const BoxDecoration(
-                                      color: AppTheme.secondaryContainer, shape: BoxShape.circle),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+              : _buildFilteredBody(),
+    );
+  }
+
+  /// Body dengan filter chips + pengelompokan waktu mengikuti desain.
+  /// Semua dihitung dari data nyata (client-side, tanpa backend baru).
+  Widget _buildFilteredBody() {
+    final categories = <String>[
+      'Semua',
+      ...{for (final n in _notifications) _categoryFor(n.type)},
+    ];
+    if (!categories.contains(_filter)) _filter = 'Semua';
+    final filtered = _filter == 'Semua'
+        ? _notifications
+        : _notifications.where((n) => _categoryFor(n.type) == _filter).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.filter_list_off, size: 56, color: AppTheme.outlineVariant),
+            const SizedBox(height: 12),
+            Text('Tidak ada notifikasi $_filter',
+                style: Theme.of(context).textTheme.titleLarge),
+          ],
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    bool isToday(DateTime dt) =>
+        dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final today = filtered.where((n) => isToday(n.createdAt)).toList();
+    final week = filtered
+        .where((n) => !isToday(n.createdAt) && now.difference(n.createdAt).inDays < 7)
+        .toList();
+    final older = filtered
+        .where((n) => !isToday(n.createdAt) && now.difference(n.createdAt).inDays >= 7)
+        .toList();
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            itemCount: categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final cat = categories[i];
+              final selected = cat == _filter;
+              return ChoiceChip(
+                label: Text(cat),
+                selected: selected,
+                onSelected: (_) => setState(() => _filter = cat),
+                selectedColor: AppTheme.primaryContainer,
+                backgroundColor: AppTheme.surfaceContainerLowest,
+                labelStyle: TextStyle(
+                  color: selected ? Colors.white : AppTheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                  side: BorderSide(
+                    color: selected
+                        ? AppTheme.primaryContainer
+                        : AppTheme.outlineVariant,
                   ),
                 ),
+              );
+            },
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                if (today.isNotEmpty) ...[
+                  _groupHeader('Hari ini'),
+                  ...today.map(_buildCard),
+                ],
+                if (week.isNotEmpty) ...[
+                  _groupHeader('Minggu ini'),
+                  ...week.map(_buildCard),
+                ],
+                if (older.isNotEmpty) ...[
+                  _groupHeader('Lebih lama'),
+                  ...older.map(_buildCard),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _groupHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Text(label.toUpperCase(),
+          style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+              color: AppTheme.outline)),
+    );
+  }
+
+  Widget _buildCard(NotificationModel n) {
+    final index = _notifications.indexOf(n);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        onTap: () {
+          if (!n.isRead && index != -1) {
+            _repo.markAsRead(n.id);
+            setState(() {
+              _notifications[index] = NotificationModel(
+                id: n.id,
+                title: n.title,
+                body: n.body,
+                type: n.type,
+                data: n.data,
+                readAt: DateTime.now(),
+                createdAt: n.createdAt,
+              );
+            });
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: n.isRead ? AppTheme.surfaceContainerLowest : AppTheme.primary.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            boxShadow: AppTheme.softCardShadow,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                ),
+                child: Icon(_iconFor(n.type), size: 20, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(n.title,
+                              style: TextStyle(
+                                  fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w700,
+                                  fontSize: 14)),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(_categoryFor(n.type),
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primary)),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(n.body, style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(height: 6),
+                    Text(_timeAgo(n.createdAt),
+                        style: const TextStyle(fontSize: 11, color: AppTheme.outline)),
+                  ],
+                ),
+              ),
+              if (!n.isRead)
+                Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.only(top: 4, left: 4),
+                  decoration: const BoxDecoration(
+                      color: AppTheme.secondaryContainer, shape: BoxShape.circle),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

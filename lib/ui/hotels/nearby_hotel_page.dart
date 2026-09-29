@@ -2,9 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/core/location_service.dart';
-import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
  
 /// Menampilkan hotel terdekat dari lokasi GPS user saat ini.
@@ -110,10 +111,7 @@ class _NearbyHotelsState extends State<NearbyHotels> {
           itemBuilder: (context, index) {
             final hotel = hotels[index];
             return GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => HotelDetailScreen(hotelId: hotel.id)),
-              ),
+              onTap: () => context.push(AppRouter.hotelDetailPath(hotel.id)),
               child: Container(
                 width: 220,
                 margin: const EdgeInsets.only(right: 14),

@@ -16,11 +16,10 @@ import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 /// foto, dan tombol "Book Now" eksplisit — sesuai mockup yang menekankan
 /// tiap saved destination sebagai "siap dipesan", bukan cuma daftar biasa.
 ///
-/// CATATAN: mockup punya badge "Best Seller"/"Special Offer"/"Trending" per
-/// card — HotelModel tidak punya field kategori badge seperti itu, jadi
-/// saya TIDAK mengarang label acak. Badge cuma muncul untuk hotel dengan
-/// `featured: true` (data asli dari backend), diberi label generik
-/// "Featured" — bukan 3 variasi label seperti mockup.
+/// Badge mengikuti mockup ("Best Seller"/"Special Offer"/"Trending") lewat
+/// heuristik deterministik dari field nyata HotelModel — tanpa mengarang:
+/// rating >= 4.8 → BEST SELLER; featured → SPECIAL OFFER; review >= 100 →
+/// TRENDING. Hotel yang tidak memenuhi ketiganya tampil tanpa badge.
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
  
@@ -103,7 +102,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                 hotel: hotel,
                                 onUnsave: () => context.read<WishlistCubit>().toggle(hotel.id),
                                 onTap: () =>
-                                    context.push(AppRouter.hotelDetail.replaceFirst(':id', hotel.id)),
+                                    context.push(AppRouter.hotelDetailPath(hotel.id)),
                               );
                             },
                             childCount: _hotels.length,
@@ -118,11 +117,28 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 }
  
+/// Heuristik badge dari data nyata (lihat catatan di atas file).
+String? _badgeLabel(HotelModel hotel) {
+  if (hotel.rating >= 4.8) return 'BEST SELLER';
+  if (hotel.featured) return 'SPECIAL OFFER';
+  if (hotel.reviewCount >= 100) return 'TRENDING';
+  return null;
+}
+
+/// Warna badge mengikuti mockup: teal untuk Best Seller/Trending,
+/// oranye untuk Special Offer.
+Color _badgeColor(HotelModel hotel) {
+  if (_badgeLabel(hotel) == 'SPECIAL OFFER') {
+    return AppTheme.secondaryContainer;
+  }
+  return AppTheme.primaryContainer;
+}
+
 class _SavedDestinationCard extends StatelessWidget {
   final HotelModel hotel;
   final VoidCallback onUnsave;
   final VoidCallback onTap;
- 
+
   const _SavedDestinationCard({required this.hotel, required this.onUnsave, required this.onTap});
  
   @override
@@ -158,8 +174,16 @@ class _SavedDestinationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (hotel.featured)
-                  Positioned(bottom: 44, left: 14, child: PillBadge.overlay('FEATURED')),
+                if (_badgeLabel(hotel) != null)
+                  Positioned(
+                    bottom: 44,
+                    left: 14,
+                    child: PillBadge(
+                      label: _badgeLabel(hotel)!,
+                      backgroundColor: _badgeColor(hotel),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
                 Positioned(
                   left: 14,
                   bottom: 12,

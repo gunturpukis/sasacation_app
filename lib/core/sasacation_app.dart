@@ -7,6 +7,7 @@ import 'package:sasacation/data/repo/checkout_repository.dart';
 import 'package:sasacation/data/repo/explore_repository.dart';
 import 'package:sasacation/data/repo/hotel_repository.dart';
 import 'package:sasacation/data/repo/recommendation_repository.dart';
+import 'package:sasacation/data/repo/trip_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
@@ -16,6 +17,7 @@ import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
 import 'package:sasacation/viewmodel/recommendation/recommendation_cubit.dart';
+import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class LombokApp extends StatelessWidget {
@@ -49,6 +51,9 @@ class LombokApp extends StatelessWidget {
         ),
         BlocProvider<RecommendationCubit>(
           create: (_) => RecommendationCubit(repository: RecommendationRepository()),
+        ),
+         BlocProvider<TripBloc>(
+          create: (_) => TripBloc(tripRepository: TripRepository()),
         ),
       ],
       child: MaterialApp.router(

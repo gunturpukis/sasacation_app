@@ -3,12 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
-import 'package:sasacation/ui/hotels/detail_hotels_page.dart';
 import 'package:sasacation/ui/hotels/featured_hotel_page.dart';
 import 'package:sasacation/ui/hotels/nearby_hotel_page.dart';
 import 'package:sasacation/ui/widget/category_widget.dart';
 import 'package:sasacation/ui/widget/gradient_image_card.dart';
-import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/viewmodel/recommendation/recommendation_cubit.dart';
  
 /// HomeScreen — restyle mengikuti mockup `home_discover_destinations`.
@@ -79,7 +77,9 @@ class HomeScreen extends StatelessWidget {
                     // ─── Popular Categories ───────────────────────────────
                     Text('Popular Categories', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 12),
-                    const CategoryGrid(),
+                    CategoryGrid(
+                      onExploreCategory: (_) => onNavigateToTab?.call(1),
+                    ),
                     const SizedBox(height: AppTheme.spacingSectionGap),
  
                     // ─── Trending This Week ───────────────────────────────
@@ -323,10 +323,7 @@ class _RecommendedSection extends StatelessWidget {
                 price: hotel.price,
                 rating: hotel.rating,
                 overlayBadgeLabel: index == 0 ? 'Most Popular' : null,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => HotelDetailScreen(hotelId: hotel.id)),
-                ),
+                onTap: () => context.push(AppRouter.hotelDetailPath(hotel.id)),
               );
             },
           ),
