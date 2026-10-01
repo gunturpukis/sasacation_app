@@ -11,3 +11,9 @@ class BookingCancelRequested extends BookingEvent {
   final String bookingId;
   BookingCancelRequested({required this.bookingId});
 }
+
+/// F1: minta Snap redirectUrl aktif untuk booking pending.
+class BookingPaymentResumeRequested extends BookingEvent {
+  final String bookingId;
+  BookingPaymentResumeRequested({required this.bookingId});
+}

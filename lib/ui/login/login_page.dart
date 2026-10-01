@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sasacation/data/repo/auth_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 
@@ -140,13 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Reset password belum tersedia — hubungi admin untuk bantuan',
-                          ),
-                        ),
-                      ),
+                      onPressed: () => _handleForgotPassword(context),
                       child: const Text('Lupa Password?'),
                     ),
                   ),
@@ -254,6 +249,44 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Reset password REAL via Firebase ke email yang diketik di form.
+  Future<void> _handleForgotPassword(BuildContext context) async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Isi email kamu dulu, lalu ketuk Lupa Password lagi'),
+        ),
+      );
+      return;
+    }
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Text('Kirim email reset password ke $email?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Kirim')),
+        ],
+      ),
+    );
+    if (send != true || !context.mounted) return;
+    final result = await AuthRepository().sendPasswordReset(email);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['success'] == true
+            ? 'Email reset terkirim ke $email'
+            : result['message'] ?? 'Gagal mengirim email reset'),
       ),
     );
   }

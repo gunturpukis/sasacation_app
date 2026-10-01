@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/notification_model.dart';
 import 'package:sasacation/data/repo/notification_repository.dart';
+import 'package:sasacation/route/approuter.dart';
  
 /// NotificationsScreen — layar baru, sebelumnya TIDAK ADA sama sekali di
 /// app (cuma ada service push token registration, tanpa in-app history).
@@ -198,6 +200,59 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  /// Tombol aksi notifikasi (F7+): petakan `data.action`
+  /// ({label, route, params}) dari backend ke route aplikasi.
+  /// Hanya route yang punya layar tujuan yang dirender — sisanya (mis.
+  /// payment_methods, group_detail, task_detail sebelum UI-nya ada) TIDAK
+  /// menampilkan tombol alih-alih navigasi buntu.
+  ({String label, String path})? _actionFor(NotificationModel n) {
+    final data = n.data;
+    final rawAction = data['action'];
+    String? route;
+    Map<String, dynamic> params = {};
+    String? label;
+    if (rawAction is Map) {
+      route = rawAction['route']?.toString();
+      label = rawAction['label']?.toString();
+      final p = rawAction['params'];
+      if (p is Map) params = Map<String, dynamic>.from(p);
+    }
+    String? param(String a, String b) =>
+        (params[a] ?? params[b] ?? data[a] ?? data[b])?.toString();
+
+    final pollId = param('pollId', 'poll_id');
+    if ((route == 'poll_detail' || (route == null && pollId != null)) &&
+        pollId != null) {
+      return (label: label ?? 'Vote now', path: AppRouter.pollDetailPath(pollId));
+    }
+    final hotelId = param('hotelId', 'hotel_id');
+    if (route == 'hotel_detail' && hotelId != null) {
+      return (label: label ?? 'Lihat Hotel', path: AppRouter.hotelDetailPath(hotelId));
+    }
+    if (route == 'booking_detail') {
+      return (label: label ?? 'Lihat Booking', path: AppRouter.myBookings);
+    }
+    final tripId = param('itineraryId', 'itinerary_id');
+    if (route == 'itinerary_detail' && tripId != null) {
+      return (label: label ?? 'Lihat Itinerary', path: AppRouter.tripDetailPath(tripId));
+    }
+    final groupId = param('groupId', 'group_id');
+    if (route == 'group_detail' && groupId != null) {
+      return (label: label ?? 'Lihat Grup', path: AppRouter.groupDetailPath(groupId));
+    }
+    if (route == 'impact_summary') {
+      return (label: label ?? 'Lihat Dampak', path: AppRouter.sustainability);
+    }
+    if (route == 'wallet') {
+      return (label: label ?? 'Lihat Wallet', path: AppRouter.paymentHistory);
+    }
+    if (route == 'task_detail') {
+      // Tanpa layar detail per-task — arahkan ke daftar tasks.
+      return (label: label ?? 'Lihat Tasks', path: AppRouter.tasks);
+    }
+    return null;
+  }
+
   Widget _buildCard(NotificationModel n) {
     final index = _notifications.indexOf(n);
     return Padding(
@@ -264,6 +319,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 6),
                     Text(_timeAgo(n.createdAt),
                         style: const TextStyle(fontSize: 11, color: AppTheme.outline)),
+                    // Tombol aksi backend (F7+): hanya bila route terpetakan.
+                    if (_actionFor(n) case (label: final label, path: final path))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => context.push(path),
+                            child: Text(label),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

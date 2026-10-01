@@ -4,11 +4,16 @@ import '../model/hotel_model.dart';
 
 class HotelRepository {
   // Ambil semua hotel (dengan filter opsional)
+  //
+  // F3: `amenities` (AND, dipisah koma) dan `sort`
+  // (rating|price_asc|price_desc|newest, salah → 400) difilter di server.
   Future<List<HotelModel>> getHotels({
     bool? featured,
     String? search,
     double? minPrice,
     double? maxPrice,
+    List<String>? amenities,
+    String? sort,
     int page = 1,
     int limit = 10,
   }) async {
@@ -18,6 +23,9 @@ class HotelRepository {
         'search': ?search,
         'minPrice': ?minPrice,
         'maxPrice': ?maxPrice,
+        if (amenities != null && amenities.isNotEmpty)
+          'amenities': amenities.join(','),
+        'sort': ?sort,
         'page': page,
         'limit': limit,
       });

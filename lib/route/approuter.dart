@@ -11,6 +11,8 @@ import 'package:sasacation/ui/ai/smart_search_screen.dart';
 import 'package:sasacation/ui/ai/trip_planner_screen.dart';
 import 'package:sasacation/ui/explore/destination_detail_screen.dart';
 import 'package:sasacation/ui/booking/booking_page.dart';
+import 'package:sasacation/ui/groups/group_detail_screen.dart';
+import 'package:sasacation/ui/groups/group_list_screen.dart';
 import 'package:sasacation/ui/checkout/booking_confirm_screen.dart';
 import 'package:sasacation/ui/checkout/checkout_screen.dart';
 import 'package:sasacation/ui/hotels/adminpanel/admin_panel_page.dart';
@@ -25,6 +27,10 @@ import 'package:sasacation/ui/trip/trip_detail_screen.dart';
 import 'package:sasacation/ui/trip/trip_management_screen.dart';
 import 'package:sasacation/ui/wishlist/wishlist_page.dart';
 import 'package:sasacation/ui/notification/notification_screen.dart';
+import 'package:sasacation/ui/tasks/tasks_screen.dart';
+import 'package:sasacation/ui/poll/poll_detail_screen.dart';
+import 'package:sasacation/ui/settings/personal_info_screen.dart';
+import 'package:sasacation/ui/settings/security_screen.dart';
 import 'package:sasacation/ui/settings/setting_screen.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
 import 'package:sasacation/ui/onboarding/onboarding_page.dart';
@@ -41,6 +47,8 @@ class AppRouter {
   static const String myBookings = '/my-bookings';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
+  static const String personalInfo = '/settings/personal-info';
+  static const String security = '/settings/security';
   static const String paymentHistory = '/payment-history';
   static const String sustainability = '/sustainability';
   // Alias lama (typo) — dipertahankan agar deep-link lama tidak 404.
@@ -59,11 +67,22 @@ class AppRouter {
   // Trip Management
   static const String tripManagement = '/trip-management';
   static const String tripDetail = '/trip-detail/:id';
+  // F7: voting grup
+  static const String pollDetail = '/poll/:id';
+  // F8: budget grup
+  static const String groups = '/groups';
+  static const String groupDetail = '/group/:id';
+  // F10: travel tasks
+  static const String tasks = '/tasks';
 
   static String tripDetailPath(String id) =>
       tripDetail.replaceFirst(':id', id);
   static String hotelDetailPath(String id) =>
       hotelDetail.replaceFirst(':id', id);
+  static String pollDetailPath(String id) =>
+      pollDetail.replaceFirst(':id', id);
+  static String groupDetailPath(String id) =>
+      groupDetail.replaceFirst(':id', id);
 
   /// Rute yang boleh diakses tanpa login (guest browsing), meniru pola OTA:
   /// pengguna bisa melihat-lihat hotel bebas, login baru wajib saat mau
@@ -158,6 +177,15 @@ class Routes {
         path: AppRouter.settings,
         builder: (_, _) => const SettingsScreen(),
       ),
+      // Butuh akun (tidak ada di guestAccessible) — sama seperti induknya.
+      GoRoute(
+        path: AppRouter.personalInfo,
+        builder: (_, _) => const PersonalInfoScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.security,
+        builder: (_, _) => const SecurityScreen(),
+      ),
       // ─── AI ────────────────────────────────────────────────────────────────
       GoRoute(
         path: AppRouter.aiChat,
@@ -180,6 +208,27 @@ class Routes {
         path: AppRouter.tripDetail,
         builder: (_, state) =>
             TripDetailScreen(tripId: state.pathParameters['id']!),
+      ),
+      // F7: butuh akun (tidak ada di guestAccessible).
+      GoRoute(
+        path: AppRouter.pollDetail,
+        builder: (_, state) =>
+            PollDetailScreen(pollId: state.pathParameters['id']!),
+      ),
+      // F8: butuh akun (tidak ada di guestAccessible).
+      GoRoute(
+        path: AppRouter.groups,
+        builder: (_, _) => const GroupListScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.groupDetail,
+        builder: (_, state) =>
+            GroupDetailScreen(groupId: state.pathParameters['id']!),
+      ),
+      // F10: butuh akun (tidak ada di guestAccessible).
+      GoRoute(
+        path: AppRouter.tasks,
+        builder: (_, _) => const TasksScreen(),
       ),
        GoRoute(
         path: AppRouter.paymentHistory,

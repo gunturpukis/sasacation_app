@@ -92,4 +92,57 @@ class BookingRepository {
       };
     }
   }
+
+  /// F11: jadwalkan ulang booking confirmed. Kembalikan selisih harga
+  /// (price_diff > 0 = perlu bayar tambahan, belum otomatis).
+  Future<Map<String, dynamic>> rescheduleBooking({
+    required String id,
+    required DateTime checkIn,
+    required DateTime checkOut,
+  }) async {
+    try {
+      final res = await ApiClient.patch('/bookings/$id/reschedule', data: {
+        'checkIn': checkIn.toIso8601String(),
+        'checkOut': checkOut.toIso8601String(),
+      });
+      final data = res.data['data'] as Map<String, dynamic>? ?? {};
+      double numVal(String key) {
+        final v = data[key];
+        if (v is num) return v.toDouble();
+        return double.tryParse('$v') ?? 0;
+      }
+
+      return {
+        'success': true,
+        'message': res.data['message'] ?? 'Jadwal booking diperbarui',
+        'priceDiff': numVal('price_diff'),
+        'newTotal': numVal('new_total'),
+      };
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message':
+            e.response?.data?['message'] ?? 'Gagal menjadwalkan ulang',
+      };
+    }
+  }
+
+  /// Lanjutkan pembayaran booking pending (F1): ambil Snap `redirectUrl`
+  /// yang masih aktif. 404 = tidak ada pembayaran aktif → panggil
+  /// `/checkout/pay` ulang (di luar scope fungsi ini).
+  Future<Map<String, dynamic>> resumePayment(String bookingId) async {
+    try {
+      final res = await ApiClient.get('/checkout/resume/$bookingId');
+      final data = res.data['data'] as Map<String, dynamic>;
+      return {'success': true, 'redirectUrl': data['redirectUrl'] as String};
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      return {
+        'success': false,
+        'message': code == 404
+            ? 'Tidak ada pembayaran aktif untuk booking ini'
+            : e.response?.data?['message'] ?? 'Gagal melanjutkan pembayaran',
+      };
+    }
+  }
 }

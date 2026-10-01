@@ -23,4 +23,9 @@ class AuthLogoutRequested extends AuthEvent {}
 
 class AuthProfileRequested extends AuthEvent {}
 
+class AuthProfileUpdateRequested extends AuthEvent {
+  final String name;
+  AuthProfileUpdateRequested({required this.name});
+}
+
 class AuthCheckStatusRequested extends AuthEvent {}

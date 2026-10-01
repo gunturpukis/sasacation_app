@@ -9,6 +9,12 @@ import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 /// View: BookingSheet
 /// Collects stay details (dates, guests) then navigates to CheckoutScreen.
 /// Payment is handled entirely in CheckoutScreen + PaymentResult page.
+///
+/// CATATAN vs mockup "Confirm Booking" (metode tersimpan Visa/PayPal):
+/// pembayaran saat ini lewat Midtrans redirect per-transaksi tanpa vault
+/// kartu. KONTRAK BACKEND untuk saved methods: tokenisasi Midtrans
+/// (saved_token_id per user) + GET /payment-methods; Flutter tinggal tambah
+/// radio list di sheet ini sebelum lanjut checkout.
 class BookingSheet extends StatefulWidget {
   final HotelModel hotel;
   const BookingSheet({super.key, required this.hotel});

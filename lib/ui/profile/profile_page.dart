@@ -361,9 +361,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       return const SizedBox.shrink();
                     }
                     final now = DateTime.now();
+                    // F1: booking pending ikut tampil dengan badge
+                    // "Action Required" seperti mockup — penyelesaiannya
+                    // lewat tombol Complete Booking di My Bookings.
                     final upcoming = bookingState.bookings
                         .where((b) =>
-                            b.isConfirmed && b.checkOut.isAfter(now))
+                            (b.isConfirmed || b.isPending) &&
+                            b.checkOut.isAfter(now))
                         .toList()
                       ..sort((a, b) => a.checkIn.compareTo(b.checkIn));
                     if (upcoming.isEmpty) return const SizedBox.shrink();
@@ -404,11 +408,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildMenuItem(
                         icon: Icons.person_outline,
                         title: 'Personal Information',
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Edit profil segera hadir di versi berikutnya'),
-                          ),
-                        ),
+                        onTap: () =>
+                            context.push(AppRouter.personalInfo),
                       ),
                       _divider(),
                       _buildMenuItem(
@@ -427,6 +428,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.favorite_border,
                         title: 'Saved Places',
                         onTap: () => context.push(AppRouter.wishlist),
+                      ),
+                      _divider(),
+                      _buildMenuItem(
+                        icon: Icons.group_outlined,
+                        title: 'My Groups',
+                        onTap: () => context.push(AppRouter.groups),
+                      ),
+                      _divider(),
+                      _buildMenuItem(
+                        icon: Icons.task_alt_outlined,
+                        title: 'Travel Tasks',
+                        onTap: () => context.push(AppRouter.tasks),
                       ),
                       _divider(),
                       _buildMenuItem(
@@ -555,8 +568,15 @@ class _UpcomingTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM yyyy');
     final daysLeft = booking.checkIn.difference(DateTime.now()).inDays;
-    final badgeLabel =
-        daysLeft > 0 ? 'Dalam $daysLeft Hari' : 'CONFIRMED';
+    final isPending = booking.isPending;
+    final badgeLabel = isPending
+        ? 'Action Required'
+        : daysLeft > 0
+            ? 'Dalam $daysLeft Hari'
+            : 'CONFIRMED';
+    final badgeColor = isPending
+        ? AppTheme.secondaryContainer
+        : AppTheme.primaryContainer;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -592,7 +612,7 @@ class _UpcomingTripCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryContainer,
+                    color: badgeColor,
                     borderRadius:
                         BorderRadius.circular(AppTheme.radiusFull),
                   ),

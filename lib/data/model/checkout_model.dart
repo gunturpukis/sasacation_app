@@ -5,6 +5,8 @@ class CheckoutPricing {
   final double tax;
   final double taxRate;
   final double serviceFee;
+  /// F4: cleaning fee dari backend (0 bila tak ada — parser toleran).
+  final double cleaningFee;
   final double total;
   final String currency;
 
@@ -14,19 +16,29 @@ class CheckoutPricing {
     required this.tax,
     required this.taxRate,
     required this.serviceFee,
+    this.cleaningFee = 0,
     required this.total,
     required this.currency,
   });
 
-  factory CheckoutPricing.fromJson(Map<String, dynamic> json) => CheckoutPricing(
-        pricePerNight: (json['pricePerNight'] as num).toDouble(),
-        subtotal: (json['subtotal'] as num).toDouble(),
-        tax: (json['tax'] as num).toDouble(),
-        taxRate: (json['taxRate'] as num).toDouble(),
-        serviceFee: (json['serviceFee'] as num).toDouble(),
-        total: (json['total'] as num).toDouble(),
-        currency: json['currency'] ?? 'USD',
-      );
+  factory CheckoutPricing.fromJson(Map<String, dynamic> json) {
+    double numVal(String key) {
+      final v = json[key];
+      if (v is num) return v.toDouble();
+      return double.tryParse('$v') ?? 0;
+    }
+
+    return CheckoutPricing(
+      pricePerNight: numVal('pricePerNight'),
+      subtotal: numVal('subtotal'),
+      tax: numVal('tax'),
+      taxRate: numVal('taxRate'),
+      serviceFee: numVal('serviceFee'),
+      cleaningFee: numVal('cleaningFee'),
+      total: numVal('total'),
+      currency: json['currency'] ?? 'USD',
+    );
+  }
 }
 
 class CheckoutSession {
@@ -93,6 +105,44 @@ class PaymentMethod {
         icon: json['icon'] ?? 'payment',
         available: json['available'] ?? true,
       );
+}
+
+// ─── Kartu tersimpan (F4) ─────────────────────────────────────────────────────
+// GET /payment-methods → [{ id, brand, last4, exp, is_primary, label }].
+// Kartu hanya tercatat setelah user mencentang "simpan kartu" di Snap
+// (param saveCard saat /pay) — daftar kosong = belum pernah menyimpan.
+class SavedPaymentMethod {
+  final String id;
+  final String brand;
+  final String last4;
+  final String? exp;
+  final bool isPrimary;
+  final String? label;
+
+  const SavedPaymentMethod({
+    required this.id,
+    required this.brand,
+    required this.last4,
+    this.exp,
+    this.isPrimary = false,
+    this.label,
+  });
+
+  factory SavedPaymentMethod.fromJson(Map<String, dynamic> json) =>
+      SavedPaymentMethod(
+        id: (json['id'] ?? '').toString(),
+        brand: (json['brand'] ?? '').toString(),
+        last4: (json['last4'] ?? '').toString(),
+        exp: json['exp']?.toString(),
+        isPrimary: json['is_primary'] == true || json['isPrimary'] == true,
+        label: json['label']?.toString(),
+      );
+
+  /// Nama tampilan: julukan user bila ada, kalau tidak brand + 4 digit.
+  String get displayName {
+    final base = '${brand.toUpperCase()} •• $last4';
+    return label != null && label!.isNotEmpty ? '$base ($label)' : base;
+  }
 }
 
 // ─── Checkout Payment Initiated (respons baru /checkout/pay) ──────────────────

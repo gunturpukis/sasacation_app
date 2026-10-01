@@ -114,6 +114,20 @@ class AuthRepository {
     }
   }
 
+  /// Kirim email reset password via Firebase. REAL — dipakai layar Security
+  /// dan "Lupa Password" di login. (Ubah password sendiri lewat backend:
+  /// SettingsRepository.changePassword — satu pintu dengan server.)
+  Future<Map<String, dynamic>> sendPasswordReset(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+      return {'success': true};
+    } on fb.FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _firebaseMsg(e)};
+    } catch (_) {
+      return {'success': false, 'message': 'Gagal mengirim email reset'};
+    }
+  }
+
   /// Kirim lokasi GPS terakhir user ke backend (fitur geolocation "hotel terdekat").
   Future<bool> updateLocation({required double latitude, required double longitude}) async {
     try {

@@ -23,6 +23,12 @@ class CheckoutPaymentMethodSelected extends CheckoutEvent {
   CheckoutPaymentMethodSelected({required this.method});
 }
 
+/// F4: toggle "simpan kartu" — hanya relevan bila metode = credit_card.
+class CheckoutSaveCardChanged extends CheckoutEvent {
+  final bool save;
+  CheckoutSaveCardChanged({required this.save});
+}
+
 class CheckoutPaymentConfirmed extends CheckoutEvent {}
 
 class CheckoutReset extends CheckoutEvent {}

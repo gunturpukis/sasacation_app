@@ -20,3 +20,10 @@ class BookingError extends BookingState {
   final String message;
   BookingError({required this.message});
 }
+
+/// F1: redirectUrl Snap aktif siap dibuka (layar memanggil url_launcher).
+class BookingResumeReady extends BookingState {
+  final String bookingId;
+  final String redirectUrl;
+  BookingResumeReady({required this.bookingId, required this.redirectUrl});
+}

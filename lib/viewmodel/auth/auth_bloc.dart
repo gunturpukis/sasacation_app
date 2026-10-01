@@ -21,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthAppleSignInRequested>(_onAppleSignIn);
     on<AuthLogoutRequested>(_onLogout);
     on<AuthProfileRequested>(_onGetProfile);
+    on<AuthProfileUpdateRequested>(_onUpdateProfile);
   }
 
   Future<void> _onCheckStatus(AuthCheckStatusRequested event, Emitter<AuthState> emit) async {
@@ -83,6 +84,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await NotificationService.instance.unregisterToken();
     await _authRepository.logout();
     emit(AuthUnauthenticated());
+  }
+
+  Future<void> _onUpdateProfile(AuthProfileUpdateRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    final result = await _authRepository.updateProfile(name: event.name);
+    if (result['success'] == true) {
+      emit(AuthProfileUpdated(user: result['user'] as UserModel));
+    } else {
+      // CATATAN: state AuthError menimpa data user di memory. Layar pemanggil
+      // WAJIB dispatch AuthProfileRequested lagi setelah menampilkan error
+      // agar state kembali ke AuthAuthenticated. (Lihat personal_info_screen.)
+      emit(AuthError(message: result['message'] ?? 'Gagal memperbarui profil'));
+    }
   }
 
   Future<void> _onGetProfile(AuthProfileRequested event, Emitter<AuthState> emit) async {

@@ -19,6 +19,12 @@ import 'package:sasacation/data/repo/payment_repository.dart';
 /// sungguhan) dan daftar transaksi dengan status apa adanya
 /// (success/failed/refunded). Tidak ada top-up, transfer, atau bills — itu
 /// fitur yang butuh sistem saldo yang memang tidak ada.
+///
+/// KONTRAK BACKEND untuk Wallet penuh (bila diputuskan): tabel `wallets`
+/// (user_id, balance_cents) + `wallet_transactions` + `loyalty_points`;
+/// endpoint GET /wallet (saldo+poin), POST /wallet/topup (via Midtrans),
+/// GET /wallet/transactions. Flutter tinggal tambah WalletRepository +
+/// kartu saldo di atas riwayat ini — tidak ada perubahan skema UI besar.
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({super.key});
  
@@ -28,26 +34,175 @@ class PaymentHistoryScreen extends StatefulWidget {
  
 class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   final _repo = PaymentRepository();
+  final _walletRepo = WalletRepository();
   List<PaymentModel> _payments = [];
   double _totalSpent = 0;
+  LoyaltyInfo? _loyalty;
   bool _loading = true;
- 
+
   @override
   void initState() {
     super.initState();
     _load();
   }
- 
+
   Future<void> _load() async {
     setState(() => _loading = true);
     final result = await _repo.getPaymentHistory();
+    final loyalty = await _walletRepo.getLoyalty();
+    if (!mounted) return;
     setState(() {
       _payments = result['payments'] as List<PaymentModel>;
       _totalSpent = result['totalSpent'] as double;
+      _loyalty = loyalty;
       _loading = false;
     });
   }
+
+  /// F9: transfer saldo ke user lain via email. Gagal (mis. saldo kurang)
+  /// tampil sebagai snackbar error backend apa adanya.
+  Future<void> _transfer() async {
+    final emailCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+    var saving = false;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dlg) => StatefulBuilder(
+        builder: (dlg, setDlg) => AlertDialog(
+          title: const Text('Transfer Saldo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email penerima',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: amountCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah (USD)',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Catatan (opsional)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dlg, false),
+                child: const Text('Batal')),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final amount =
+                          double.tryParse(amountCtrl.text.trim());
+                      if (!emailCtrl.text.contains('@') ||
+                          amount == null ||
+                          amount <= 0) {
+                        return;
+                      }
+                      setDlg(() => saving = true);
+                      final res = await _walletRepo.transfer(
+                        email: emailCtrl.text.trim(),
+                        amount: amount,
+                        note: noteCtrl.text.trim().isEmpty
+                            ? null
+                            : noteCtrl.text.trim(),
+                      );
+                      if (!dlg.mounted) return;
+                      Navigator.pop(dlg, res['success'] == true);
+                      if (mounted && res['success'] != true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['message'] ??
+                                'Transfer gagal'),
+                            backgroundColor: AppTheme.error,
+                          ),
+                        );
+                      }
+                    },
+              child: const Text('Kirim'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transfer berhasil')),
+      );
+    }
+  }
  
+  Widget _loyaltyCard(BuildContext context, LoyaltyInfo info) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primary, AppTheme.primaryContainer],
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text('Sasacation Travel Pass',
+                    style: TextStyle(
+                        color: Colors.white70, fontSize: 13)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius:
+                      BorderRadius.circular(AppTheme.radiusFull),
+                ),
+                child: Text(info.tier,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('${info.points} pts',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(
+            'ID ${info.passId} • ${info.tripsCompleted} trip selesai',
+            style:
+                const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _methodIcon(String method) {
     switch (method) {
       case 'credit_card':
@@ -103,6 +258,32 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
+                  // F9: Travel Pass loyalitas — ID member + tier + poin,
+                  // semuanya dari GET /loyalty. Tanpa nomor kartu palsu.
+                  if (_loyalty != null) ...[
+                    _loyaltyCard(context, _loyalty!),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _transfer,
+                        icon: const Icon(Icons.send_outlined, size: 18),
+                        label: const Text('Transfer Saldo'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primary,
+                          side: const BorderSide(
+                              color: AppTheme.primaryContainer),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                AppTheme.radiusButton),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   // Ringkasan total dibelanjakan — REAL, dihitung dari
                   // transaksi sukses, bukan "saldo" seperti mockup.
                   Container(

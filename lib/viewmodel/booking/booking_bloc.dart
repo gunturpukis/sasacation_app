@@ -13,12 +13,26 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         super(BookingInitial()) {
     on<BookingListRequested>(_onListRequested);
     on<BookingCancelRequested>(_onCancelRequested);
+    on<BookingPaymentResumeRequested>(_onResumeRequested);
   }
 
   Future<void> _onListRequested(BookingListRequested event, Emitter<BookingState> emit) async {
     emit(BookingLoading());
     final bookings = await _bookingRepository.getMyBookings();
     emit(BookingListLoaded(bookings: bookings));
+  }
+
+  Future<void> _onResumeRequested(BookingPaymentResumeRequested event, Emitter<BookingState> emit) async {
+    emit(BookingLoading());
+    final result = await _bookingRepository.resumePayment(event.bookingId);
+    if (result['success'] == true) {
+      emit(BookingResumeReady(
+        bookingId: event.bookingId,
+        redirectUrl: result['redirectUrl'] as String,
+      ));
+    } else {
+      emit(BookingError(message: result['message'] ?? 'Gagal melanjutkan pembayaran'));
+    }
   }
 
   Future<void> _onCancelRequested(BookingCancelRequested event, Emitter<BookingState> emit) async {

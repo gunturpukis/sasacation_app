@@ -23,6 +23,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         super(CheckoutInitial()) {
     on<CheckoutInitiated>(_onInitiated);
     on<CheckoutPaymentMethodSelected>(_onMethodSelected);
+    on<CheckoutSaveCardChanged>(_onSaveCardChanged);
     on<CheckoutPaymentConfirmed>(_onPaymentConfirmed);
     on<CheckoutReset>(_onReset);
   }
@@ -58,6 +59,19 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       emit(CheckoutSessionLoaded(
         session: current.session,
         selectedMethod: event.method,
+        // Toggle save hanya bermakna untuk kartu kredit — reset saat ganti.
+        saveCard: event.method.id == 'credit_card' && current.saveCard,
+      ));
+    }
+  }
+
+  void _onSaveCardChanged(CheckoutSaveCardChanged event, Emitter<CheckoutState> emit) {
+    if (state is CheckoutSessionLoaded) {
+      final current = state as CheckoutSessionLoaded;
+      emit(CheckoutSessionLoaded(
+        session: current.session,
+        selectedMethod: current.selectedMethod,
+        saveCard: event.save,
       ));
     }
   }
@@ -76,6 +90,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       guestCount: _guestCount!,
       notes: _notes,
       paymentMethod: current.selectedMethod!.id,
+      saveCard: current.saveCard,
     );
 
     if (result['success'] != true) {

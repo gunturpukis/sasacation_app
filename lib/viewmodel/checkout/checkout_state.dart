@@ -9,8 +9,10 @@ class CheckoutLoading extends CheckoutState {}
 class CheckoutSessionLoaded extends CheckoutState {
   final CheckoutSession session;
   final PaymentMethod? selectedMethod;
+  final bool saveCard;
 
-  CheckoutSessionLoaded({required this.session, this.selectedMethod});
+  CheckoutSessionLoaded(
+      {required this.session, this.selectedMethod, this.saveCard = false});
 
   bool get canPay => selectedMethod != null;
 }

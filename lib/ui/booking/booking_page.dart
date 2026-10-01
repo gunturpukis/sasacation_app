@@ -3,10 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
+import 'package:sasacation/data/repo/explore_repository.dart';
 import 'package:sasacation/viewmodel/booking/booking_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// View: MyBookingsScreen
 /// Listens to BookingBloc (ViewModel) for user's booking list.
+///
+/// F1 (backend batch Figma audit): booking lahir `pending` — tab Pending +
+/// tombol "Complete Booking" membuka Snap `redirectUrl` aktif via
+/// `GET /checkout/resume/:id`. 404 (tidak ada pembayaran aktif) tampil
+/// sebagai snackbar error apa adanya.
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
 
@@ -15,6 +22,10 @@ class MyBookingsScreen extends StatefulWidget {
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
+  /// Id booking yang sedang dimintakan resume — spinner per-kartu agar
+  /// loading tidak menelan seluruh layar (BookingLoading = full-screen).
+  String? _resumingId;
+
   @override
   void initState() {
     super.initState();
@@ -22,10 +33,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     context.read<BookingBloc>().add(BookingListRequested());
   }
 
+  Future<void> _launchResume(String redirectUrl) async {
+    final url = Uri.parse(redirectUrl);
+    final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Tidak dapat membuka halaman pembayaran'),
+            backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('My Bookings'),
@@ -37,6 +60,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             indicatorColor: AppTheme.primaryColor,
             tabs: [
               Tab(text: 'Semua'),
+              Tab(text: 'Pending'),
               Tab(text: 'Aktif'),
               Tab(text: 'Selesai'),
               Tab(text: 'Batal'),
@@ -44,7 +68,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
         ),
         body: BlocConsumer<BookingBloc, BookingState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is BookingCancelled) {
               // Reload list setelah cancel
               context.read<BookingBloc>().add(BookingListRequested());
@@ -54,16 +78,27 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   backgroundColor: Colors.green,
                 ),
               );
+            } else if (state is BookingResumeReady) {
+              setState(() => _resumingId = null);
+              await _launchResume(state.redirectUrl);
+              // Muat ulang — webhook bisa mengubah pending → confirmed.
+              if (mounted) {
+                context.read<BookingBloc>().add(BookingListRequested());
+              }
             } else if (state is BookingError) {
+              setState(() => _resumingId = null);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(state.message),
                     backgroundColor: Colors.red),
               );
+            } else if (state is BookingListLoaded) {
+              setState(() => _resumingId = null);
             }
           },
           builder: (context, state) {
-            if (state is BookingLoading || state is BookingInitial) {
+            if (state is BookingLoading && _resumingId == null ||
+                state is BookingInitial) {
               return const Center(child: CircularProgressIndicator());
             }
             if (state is BookingListLoaded) {
@@ -74,6 +109,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               return TabBarView(
                 children: [
                   _bookingsList(context, bookings),
+                  _bookingsList(context, bookings.where((b) => b.isPending).toList()),
                   _bookingsList(context, bookings.where((b) => b.isConfirmed).toList()),
                   _bookingsList(context, bookings.where((b) => b.isCompleted).toList()),
                   _bookingsList(context, bookings.where((b) => b.isCancelled).toList()),
@@ -122,16 +158,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Widget _buildBookingCard(BuildContext context, BookingModel booking) {
     final fmt = DateFormat('dd MMM yyyy');
-    final statusColor = booking.isConfirmed
-        ? Colors.green
-        : booking.isCancelled
-            ? Colors.red
-            : Colors.blue;
-    final statusLabel = booking.isConfirmed
-        ? 'Confirmed'
-        : booking.isCancelled
-            ? 'Cancelled'
-            : 'Completed';
+    final statusColor = booking.isPending
+        ? AppTheme.secondaryContainer
+        : booking.isConfirmed
+            ? Colors.green
+            : booking.isCancelled
+                ? Colors.red
+                : Colors.blue;
+    final statusLabel = booking.isPending
+        ? 'Pending'
+        : booking.isConfirmed
+            ? 'Confirmed'
+            : booking.isCancelled
+                ? 'Cancelled'
+                : 'Completed';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -229,16 +269,61 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor),
                     ),
-                    if (booking.isConfirmed)
-                      TextButton.icon(
-                        onPressed: () =>
-                            _confirmCancel(context, booking.id),
-                        icon: const Icon(
-                            Icons.cancel_outlined,
-                            size: 16),
-                        label: const Text('Batalkan'),
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.red),
+                    if (booking.isPending)
+                      ElevatedButton(
+                        onPressed: _resumingId == booking.id
+                            ? null
+                            : () {
+                                setState(
+                                    () => _resumingId = booking.id);
+                                context.read<BookingBloc>().add(
+                                    BookingPaymentResumeRequested(
+                                        bookingId: booking.id));
+                              },
+                        style: AppTheme.heroButtonStyle.copyWith(
+                          padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 10),
+                          ),
+                          textStyle: WidgetStateProperty.all(
+                            const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        child: _resumingId == booking.id
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white),
+                              )
+                            : const Text('Complete Booking'),
+                      )
+                    else if (booking.isConfirmed)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () =>
+                                _reschedule(context, booking),
+                            icon: const Icon(
+                                Icons.calendar_month_outlined,
+                                size: 16),
+                            label: const Text('Jadwal Ulang'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () =>
+                                _confirmCancel(context, booking.id),
+                            icon: const Icon(
+                                Icons.cancel_outlined,
+                                size: 16),
+                            label: const Text('Batalkan'),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.red),
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -248,6 +333,130 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         ],
       ),
     );
+  }
+
+  /// F11: dialog jadwal ulang (khusus confirmed, aturan backend).
+  /// Selisih harga ditampilkan apa adanya dari respons server.
+  Future<void> _reschedule(
+      BuildContext context, BookingModel booking) async {
+    DateTime checkIn = booking.checkIn;
+    DateTime checkOut = booking.checkOut;
+    var saving = false;
+    final fmt = DateFormat('dd MMM yyyy');
+
+    Future<DateTime?> pick(DateTime initial, DateTime first) =>
+        showDatePicker(
+          context: context,
+          initialDate: initial,
+          firstDate: first,
+          lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+        );
+
+    final confirmed = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dlg) => StatefulBuilder(
+        builder: (dlg, setDlg) => AlertDialog(
+          title: const Text('Jadwal Ulang'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Check-in'),
+                subtitle: Text(fmt.format(checkIn)),
+                trailing: const Icon(Icons.calendar_today_outlined),
+                onTap: () async {
+                  final picked = await pick(
+                      checkIn, DateTime.now());
+                  if (picked != null) {
+                    setDlg(() {
+                      checkIn = picked;
+                      if (!checkOut.isAfter(checkIn)) {
+                        checkOut =
+                            checkIn.add(const Duration(days: 1));
+                      }
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Check-out'),
+                subtitle: Text(fmt.format(checkOut)),
+                trailing: const Icon(Icons.calendar_today_outlined),
+                onTap: () async {
+                  final picked = await pick(
+                      checkOut, checkIn.add(const Duration(days: 1)));
+                  if (picked != null) {
+                    setDlg(() => checkOut = picked);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dlg, false),
+                child: const Text('Batal')),
+            ElevatedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      setDlg(() => saving = true);
+                      final result = await BookingRepository()
+                          .rescheduleBooking(
+                        id: booking.id,
+                        checkIn: checkIn,
+                        checkOut: checkOut,
+                      );
+                      if (!dlg.mounted) return;
+                      Navigator.pop(dlg, result);
+                    },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    if (confirmed != null) {
+      if (confirmed['success'] == true) {
+        final diff = (confirmed['priceDiff'] as num?)?.toDouble() ?? 0;
+        final total =
+            (confirmed['newTotal'] as num?)?.toDouble();
+        await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Jadwal Diperbarui'),
+            content: Text(
+              diff > 0
+                  ? 'Total baru \$${total?.toStringAsFixed(0) ?? '-'} '
+                      '(+\$${diff.toStringAsFixed(0)}). Pembayaran tambahan belum otomatis — hubungi CS bila perlu.'
+                  : diff < 0
+                      ? 'Total baru \$${total?.toStringAsFixed(0) ?? '-'} '
+                          '(selisih \$${(-diff).toStringAsFixed(0)} akan disesuaikan).'
+                      : 'Tanggal berhasil diubah tanpa selisih harga.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        if (context.mounted) {
+          context.read<BookingBloc>().add(BookingListRequested());
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(confirmed['message'] ?? 'Gagal menjadwalkan ulang'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _confirmCancel(BuildContext context, String bookingId) {

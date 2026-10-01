@@ -37,8 +37,10 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       ) async {
     emit(TripSaving());
     try {
-      await _tripRepository.saveTrip(event.trip);
-      emit(TripSaved(trip: event.trip));
+      // F6: pakai hasil server (id asli) — bukan objek lokal, agar layar
+      // detail berikutnya membuka id yang benar di backend.
+      final saved = await _tripRepository.saveTrip(event.trip);
+      emit(TripSaved(trip: saved));
     } catch (e) {
       emit(TripError(message: 'Failed to save trip: $e'));
     }

@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/checkout_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
+import 'package:sasacation/data/repo/checkout_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,7 +43,10 @@ enum _CheckoutStep { review, payment }
  
 class _CheckoutScreenState extends State<CheckoutScreen> {
   _CheckoutStep _step = _CheckoutStep.review;
- 
+  // F4: kartu tersimpan dimuat sekali (read-only di layar ini; rename
+  // me-refresh list). Null = belum dimuat; [] = tidak punya kartu.
+  List<SavedPaymentMethod>? _savedMethods;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +58,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       guestCount: widget.guestCount,
       notes: widget.notes,
     ));
+    _loadSavedMethods();
+  }
+
+  Future<void> _loadSavedMethods() async {
+    final methods = await CheckoutRepository().getSavedMethods();
+    if (!mounted) return;
+    setState(() => _savedMethods = methods);
   }
  
   @override
@@ -212,8 +224,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         );
       }
-      // Step pembayaran: ringkasan singkat + pilihan metode bayar saja,
-      // supaya fokus user tidak terpecah dengan detail yang sudah dicek di Review.
+      // Step pembayaran: kartu tersimpan + pilihan metode + toggle save.
       return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -221,12 +232,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             _HotelSummaryCard(session: state.session),
             const SizedBox(height: 16),
+            if (_savedMethods != null && _savedMethods!.isNotEmpty) ...[
+              _SavedMethodsCard(
+                methods: _savedMethods!,
+                onRenamed: _loadSavedMethods,
+              ),
+              const SizedBox(height: 16),
+            ],
             _PaymentMethodsCard(
               methods: state.session.paymentMethods,
               selected: state.selectedMethod,
               onSelect: (m) =>
                   ctx.read<CheckoutBloc>().add(CheckoutPaymentMethodSelected(method: m)),
             ),
+            // F4: toggle save hanya untuk kartu kredit (kontrak backend).
+            if (state.selectedMethod?.id == 'credit_card') ...[
+              const SizedBox(height: 12),
+              SwitchListTile(
+                value: state.saveCard,
+                onChanged: (v) => ctx
+                    .read<CheckoutBloc>()
+                    .add(CheckoutSaveCardChanged(save: v)),
+                activeThumbColor: AppTheme.primaryContainer,
+                title: const Text('Simpan kartu ini',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: const Text(
+                    'Munculkan opsi simpan di halaman pembayaran untuk pemakaian berikutnya',
+                    style: TextStyle(fontSize: 12)),
+              ),
+            ],
             const SizedBox(height: 100),
           ],
         ),
@@ -434,6 +469,9 @@ class _PriceBreakdownCard extends StatelessWidget {
           _Row('Subtotal', '\$${pricing.subtotal.toStringAsFixed(0)}'),
           _Row('Pajak (${pricing.taxRate.toStringAsFixed(0)}%)', '\$${pricing.tax.toStringAsFixed(0)}'),
           _Row('Biaya layanan', '\$${pricing.serviceFee.toStringAsFixed(0)}'),
+          // F4: baris cleaning fee hanya bila backend mengirim nilai > 0.
+          if (pricing.cleaningFee > 0)
+            _Row('Cleaning fee', '\$${pricing.cleaningFee.toStringAsFixed(0)}'),
           const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -460,6 +498,9 @@ class _PaymentMethodsCard extends StatelessWidget {
     final groups = {
       'Kartu': methods.where((m) => m.id == 'credit_card').toList(),
       'E-Wallet': methods.where((m) => ['gopay','ovo','dana'].contains(m.id)).toList(),
+      // F4: PayPal kini dikirim backend — grup sendiri agar tidak hilang
+      // (sebelumnya id 'paypal' tidak masuk grup mana pun).
+      'PayPal': methods.where((m) => m.id == 'paypal').toList(),
       'Lainnya': methods.where((m) => ['bank_transfer','qris'].contains(m.id)).toList(),
     };
     return _Card(
@@ -490,6 +531,115 @@ class _PaymentMethodsCard extends StatelessWidget {
   }
 }
  
+/// F4: daftar kartu tersimpan (read-only + ganti julukan). Kartu baru
+/// tercatat hanya lewat toggle "Simpan kartu ini" saat bayar dengan kartu
+/// kredit — tidak ada input nomor kartu manual di aplikasi.
+class _SavedMethodsCard extends StatelessWidget {
+  final List<SavedPaymentMethod> methods;
+  final VoidCallback onRenamed;
+  const _SavedMethodsCard({required this.methods, required this.onRenamed});
+
+  Future<void> _rename(BuildContext context, SavedPaymentMethod m) async {
+    final ctrl = TextEditingController(text: m.label ?? '');
+    final label = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Julukan Kartu'),
+        content: TextField(
+          controller: ctrl,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'mis. Business',
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    if (label == null || label.isEmpty || !context.mounted) return;
+    final result = await CheckoutRepository()
+        .renameSavedMethod(id: m.id, label: label);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['success'] == true
+            ? 'Julukan kartu diperbarui'
+            : result['message'] ?? 'Gagal mengganti nama kartu'),
+        backgroundColor: result['success'] == true
+            ? AppTheme.successColor
+            : AppTheme.error,
+      ),
+    );
+    if (result['success'] == true) onRenamed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      title: 'Kartu Tersimpan',
+      child: Column(
+        children: methods
+            .map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.credit_card,
+                          size: 20, color: AppTheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(m.displayName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14)),
+                            if (m.exp != null)
+                              Text('Exp ${m.exp}',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.onSurfaceVariant)),
+                          ],
+                        ),
+                      ),
+                      if (m.isPrimary)
+                        Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(
+                                AppTheme.radiusFull),
+                          ),
+                          child: const Text('Utama',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary)),
+                        ),
+                      IconButton(
+                        tooltip: 'Ganti julukan',
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        color: AppTheme.outline,
+                        onPressed: () => _rename(context, m),
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
 class _MethodTile extends StatelessWidget {
   final method;
   final bool isSelected;
@@ -501,6 +651,8 @@ class _MethodTile extends StatelessWidget {
       case 'credit_card': return Icons.credit_card;
       case 'bank_transfer': return Icons.account_balance;
       case 'qris': return Icons.qr_code_scanner;
+      // PayPal & e-wallet lain memakai ikon dompet generik (Material tidak
+      // menyediakan ikon brand PayPal).
       default: return Icons.account_balance_wallet;
     }
   }

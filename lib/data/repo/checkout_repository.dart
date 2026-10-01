@@ -44,6 +44,9 @@ class CheckoutRepository {
     required int guestCount,
     String? notes,
     required String paymentMethod,
+    // F4: khusus credit_card — memunculkan toggle save di Snap agar kartu
+    // tercatat ke GET /payment-methods untuk pemakaian berikutnya.
+    bool saveCard = false,
   }) async {
     try {
       final res = await ApiClient.post('/checkout/pay', data: {
@@ -53,6 +56,7 @@ class CheckoutRepository {
         'guestCount': guestCount,
         'notes': ?notes,
         'paymentMethod': paymentMethod,
+        if (saveCard) 'saveCard': true,
       });
       return {
         'success': true,
@@ -96,6 +100,38 @@ class CheckoutRepository {
           .toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  /// F4: kartu tersimpan milik user (bisa kosong — belum pernah save).
+  Future<List<SavedPaymentMethod>> getSavedMethods() async {
+    try {
+      final res = await ApiClient.get('/payment-methods');
+      final raw = res.data['data'];
+      if (raw is! List) return [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(SavedPaymentMethod.fromJson)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// F4: ganti julukan kartu ("Business"). Backend 500 untuk id tak dikenal
+  /// (seharusnya 404) — pesan error generik sudah cukup di UI.
+  Future<Map<String, dynamic>> renameSavedMethod({
+    required String id,
+    required String label,
+  }) async {
+    try {
+      await ApiClient.patch('/payment-methods/$id', data: {'label': label});
+      return {'success': true};
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': e.response?.data?['message'] ?? 'Gagal mengganti nama kartu',
+      };
     }
   }
 }

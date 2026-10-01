@@ -240,4 +240,8 @@ class BookingModel {
   bool get isConfirmed => status.toLowerCase() == 'confirmed';
   bool get isCancelled => status.toLowerCase() == 'cancelled';
   bool get isCompleted => status.toLowerCase() == 'completed';
+  /// Status baru dari backend (batch Figma audit): booking lahir `pending`
+  /// dan butuh pembayaran. Webhook sukses → confirmed; gagal/expired →
+  /// cancelled. Lihat F1 di FLUTTER_HANDOFF.md (repo backend).
+  bool get isPending => status.toLowerCase() == 'pending';
 }

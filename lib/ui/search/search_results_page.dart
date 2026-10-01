@@ -29,6 +29,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   static const _recentsKey = 'recent_searches';
   static const _maxRecents = 5;
 
+  /// F5: personalisasi AI dari Settings. OFF = kartu AI Pick disembunyikan.
+  bool _aiEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +39,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     _searchCtrl.addListener(() => setState(() {}));
     context.read<HotelSearchCubit>().search(query: widget.initialQuery);
     _loadRecents();
+    _loadAiPref();
+  }
+
+  Future<void> _loadAiPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(
+        () => _aiEnabled = prefs.getBool('ai_personalization') ?? true);
   }
 
   Future<void> _loadRecents() async {
@@ -163,7 +174,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: 'Urutkan',
+                label: state.amenities.isEmpty
+                    ? 'Fasilitas'
+                    : 'Fasilitas (${state.amenities.length})',
+                onTap: () => _openFilterSheet(context),
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: _sortLabel(state.sort),
                 icon: Icons.swap_vert,
                 onTap: () => _openSortSheet(context),
               ),
@@ -174,6 +192,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
  
+  String _sortLabel(HotelSortOption sort) => switch (sort) {
+        HotelSortOption.priceLowHigh => 'Termurah',
+        HotelSortOption.priceHighLow => 'Termahal',
+        HotelSortOption.ratingHigh => 'Rating',
+        HotelSortOption.newest => 'Terbaru',
+        HotelSortOption.recommended => 'Urutkan',
+      };
+
   Widget _buildResultList(BuildContext context) {
     return BlocBuilder<HotelSearchCubit, HotelSearchState>(
       builder: (context, state) {
@@ -195,11 +221,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         }
         // "AI Pick": rekomendasi rating tertinggi dari hasil nyata —
         // bukan dari backend AI, tapi deterministik dari data yang ada.
+        // Disembunyikan bila personalisasi AI dimatikan di Settings (F5).
         final queryEmpty = _searchCtrl.text.trim().isEmpty;
         final showRecents = queryEmpty && _recents.isNotEmpty;
-        final HotelModel? aiPick = (!queryEmpty && results.length >= 2)
-            ? results.reduce((a, b) => a.rating >= b.rating ? a : b)
-            : null;
+        final HotelModel? aiPick =
+            (_aiEnabled && !queryEmpty && results.length >= 2)
+                ? results.reduce((a, b) => a.rating >= b.rating ? a : b)
+                : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -357,9 +385,21 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
  
+  /// Opsi amenities = string persis seperti tersimpan di backend
+  /// (F3: filter AND, case-sensitive). Diverifikasi via curl.
+  static const _amenityOptions = [
+    'WiFi',
+    'Pool',
+    'Restaurant',
+    'Spa',
+    'Bar',
+    'Private Beach',
+  ];
+
   void _openFilterSheet(BuildContext context) {
     final cubit = context.read<HotelSearchCubit>();
     double minRating = cubit.state.minRating;
+    final selectedAmenities = List<String>.of(cubit.state.amenities);
     final minCtrl = TextEditingController(text: cubit.state.minPrice?.toStringAsFixed(0) ?? '');
     final maxCtrl = TextEditingController(text: cubit.state.maxPrice?.toStringAsFixed(0) ?? '');
  
@@ -427,6 +467,32 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 20),
+              const Text('Fasilitas (harus ada semua)', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _amenityOptions.map((a) {
+                  final selected = selectedAmenities.contains(a);
+                  return FilterChip(
+                    label: Text(a),
+                    selected: selected,
+                    selectedColor: AppTheme.primaryColor.withOpacity(0.15),
+                    labelStyle: TextStyle(
+                      color: selected ? AppTheme.primaryColor : Colors.black87,
+                      fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    onSelected: (_) => setSheetState(() {
+                      if (selected) {
+                        selectedAmenities.remove(a);
+                      } else {
+                        selectedAmenities.add(a);
+                      }
+                    }),
+                  );
+                }).toList(),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -437,6 +503,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       double.tryParse(minCtrl.text),
                       double.tryParse(maxCtrl.text),
                     );
+                    cubit.setAmenities(selectedAmenities);
                     Navigator.pop(sheetContext);
                   },
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
@@ -467,6 +534,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             _SortTile('Harga terendah', HotelSortOption.priceLowHigh, cubit, sheetContext),
             _SortTile('Harga tertinggi', HotelSortOption.priceHighLow, cubit, sheetContext),
             _SortTile('Rating tertinggi', HotelSortOption.ratingHigh, cubit, sheetContext),
+            _SortTile('Terbaru', HotelSortOption.newest, cubit, sheetContext),
             const SizedBox(height: 12),
           ],
         ),

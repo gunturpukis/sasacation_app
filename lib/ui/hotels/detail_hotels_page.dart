@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/ui/widget/booking_sheets.dart';
 import 'package:sasacation/ui/widget/glass_icon_button.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
@@ -236,6 +237,29 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           _GalleryBento(images: hotel.images),
                           const SizedBox(height: AppTheme.spacingSectionGap),
                         ],
+
+                        // ─── Guest Reviews — mengikuti mockup. Hanya tampil
+                        // bila backend mengirim ulasan individual (lihat
+                        // kontrak di HotelReview); kalau kosong, section
+                        // disembunyikan alih-alih mengarang kutipan.
+                        if (hotel.reviews.isNotEmpty) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Guest Reviews',
+                                  style: Theme.of(context).textTheme.headlineMedium),
+                              TextButton(
+                                onPressed: () =>
+                                    _showAllReviews(context, hotel.reviews),
+                                child: const Text('See all',
+                                    style: TextStyle(fontSize: 13)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _ReviewCard(review: hotel.reviews.first),
+                          const SizedBox(height: AppTheme.spacingSectionGap),
+                        ],
  
                         // Peta lokasi — placeholder visual yang bisa diketuk
                         // untuk membuka Google Maps (tanpa Maps SDK).
@@ -460,4 +484,131 @@ class AmenityChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Kartu ulasan tamu mengikuti mockup: avatar, nama, info menginap,
+/// bintang, dan kutipan.
+class _ReviewCard extends StatelessWidget {
+  final HotelReview review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: AppTheme.softCardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppTheme.primary.withOpacity(0.1),
+                backgroundImage: review.avatar != null
+                    ? NetworkImage(review.avatar!)
+                    : null,
+                child: review.avatar == null
+                    ? Text(
+                        review.userName.isNotEmpty
+                            ? review.userName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(review.userName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 14)),
+                    if (review.stayed != null)
+                      Text('Stayed: ${review.stayed}',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (i) {
+                  final filled = i < review.rating.round().clamp(0, 5);
+                  return Icon(
+                    filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 15,
+                    color: AppTheme.ratingColor,
+                  );
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('"${review.text}"',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+}
+
+/// "See all" membuka bottom sheet berisi semua ulasan dari data yang sama —
+/// tanpa route baru karena datanya sudah ada di memori.
+void _showAllReviews(BuildContext context, List<HotelReview> reviews) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AppTheme.radiusSheet)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Guest Reviews (${reviews.length})',
+                style: Theme.of(sheetContext).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.separated(
+                controller: controller,
+                itemCount: reviews.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
