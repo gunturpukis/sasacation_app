@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/poll_model.dart';
 import 'package:sasacation/data/repo/poll_repository.dart';
@@ -40,6 +41,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
   }
 
   Future<void> _vote(String optionId) async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _votingOptionId = optionId);
     final result =
         await _repo.vote(pollId: widget.pollId, optionId: optionId);
@@ -48,12 +50,12 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
     if (result['success'] == true) {
       setState(() => _poll = result['poll'] as PollModel);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Suara tercatat')),
+        SnackBar(content: Text(l10n.ait_pollVoted)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'Gagal memberikan suara'),
+          content: Text(result['message'] ?? l10n.ait_pollVoteFailed),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -62,9 +64,10 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Vote'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.ait_pollTitle), centerTitle: true),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _poll == null
@@ -75,13 +78,13 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                       const Icon(Icons.how_to_vote_outlined,
                           size: 56, color: AppTheme.outlineVariant),
                       const SizedBox(height: 12),
-                      Text('Vote tidak ditemukan',
+                      Text(l10n.ait_pollNotFound,
                           style:
                               Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 12),
                       ElevatedButton(
                         onPressed: _load,
-                        child: const Text('Coba lagi'),
+                        child: Text(l10n.common_retry),
                       ),
                     ],
                   ),
@@ -112,7 +115,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                                   AppTheme.radiusFull),
                             ),
                             child: Text(
-                              _poll!.isOpen ? 'Open' : 'Closed',
+                              _poll!.isOpen ? l10n.ait_pollOpen : l10n.ait_pollClosed,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -133,7 +136,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                       ],
                       const SizedBox(height: 6),
                       Text(
-                        '${_poll!.totalVotes} suara',
+                        l10n.ait_pollTotalVotes(_poll!.totalVotes),
                         style: const TextStyle(
                             fontSize: 12, color: AppTheme.outline),
                       ),
@@ -194,7 +197,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '${o.pct.toStringAsFixed(0)}% • ${o.votes} suara',
+                                    l10n.ait_pollOptionStats(o.pct.toStringAsFixed(0), o.votes),
                                     style: const TextStyle(
                                         fontSize: 12,
                                         color: AppTheme.outline),
@@ -213,8 +216,8 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                                                       strokeWidth: 2),
                                             )
                                           : Text(mine
-                                              ? 'Ganti ke ini'
-                                              : 'Vote now'),
+                                              ? l10n.ait_pollChangeVote
+                                              : l10n.ait_pollVoteNow),
                                     ),
                                 ],
                               ),

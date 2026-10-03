@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/task_model.dart';
 import 'package:sasacation/data/repo/task_repository.dart';
@@ -20,13 +21,22 @@ class _TasksScreenState extends State<TasksScreen> {
   bool _loading = true;
   bool _showDone = false;
 
-  static const _kinds = {
-    'flight_checkin': 'Check-in Penerbangan',
-    'reminder': 'Pengingat',
-    'payment': 'Pembayaran',
-    'document': 'Dokumen',
-    'other': 'Lainnya',
-  };
+  static String _kindLabel(AppLocalizations l10n, String kind) {
+    switch (kind) {
+      case 'flight_checkin':
+        return l10n.ait_taskKindFlight;
+      case 'reminder':
+        return l10n.ait_taskKindReminder;
+      case 'payment':
+        return l10n.ait_taskKindPayment;
+      case 'document':
+        return l10n.ait_taskKindDocument;
+      case 'other':
+        return l10n.ait_taskKindOther;
+      default:
+        return kind;
+    }
+  }
 
   static const _kindIcons = {
     'flight_checkin': Icons.flight_takeoff_outlined,
@@ -58,14 +68,15 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> _delete(TaskModel t) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await _repo.deleteTask(t.id);
     if (!mounted) return;
     if (ok) {
       _load();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal menghapus task'),
+        SnackBar(
+          content: Text(l10n.ait_taskDeleteFailed),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -73,6 +84,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> _create() async {
+    final l10n = AppLocalizations.of(context);
     final titleCtrl = TextEditingController();
     final detailCtrl = TextEditingController();
     var kind = 'reminder';
@@ -81,7 +93,7 @@ class _TasksScreenState extends State<TasksScreen> {
       context: context,
       builder: (dlg) => StatefulBuilder(
         builder: (dlg, setDlg) => AlertDialog(
-          title: const Text('Task Baru'),
+          title: Text(l10n.ait_taskNewTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -89,25 +101,38 @@ class _TasksScreenState extends State<TasksScreen> {
                 TextField(
                   controller: titleCtrl,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(labelText: 'Judul'),
+                  decoration: InputDecoration(labelText: l10n.ait_taskTitleLabel),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: kind,
-                  items: _kinds.entries
-                      .map((e) => DropdownMenuItem(
-                          value: e.key, child: Text(e.value)))
-                      .toList(),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'flight_checkin',
+                        child: Text(l10n.ait_taskKindFlight)),
+                    DropdownMenuItem(
+                        value: 'reminder',
+                        child: Text(l10n.ait_taskKindReminder)),
+                    DropdownMenuItem(
+                        value: 'payment',
+                        child: Text(l10n.ait_taskKindPayment)),
+                    DropdownMenuItem(
+                        value: 'document',
+                        child: Text(l10n.ait_taskKindDocument)),
+                    DropdownMenuItem(
+                        value: 'other',
+                        child: Text(l10n.ait_taskKindOther)),
+                  ],
                   onChanged: (v) =>
                       setDlg(() => kind = v ?? 'reminder'),
                   decoration:
-                      const InputDecoration(labelText: 'Jenis'),
+                      InputDecoration(labelText: l10n.ait_taskKindLabel),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: detailCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Detail (opsional)',
+                  decoration: InputDecoration(
+                    labelText: l10n.ait_taskDetailLabel,
                   ),
                 ),
               ],
@@ -116,7 +141,7 @@ class _TasksScreenState extends State<TasksScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dlg, false),
-                child: const Text('Batal')),
+                child: Text(l10n.common_cancel)),
             ElevatedButton(
               onPressed: saving
                   ? null
@@ -136,13 +161,13 @@ class _TasksScreenState extends State<TasksScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(res['message'] ??
-                                'Gagal membuat task'),
+                                l10n.ait_taskCreateFailed),
                             backgroundColor: AppTheme.error,
                           ),
                         );
                       }
                     },
-              child: const Text('Buat'),
+              child: Text(l10n.common_create),
             ),
           ],
         ),
@@ -153,18 +178,19 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final visible =
         _showDone ? _tasks : _tasks.where((t) => !t.done).toList();
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        title: const Text('Travel Tasks'),
+        title: Text(l10n.ait_tasksTitle),
         centerTitle: true,
         actions: [
           IconButton(
             tooltip: _showDone
-                ? 'Sembunyikan selesai'
-                : 'Tampilkan selesai',
+                ? l10n.ait_tasksHideDone
+                : l10n.ait_tasksShowDone,
             icon: Icon(_showDone
                 ? Icons.visibility_off_outlined
                 : Icons.visibility_outlined),
@@ -177,8 +203,8 @@ class _TasksScreenState extends State<TasksScreen> {
         onPressed: _create,
         backgroundColor: AppTheme.primaryContainer,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Task Baru',
-            style: TextStyle(color: Colors.white)),
+        label: Text(l10n.ait_taskNewTitle,
+            style: const TextStyle(color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -193,8 +219,8 @@ class _TasksScreenState extends State<TasksScreen> {
                       const SizedBox(height: 12),
                       Text(
                         _tasks.isEmpty
-                            ? 'Belum ada task'
-                            : 'Semua task selesai 🎉',
+                            ? l10n.ait_tasksEmptyTitle
+                            : l10n.ait_tasksAllDone,
                         style: Theme.of(context)
                             .textTheme
                             .titleLarge,
@@ -216,6 +242,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Widget _taskCard(BuildContext context, TaskModel t) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -247,7 +274,7 @@ class _TasksScreenState extends State<TasksScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _kinds[t.kind] ?? t.kind,
+                  _kindLabel(l10n, t.kind),
                   style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -282,7 +309,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             AppTheme.radiusMd),
                       ),
                       child: Text(
-                        'Penerbangan ${t.flightNo}${t.seats.isNotEmpty ? ' • Kursi: ${t.seats.join(', ')}' : ''}',
+                        l10n.ait_taskFlight(t.flightNo ?? '', t.seats.isNotEmpty ? l10n.ait_taskSeats(t.seats.join(', ')) : ''),
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),
@@ -298,7 +325,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 onChanged: (_) => _toggle(t),
               ),
               IconButton(
-                tooltip: 'Hapus',
+                tooltip: l10n.common_delete,
                 icon: const Icon(Icons.delete_outline, size: 18),
                 color: AppTheme.error,
                 onPressed: () => _delete(t),

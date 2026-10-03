@@ -232,12 +232,14 @@
 // }
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/repo/notification_repository.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
 import 'package:sasacation/viewmodel/booking/booking_bloc.dart';
  
@@ -273,9 +275,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Profile'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.me_profileTitle), centerTitle: true),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthUnauthenticated) {
@@ -304,7 +307,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(Icons.person, size: 50, color: AppTheme.primary),
                 ),
                 const SizedBox(height: 16),
-                Text(user?.name ?? 'Guest', style: Theme.of(context).textTheme.headlineMedium),
+                Text(user?.name ?? l10n.me_guestName, style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 4),
                 Text(user?.email ?? '', style: Theme.of(context).textTheme.bodyMedium),
  
@@ -328,7 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             const Icon(Icons.stars_rounded, size: 15, color: AppTheme.secondary),
                             const SizedBox(width: 6),
-                            Text('$completedCount Trips Completed',
+                            Text(l10n.me_tripsCompleted(completedCount),
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                           ],
                         ),
@@ -345,8 +348,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppTheme.primaryContainer,
                       borderRadius: BorderRadius.circular(AppTheme.radiusFull),
                     ),
-                    child: const Text('Admin',
-                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text(l10n.me_adminBadge,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -377,13 +380,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Upcoming Trips',
+                            Text(l10n.me_upcomingTrips,
                                 style: Theme.of(context).textTheme.titleLarge),
                             TextButton(
                               onPressed: () =>
                                   context.push(AppRouter.myBookings),
-                              child: const Text('Lihat semua',
-                                  style: TextStyle(fontSize: 13)),
+                              child: Text(l10n.me_seeAll,
+                                  style: const TextStyle(fontSize: 13)),
                             ),
                           ],
                         ),
@@ -407,78 +410,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _buildMenuItem(
                         icon: Icons.person_outline,
-                        title: 'Personal Information',
+                        title: l10n.me_menuPersonalInfo,
                         onTap: () =>
                             context.push(AppRouter.personalInfo),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.confirmation_number_outlined,
-                        title: 'My Bookings',
+                        title: l10n.me_menuMyBookings,
                         onTap: () => context.push(AppRouter.myBookings),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.receipt_long_outlined,
-                        title: 'Payment History',
+                        title: l10n.me_menuPaymentHistory,
                         onTap: () => context.push(AppRouter.paymentHistory),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.favorite_border,
-                        title: 'Saved Places',
+                        title: l10n.me_menuSavedPlaces,
                         onTap: () => context.push(AppRouter.wishlist),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.group_outlined,
-                        title: 'My Groups',
+                        title: l10n.me_menuMyGroups,
                         onTap: () => context.push(AppRouter.groups),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.task_alt_outlined,
-                        title: 'Travel Tasks',
+                        title: l10n.me_menuTravelTasks,
                         onTap: () => context.push(AppRouter.tasks),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.eco_outlined,
-                        title: 'Komitmen Sasacation',
+                        title: l10n.me_menuSustainability,
                         onTap: () => context.push(AppRouter.sustainability),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.settings_outlined,
-                        title: 'Settings',
+                        title: l10n.me_menuSettings,
                         onTap: () => context.push(AppRouter.settings),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.notifications_outlined,
-                        title: 'Notifications',
+                        title: l10n.me_menuNotifications,
                         onTap: () => context.push(AppRouter.notifications),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.notifications_active_outlined,
-                        title: 'Test Push Notification',
+                        title: l10n.me_menuTestPush,
                         onTap: () => _sendTestNotification(context),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.help_outline,
-                        title: 'Help Center',
+                        title: l10n.me_menuHelpCenter,
                         onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Pusat bantuan segera hadir di versi berikutnya'),
+                          SnackBar(
+                            content: Text(l10n.me_helpCenterSoon),
                           ),
                         ),
                       ),
                       _divider(),
                       _buildMenuItem(
                         icon: Icons.logout,
-                        title: 'Sign Out',
+                        title: l10n.common_signOut,
                         textColor: AppTheme.error,
                         onTap: () => _showLogoutDialog(context),
                       ),
@@ -523,33 +526,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// yang sudah teregistrasi ke backend saat login. Berguna untuk QA
   /// verifikasi setup Firebase tanpa perlu tool eksternal.
   Future<void> _sendTestNotification(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(content: Text('Mengirim test notification...')));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.me_sendingTestNotification)));
  
     final result = await NotificationRepository().sendTestNotification();
  
     messenger.showSnackBar(SnackBar(
       backgroundColor: result['success'] == true ? AppTheme.successColor : AppTheme.error,
-      content: Text(result['message'] ?? 'Selesai'),
+      content: Text(result['message'] ?? l10n.me_fallbackDone),
     ));
   }
  
   void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Yakin ingin keluar dari akun?'),
+        title: Text(l10n.me_logoutTitle),
+        content: Text(l10n.me_logoutConfirm),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusSheet)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.common_cancel)),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               context.read<AuthBloc>().add(AuthLogoutRequested());
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Logout'),
+            child: Text(l10n.me_logoutTitle),
           ),
         ],
       ),
@@ -566,14 +571,15 @@ class _UpcomingTripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fmt = DateFormat('d MMM yyyy');
     final daysLeft = booking.checkIn.difference(DateTime.now()).inDays;
     final isPending = booking.isPending;
     final badgeLabel = isPending
-        ? 'Action Required'
+        ? l10n.me_actionRequired
         : daysLeft > 0
-            ? 'Dalam $daysLeft Hari'
-            : 'CONFIRMED';
+            ? l10n.me_daysLeft(daysLeft)
+            : l10n.me_confirmedBadge;
     final badgeColor = isPending
         ? AppTheme.secondaryContainer
         : AppTheme.primaryContainer;
@@ -641,14 +647,14 @@ class _UpcomingTripCard extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 2),
                           Text(
-                            '${fmt.format(booking.checkIn)} – ${fmt.format(booking.checkOut)} • ${booking.nights} malam',
+                            '${fmt.format(booking.checkIn)} – ${fmt.format(booking.checkOut)} • ${l10n.me_nightsCount(booking.nights)}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('\$${booking.totalPrice.toStringAsFixed(0)}',
+                    MoneyText(booking.totalPrice,
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -660,7 +666,7 @@ class _UpcomingTripCard extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => context.push(AppRouter.myBookings),
-                    child: const Text('Lihat Booking'),
+                    child: Text(l10n.me_actionViewBooking),
                   ),
                 ),
               ],

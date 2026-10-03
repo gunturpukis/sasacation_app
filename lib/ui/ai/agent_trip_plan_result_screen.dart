@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
+import 'package:sasacation/utils/money.dart';
 
 /// Screen: AgentTripPlanResultScreen
 /// Ditampilkan saat user ketuk kartu "Lihat Itinerary" di chat — hasil dari
@@ -17,6 +19,7 @@ class AgentTripPlanResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(plan.title)),
       body: ListView(
@@ -37,8 +40,17 @@ class AgentTripPlanResultScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.payments_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Text('Estimasi total: \$${plan.totalEstimatedCost.toStringAsFixed(0)}',
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(l10n.ait_planTotalLabel,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13)),
+                        MoneyText(plan.totalEstimatedCost,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 13)),
+                      ],
+                    ),
                   ],
                 ),
                 if (plan.bestTimeToVisit.isNotEmpty) ...[
@@ -60,7 +72,7 @@ class AgentTripPlanResultScreen extends StatelessWidget {
           ...plan.days.map((day) => _DaySection(day: day)),
           if (plan.tips.isNotEmpty) ...[
             const SizedBox(height: 8),
-            const Text('Tips', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text(l10n.ait_planTipsTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 8),
             ...plan.tips.map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
@@ -103,7 +115,7 @@ class _DaySection extends StatelessWidget {
               Expanded(
                 child: Text(day.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
-              Text('\$${day.dailyCost.toStringAsFixed(0)}',
+              MoneyText(day.dailyCost,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             ],
           ),

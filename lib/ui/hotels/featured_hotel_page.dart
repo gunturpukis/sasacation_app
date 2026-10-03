@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
  
 class FeaturedHotels extends StatefulWidget {
@@ -26,6 +28,7 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
       height: 280,
       child: BlocBuilder<HotelBloc, HotelState>(
         builder: (context, state) {
+          final l10n = AppLocalizations.of(context);
           // FIX: baca dari HotelCompositeState
           if (state is HotelCompositeState) {
             if (state.isLoadingFeatured) {
@@ -35,7 +38,7 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
               return Center(child: Text(state.featuredError!));
             }
             final hotels = state.featuredHotels ?? [];
-            if (hotels.isEmpty) return const Center(child: Text('Tidak ada hotel featured'));
+            if (hotels.isEmpty) return Center(child: Text(l10n.fun_emptyFeatured));
             return ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: hotels.length,
@@ -101,10 +104,14 @@ class _FeaturedHotelsState extends State<FeaturedHotels> {
                                 ]),
                                 const SizedBox(height: 8),
                                 Row(children: [
-                                  Text('\$${hotel.price.toStringAsFixed(0)}',
+                                  MoneyText(hotel.price,
                                       style: const TextStyle(
-                                          fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-                                  const Text(' / malam', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                          fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                      suffix: AppLocalizations.of(context).common_perNight,
+                                      suffixStyle: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.grey)),
                                 ]),
                               ],
                             ),

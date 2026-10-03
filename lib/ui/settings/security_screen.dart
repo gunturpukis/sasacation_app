@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/repo/auth_repository.dart';
 import 'package:sasacation/data/repo/settings_repository.dart';
@@ -43,11 +44,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['success'] == true
-            ? 'Password berhasil diubah'
-            : result['message'] ?? 'Gagal mengubah password'),
+            ? l10n.me_passwordChanged
+            : result['message'] ?? l10n.me_passwordChangeFailed),
         backgroundColor: result['success'] == true
             ? AppTheme.successColor
             : AppTheme.error,
@@ -65,9 +67,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
     final email =
         state is AuthAuthenticated ? state.user.email : null;
     if (email == null || email.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email akun tidak tersedia. Silakan login ulang.'),
+        SnackBar(
+          content: Text(l10n.me_emailUnavailable),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -77,11 +80,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
     final result = await _authRepo.sendPasswordReset(email);
     if (!mounted) return;
     setState(() => _sendingReset = false);
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['success'] == true
-            ? 'Email reset terkirim ke $email'
-            : result['message'] ?? 'Gagal mengirim email reset'),
+            ? l10n.me_resetSent(email)
+            : result['message'] ?? l10n.me_resetFailed),
         backgroundColor: result['success'] == true
             ? AppTheme.successColor
             : AppTheme.error,
@@ -91,10 +95,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar:
-          AppBar(title: const Text('Security & Password'), centerTitle: true),
+          AppBar(title: Text(l10n.me_securityTitle), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -102,39 +107,39 @@ class _SecurityScreenState extends State<SecurityScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ubah Password',
+              Text(l10n.me_changePassword,
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                'Password baru minimal 8 karakter (aturan server).',
+                l10n.me_passwordRule,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _currentCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Password saat ini',
-                  prefixIcon: Icon(Icons.lock_outline),
+                decoration: InputDecoration(
+                  hintText: l10n.me_currentPasswordHint,
+                  prefixIcon: const Icon(Icons.lock_outline),
                 ),
                 validator: (v) => v == null || v.isEmpty
-                    ? 'Password saat ini wajib diisi'
+                    ? l10n.me_currentPasswordRequired
                     : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _newCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Password baru (min. 8 karakter)',
-                  prefixIcon: Icon(Icons.lock_reset_outlined),
+                decoration: InputDecoration(
+                  hintText: l10n.me_newPasswordHint,
+                  prefixIcon: const Icon(Icons.lock_reset_outlined),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) {
-                    return 'Password baru wajib diisi';
+                    return l10n.me_newPasswordRequired;
                   }
                   if (v.length < 8) {
-                    return 'Password minimal 8 karakter';
+                    return l10n.me_passwordMinLength;
                   }
                   return null;
                 },
@@ -143,12 +148,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
               TextFormField(
                 controller: _confirmCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Konfirmasi password baru',
-                  prefixIcon: Icon(Icons.check_circle_outline),
+                decoration: InputDecoration(
+                  hintText: l10n.me_confirmPasswordHint,
+                  prefixIcon: const Icon(Icons.check_circle_outline),
                 ),
                 validator: (v) => v != _newCtrl.text
-                    ? 'Konfirmasi tidak sama'
+                    ? l10n.me_confirmMismatch
                     : null,
               ),
               const SizedBox(height: 20),
@@ -163,7 +168,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Ubah Password'),
+                      : Text(l10n.me_changePassword),
                 ),
               ),
               const SizedBox(height: 8),
@@ -171,8 +176,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 child: TextButton(
                   onPressed: _sendingReset ? null : _sendReset,
                   child: Text(_sendingReset
-                      ? 'Mengirim...'
-                      : 'Kirim email reset password'),
+                      ? l10n.me_sending
+                      : l10n.me_sendResetEmail),
                 ),
               ),
             ],

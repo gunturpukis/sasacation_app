@@ -17,6 +17,9 @@ class SettingsRepository {
       if (data['ai_personalization'] is bool) {
         await prefs.setBool(localAiKey, data['ai_personalization'] as bool);
       }
+      if (data['language'] is String) {
+        await prefs.setString('language', data['language'] as String);
+      }
       return data;
     } catch (_) {
       return null;
@@ -41,6 +44,10 @@ class SettingsRepository {
       if (aiPersonalization != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(localAiKey, aiPersonalization);
+      }
+      if (language != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('language', language);
       }
       return {'success': true, 'settings': data};
     } on DioException catch (e) {

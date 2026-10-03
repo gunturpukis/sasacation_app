@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
@@ -266,7 +267,7 @@ class CategoryGrid extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Explore ${category['label']}',
+                    AppLocalizations.of(context).fun_exploreCategory(category['label']),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

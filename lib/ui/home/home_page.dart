@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -43,6 +44,7 @@ class HomeScreen extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: SafeArea(
@@ -60,22 +62,22 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Where to next?', style: Theme.of(context).textTheme.headlineMedium),
+                    Text(l10n.fun_headlineWhereToNext, style: Theme.of(context).textTheme.headlineMedium),
                     const SizedBox(height: 4),
-                    Text('Find your dream vacation with AI assistance',
+                    Text(l10n.fun_headlineSubtitle,
                         style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 16),
                     const _SearchBar(),
                     const SizedBox(height: AppTheme.spacingSectionGap),
- 
+
                     // ─── Recommended for You ─────────────────────────────
-                    const _SectionHeader(title: 'Recommended for You', actionLabel: 'See all'),
+                    _SectionHeader(title: l10n.fun_sectionRecommended, actionLabel: l10n.common_seeAll),
                     const SizedBox(height: 12),
                     const _RecommendedSection(),
                     const SizedBox(height: AppTheme.spacingSectionGap),
- 
+
                     // ─── Popular Categories ───────────────────────────────
-                    Text('Popular Categories', style: Theme.of(context).textTheme.titleLarge),
+                    Text(l10n.fun_sectionPopularCategories, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 12),
                     CategoryGrid(
                       onExploreCategory: (_) => onNavigateToTab?.call(1),
@@ -83,8 +85,8 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingSectionGap),
  
                     // ─── Trending This Week ───────────────────────────────
-                    const _SectionHeader(
-                        title: 'Trending This Week', badgeLabel: 'New Arrivals'),
+                    _SectionHeader(
+                        title: l10n.fun_sectionTrending, badgeLabel: l10n.fun_badgeNewArrivals),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -161,6 +163,7 @@ class _TopBar extends StatelessWidget {
   }
  
   void _showQuickMenu(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -184,7 +187,7 @@ class _TopBar extends StatelessWidget {
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.bookmark_border, color: AppTheme.primary),
-              title: const Text('Saved Destinations'),
+              title: Text(l10n.fun_quickMenuSaved),
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.push(AppRouter.wishlist);
@@ -192,7 +195,7 @@ class _TopBar extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.confirmation_number_outlined, color: AppTheme.primary),
-              title: const Text('My Bookings'),
+              title: Text(l10n.fun_quickMenuBookings),
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.push(AppRouter.myBookings);
@@ -200,7 +203,7 @@ class _TopBar extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.notifications_outlined, color: AppTheme.primary),
-              title: const Text('Notifications'),
+              title: Text(l10n.fun_quickMenuNotifications),
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.push(AppRouter.notifications);
@@ -208,7 +211,7 @@ class _TopBar extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.settings_outlined, color: AppTheme.primary),
-              title: const Text('Settings'),
+              title: Text(l10n.fun_quickMenuSettings),
               onTap: () {
                 Navigator.pop(sheetContext);
                 context.push(AppRouter.settings);
@@ -228,6 +231,7 @@ class _SearchBar extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => context.push(AppRouter.searchResults),
       child: Container(
@@ -243,7 +247,7 @@ class _SearchBar extends StatelessWidget {
             const Icon(Icons.search, color: AppTheme.primary, size: 20),
             const SizedBox(width: 10),
             Expanded(
-              child: Text('Search destinations, villas, or activities...',
+              child: Text(l10n.fun_searchHint,
                   style: TextStyle(color: AppTheme.outline, fontSize: 14)),
             ),
             Container(
@@ -303,6 +307,7 @@ class _RecommendedSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<RecommendationCubit, RecommendationState>(
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         if (state is! RecommendationLoaded || state.hotels.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -322,7 +327,7 @@ class _RecommendedSection extends StatelessWidget {
                 location: hotel.location,
                 price: hotel.price,
                 rating: hotel.rating,
-                overlayBadgeLabel: index == 0 ? 'Most Popular' : null,
+                overlayBadgeLabel: index == 0 ? l10n.fun_badgeMostPopular : null,
                 onTap: () => context.push(AppRouter.hotelDetailPath(hotel.id)),
               );
             },

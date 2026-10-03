@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -53,6 +54,7 @@ class _NearbyHotelsState extends State<NearbyHotels> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -63,27 +65,28 @@ class _NearbyHotelsState extends State<NearbyHotels> {
               children: [
                 const Icon(Icons.near_me, color: AppTheme.primaryColor, size: 18),
                 const SizedBox(width: 8),
-                const Text('Hotel Terdekat',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(l10n.fun_nearbyTitle,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
             if (_permissionDenied)
-              TextButton(onPressed: _loadNearby, child: const Text('Coba Lagi')),
+              TextButton(onPressed: _loadNearby, child: Text(l10n.common_retry)),
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(height: 260, child: _buildBody()),
+        SizedBox(height: 260, child: _buildBody(context)),
       ],
     );
   }
- 
-  Widget _buildBody() {
+
+  Widget _buildBody(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_permissionDenied) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            _errorMessage ?? 'Izin lokasi dibutuhkan untuk fitur ini',
+            _errorMessage ?? l10n.fun_locationPermissionNeeded,
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
@@ -100,7 +103,7 @@ class _NearbyHotelsState extends State<NearbyHotels> {
         if (hotels.isEmpty) {
           return Center(
             child: Text(
-              state.nearbyError ?? 'Tidak ada hotel di sekitar Anda',
+              state.nearbyError ?? AppLocalizations.of(context).fun_emptyNearby,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
             ),
           );
@@ -146,7 +149,7 @@ class _NearbyHotelsState extends State<NearbyHotels> {
                                 children: [
                                   Icon(Icons.social_distance, size: 12, color: Colors.grey.shade500),
                                   const SizedBox(width: 4),
-                                  Text('${hotel.distanceKm!.toStringAsFixed(1)} km dari Anda',
+                                  Text(l10n.fun_distanceFromYou(hotel.distanceKm!.toStringAsFixed(1)),
                                       style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                                 ],
                               ),

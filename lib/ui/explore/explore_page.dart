@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/ui/widget/explore_grid.dart';
@@ -26,6 +27,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -35,8 +37,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
             title: BlocBuilder<ExploreBloc, ExploreState>(
               builder: (context, state) {
                 final category = state is ExploreLoaded
-                    ? (state.selectedCategory == 'All' ? 'Explore Lombok' : state.selectedCategory)
-                    : 'Explore Lombok';
+                    ? (state.selectedCategory == 'All' ? l10n.fun_exploreTitle : state.selectedCategory)
+                    : l10n.fun_exploreTitle;
                 return Text(category,
                     style: const TextStyle(fontWeight: FontWeight.bold));
               },
@@ -52,7 +54,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     onPressed: () =>
                         context.read<ExploreBloc>().add(ExploreItemsRequested()),
                     icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Reset', style: TextStyle(fontSize: 13)),
+                    label: Text(l10n.fun_resetFilters, style: const TextStyle(fontSize: 13)),
                   );
                 },
               ),
@@ -80,7 +82,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${state.items.length} tempat ditemukan',
+                        Text(l10n.fun_placesFound(state.items.length),
                             style: TextStyle(
                                 color: Colors.grey.shade600, fontSize: 13)),
                         if (state.searchQuery.isNotEmpty)

@@ -1,12 +1,14 @@
 // ─── Trip Management Screen ─────────────────────────────────────────────────
 // Screen to view and manage saved AI-generated trips
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/trip_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 
 class TripManagementScreen extends StatefulWidget {
@@ -26,17 +28,18 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        title: const Text('My Trips'),
+        title: Text(l10n.ait_tripsTitle),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () =>
                 context.read<TripBloc>().add(TripsLoadRequested()),
-            tooltip: 'Reload trips',
+            tooltip: l10n.ait_tripsReloadTooltip,
           ),
         ],
       ),
@@ -66,7 +69,7 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                       onPressed: () =>
                           context.read<TripBloc>().add(TripsLoadRequested()),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Coba Lagi'),
+                      label: Text(l10n.common_retry),
                     ),
                   ],
                 ),
@@ -88,11 +91,11 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                     const Icon(Icons.timeline_outlined, size: 64,
                         color: AppTheme.outlineVariant),
                     const SizedBox(height: 16),
-                    Text('Belum ada trip yang disimpan',
+                    Text(l10n.ait_tripsEmptyTitle,
                         style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 6),
                     Text(
-                      'Buat itinerary dengan AI lalu simpan untuk keesokan harinya',
+                      l10n.ait_tripsEmptySubtitle,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -100,7 +103,7 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                     ElevatedButton.icon(
                       onPressed: () => context.push(AppRouter.tripPlanner),
                       icon: const Icon(Icons.auto_awesome),
-                      label: const Text('Buat Itinerary Pertama'),
+                      label: Text(l10n.ait_tripsEmptyCta),
                     ),
                   ],
                 ),
@@ -116,11 +119,11 @@ class _TripManagementScreenState extends State<TripManagementScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Trip Anda',
+                      Text(l10n.ait_tripsHeaderTitle,
                           style: Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: 4),
                       Text(
-                        '${trips.length} trip disimpan',
+                        l10n.ait_tripsSavedCount(trips.length),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
@@ -169,6 +172,7 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -191,7 +195,7 @@ class _TripCard extends StatelessWidget {
                       const Icon(Icons.timeline, size: 14,
                           color: AppTheme.tertiary),
                       const SizedBox(width: 4),
-                      Text('TRIP SAVED',
+                      Text(l10n.ait_tripCardBadge,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: AppTheme.tertiary)),
                     ],
@@ -206,14 +210,15 @@ class _TripCard extends StatelessWidget {
                   Row(
                     children: [
                       PillBadge(
-                        label: 'Est. \$${trip.totalEstimatedCost.toInt()}',
+                        label: l10n.ait_tripCardEstimate(
+                            Money.formatSync(trip.totalEstimatedCost, usdDecimals: 0)),
                         icon: Icons.payments_outlined,
                         backgroundColor: AppTheme.surfaceContainerLow,
                         foregroundColor: AppTheme.primary,
                       ),
                       const SizedBox(width: 8),
                       PillBadge(
-                        label: '${trip.days.length} Hari',
+                        label: l10n.ait_tripCardDays(trip.days.length),
                         icon: Icons.calendar_today_outlined,
                         backgroundColor: AppTheme.surfaceContainerLow,
                         foregroundColor: AppTheme.primary,
@@ -235,7 +240,7 @@ class _TripCard extends StatelessWidget {
                       icon: const Icon(Icons.delete_outline,
                           color: AppTheme.error),
                       onPressed: onDelete,
-                      tooltip: 'Hapus trip',
+                      tooltip: l10n.ait_tripDeleteTooltip,
                     ),
                   ),
                 ],

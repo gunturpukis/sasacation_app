@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/group_model.dart';
 import 'package:sasacation/data/repo/group_repository.dart';
+import 'package:sasacation/utils/money.dart';
 
 /// F8: detail budget grup — kartu "Spending Gap Detected" bila over
 /// (memakai pct_over backend), anggota + fair share, daftar pengeluaran,
@@ -36,6 +38,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _addExpense() async {
+    final l10n = AppLocalizations.of(context);
     final labelCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
     var saving = false;
@@ -43,15 +46,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       context: context,
       builder: (dlg) => StatefulBuilder(
         builder: (dlg, setDlg) => AlertDialog(
-          title: const Text('Pengeluaran Baru'),
+          title: Text(l10n.ait_expenseNewTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: labelCtrl,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Keterangan',
+                decoration: InputDecoration(
+                  labelText: l10n.ait_expenseNameLabel,
                   hintText: 'mis. Dinner',
                 ),
               ),
@@ -59,8 +62,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Jumlah (USD)',
+                decoration: InputDecoration(
+                  labelText: l10n.ait_expenseAmountLabel,
                 ),
               ),
             ],
@@ -68,7 +71,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dlg, false),
-                child: const Text('Batal')),
+                child: Text(l10n.common_cancel)),
             ElevatedButton(
               onPressed: saving
                   ? null
@@ -92,13 +95,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(res['message'] ??
-                                'Gagal menambah pengeluaran'),
+                                l10n.ait_expenseAddFailed),
                             backgroundColor: AppTheme.error,
                           ),
                         );
                       }
                     },
-              child: const Text('Tambah'),
+              child: Text(l10n.ait_expenseAdd),
             ),
           ],
         ),
@@ -108,6 +111,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _deleteExpense(GroupExpense e) async {
+    final l10n = AppLocalizations.of(context);
     final res = await _repo.deleteExpense(
         groupId: widget.groupId, expenseId: e.id);
     if (!mounted) return;
@@ -117,7 +121,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
-              Text(res['message'] ?? 'Gagal menghapus pengeluaran'),
+              Text(res['message'] ?? l10n.ait_expenseDeleteFailed),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -126,10 +130,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar:
-          AppBar(title: Text(_group?.name ?? 'Group'), centerTitle: true),
+          AppBar(title: Text(_group?.name ?? l10n.ait_groupDetailTitle), centerTitle: true),
       floatingActionButton:
           _group == null || _loading
               ? null
@@ -137,8 +142,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 onPressed: _addExpense,
                 backgroundColor: AppTheme.primaryContainer,
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Pengeluaran',
-                    style: TextStyle(color: Colors.white)),
+                label: Text(l10n.ait_expenseFab,
+                    style: const TextStyle(color: Colors.white)),
               ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -151,14 +156,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                         size: 56,
                         color: AppTheme.outlineVariant),
                     const SizedBox(height: 12),
-                    Text('Grup tidak ditemukan',
+                    Text(l10n.ait_groupNotFound,
                         style: Theme.of(context)
                             .textTheme
                             .titleLarge),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: _load,
-                      child: const Text('Coba lagi'),
+                      child: Text(l10n.common_retry),
                     ),
                   ],
                 ),
@@ -176,7 +181,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                       _gapCard(context, _group!),
                     ],
                     const SizedBox(height: 20),
-                    Text('Anggota (${_group!.memberCount})',
+                    Text(l10n.ait_groupMembersTitle(_group!.memberCount),
                         style: Theme.of(context)
                             .textTheme
                             .titleLarge),
@@ -219,7 +224,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                                           fontWeight:
                                               FontWeight.w600)),
                                   Text(
-                                    'Bayar \$${m.paid.toStringAsFixed(0)} • Bagian \$${m.fairShare.toStringAsFixed(0)}',
+                                    l10n.ait_memberPaidShare(Money.formatSync(m.paid), Money.formatSync(m.fairShare)),
                                     style: const TextStyle(
                                         fontSize: 12,
                                         color: AppTheme.outline),
@@ -229,8 +234,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             ),
                             Text(
                               m.balance >= 0
-                                  ? '+\$${m.balance.toStringAsFixed(0)}'
-                                  : '-\$${m.balance.abs().toStringAsFixed(0)}',
+                                  ? '+${Money.formatSync(m.balance)}'
+                                  : '-${Money.formatSync(m.balance.abs())}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: m.balance >= 0
@@ -244,15 +249,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                        'Pengeluaran (${_group!.expenses.length})',
+                        l10n.ait_expenseListTitle(_group!.expenses.length),
                         style: Theme.of(context)
                             .textTheme
                             .titleLarge),
                     const SizedBox(height: 10),
                     if (_group!.expenses.isEmpty)
-                      const Text(
-                        'Belum ada pengeluaran tercatat.',
-                        style: TextStyle(
+                      Text(
+                        l10n.ait_expenseEmpty,
+                        style: const TextStyle(
                             color: AppTheme.outline,
                             fontSize: 13),
                       ),
@@ -287,13 +292,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                                 ],
                               ),
                             ),
-                            Text(
-                              '-\$${e.amount.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700),
-                            ),
+                            MoneyText(e.amount,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700)),
                             IconButton(
-                              tooltip: 'Hapus',
+                              tooltip: l10n.common_delete,
                               icon: const Icon(
                                   Icons.delete_outline,
                                   size: 18),
@@ -313,6 +316,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Widget _summaryCard(BuildContext context, GroupModel g) {
+    final l10n = AppLocalizations.of(context);
     final pct = g.budgetTotal > 0
         ? (g.totalSpent / g.budgetTotal).clamp(0.0, 1.0)
         : 0.0;
@@ -325,8 +329,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('GROUP BUDGET',
-              style: TextStyle(
+          Text(l10n.ait_groupBudgetBadge,
+              style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -351,10 +355,29 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            '\$${g.totalSpent.toStringAsFixed(0)} terpakai dari \$${g.budgetTotal.toStringAsFixed(0)} • Sisa \$${g.remaining.toStringAsFixed(0)}',
-            style: const TextStyle(
-                color: Colors.white, fontSize: 13),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              MoneyText(g.totalSpent,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 13)),
+              Text(
+                ' ${l10n.ait_groupUsedFrom} ',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 13),
+              ),
+              MoneyText(g.budgetTotal,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 13)),
+              Text(
+                ' • ${l10n.ait_groupRemaining} ',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 13),
+              ),
+              MoneyText(g.remaining,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 13)),
+            ],
           ),
         ],
       ),
@@ -362,6 +385,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Widget _gapCard(BuildContext context, GroupModel g) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -373,18 +397,18 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('GROUP BUDGET EQUITY',
-              style: TextStyle(
+          Text(l10n.ait_groupEquityBadge,
+              style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
                   color: AppTheme.secondary)),
           const SizedBox(height: 4),
-          Text('Spending Gap Detected',
+          Text(l10n.ait_gapDetectedTitle,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            'Pengeluaran grup ${g.pctOver.toStringAsFixed(0)}% di atas budget bersama. Pertimbangkan alternatif yang lebih hemat.',
+            l10n.ait_gapDetectedDesc(g.pctOver.toStringAsFixed(0)),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],

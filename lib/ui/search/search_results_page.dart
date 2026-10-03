@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/search/hotel_search_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,6 +104,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
  
   Widget _buildSearchBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 16, 12),
       child: Row(
@@ -121,10 +124,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 controller: _searchCtrl,
                 textInputAction: TextInputAction.search,
                 style: const TextStyle(fontSize: 14),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
-                  hintText: 'Cari hotel atau lokasi...',
-                  prefixIcon: Icon(Icons.search, size: 20, color: AppTheme.primary),
+                  hintText: l10n.fun_searchHotelHint,
+                  prefixIcon: const Icon(Icons.search, size: 20, color: AppTheme.primary),
                 ),
                 onSubmitted: _submitSearch,
               ),
@@ -148,6 +151,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
  
   Widget _buildFilterChips(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocBuilder<HotelSearchCubit, HotelSearchState>(
       builder: (context, state) {
         return SizedBox(
@@ -157,31 +161,31 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               _FilterChip(
-                label: 'Semua filter',
+                label: l10n.fun_filterAll,
                 icon: Icons.tune,
                 filled: true,
                 onTap: () => _openFilterSheet(context),
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: state.minPrice != null || state.maxPrice != null ? 'Harga •' : 'Harga',
+                label: state.minPrice != null || state.maxPrice != null ? l10n.fun_filterPriceActive : l10n.fun_filterPrice,
                 onTap: () => _openFilterSheet(context),
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: state.minRating > 0 ? 'Rating ${state.minRating.toStringAsFixed(0)}+' : 'Rating',
+                label: state.minRating > 0 ? l10n.fun_filterRatingValue(state.minRating.toStringAsFixed(0)) : l10n.fun_filterRating,
                 onTap: () => _openFilterSheet(context),
               ),
               const SizedBox(width: 8),
               _FilterChip(
                 label: state.amenities.isEmpty
-                    ? 'Fasilitas'
-                    : 'Fasilitas (${state.amenities.length})',
+                    ? l10n.fun_filterAmenities
+                    : l10n.fun_filterAmenitiesCount(state.amenities.length),
                 onTap: () => _openFilterSheet(context),
               ),
               const SizedBox(width: 8),
               _FilterChip(
-                label: _sortLabel(state.sort),
+                label: _sortLabel(context, state.sort),
                 icon: Icons.swap_vert,
                 onTap: () => _openSortSheet(context),
               ),
@@ -191,16 +195,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       },
     );
   }
- 
-  String _sortLabel(HotelSortOption sort) => switch (sort) {
-        HotelSortOption.priceLowHigh => 'Termurah',
-        HotelSortOption.priceHighLow => 'Termahal',
-        HotelSortOption.ratingHigh => 'Rating',
-        HotelSortOption.newest => 'Terbaru',
-        HotelSortOption.recommended => 'Urutkan',
-      };
+
+  String _sortLabel(BuildContext context, HotelSortOption sort) {
+    final l10n = AppLocalizations.of(context);
+    return switch (sort) {
+      HotelSortOption.priceLowHigh => l10n.fun_sortCheapest,
+      HotelSortOption.priceHighLow => l10n.fun_sortExpensive,
+      HotelSortOption.ratingHigh => l10n.fun_filterRating,
+      HotelSortOption.newest => l10n.fun_sortNewest,
+      HotelSortOption.recommended => l10n.fun_sortDefault,
+    };
+  }
 
   Widget _buildResultList(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocBuilder<HotelSearchCubit, HotelSearchState>(
       builder: (context, state) {
         if (state.isLoading) {
@@ -214,7 +222,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               children: [
                 Icon(Icons.search_off, size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
-                Text(state.error ?? 'Tidak ada hasil', textAlign: TextAlign.center),
+                Text(state.error ?? l10n.fun_noResults, textAlign: TextAlign.center),
               ],
             ),
           );
@@ -234,7 +242,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             if (showRecents) _buildRecents(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text('${results.length} properti ditemukan',
+              child: Text(l10n.fun_propertiesFound(results.length),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             ),
             Expanded(
@@ -274,6 +282,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   /// Riwayat pencarian lokal — mengikuti desain ("Recent Searches" + Clear All).
   Widget _buildRecents() {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Column(
@@ -282,11 +291,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Terakhir dicari',
+              Text(l10n.fun_recentSearches,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16)),
               TextButton(
                 onPressed: _clearRecents,
-                child: const Text('Hapus Semua', style: TextStyle(fontSize: 13)),
+                child: Text(l10n.fun_clearAll, style: const TextStyle(fontSize: 13)),
               ),
             ],
           ),
@@ -338,6 +347,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   /// Kartu "AI Pick for You" mengikuti desain — isinya hotel rating tertinggi
   /// dari hasil pencarian nyata (deterministik, tanpa backend AI).
   Widget _buildAiPick(BuildContext context, HotelModel hotel) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
@@ -356,8 +366,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               color: AppTheme.secondaryContainer,
               borderRadius: BorderRadius.circular(AppTheme.radiusFull),
             ),
-            child: const Text('AI Pick for You',
-                style: TextStyle(
+            child: Text(l10n.fun_aiPickTitle,
+                style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
@@ -366,7 +376,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           Text(hotel.name, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            'Rating tertinggi (${hotel.rating.toStringAsFixed(1)}) untuk pencarianmu saat ini.',
+            l10n.fun_aiPickDesc(hotel.rating.toStringAsFixed(1)),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -376,8 +386,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               onPressed: () =>
                   context.push(AppRouter.hotelDetailPath(hotel.id)),
               style: AppTheme.heroButtonStyle,
-              child: const Text('Lihat Detail',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(l10n.fun_viewDetail,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -397,6 +407,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   ];
 
   void _openFilterSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<HotelSearchCubit>();
     double minRating = cubit.state.minRating;
     final selectedAmenities = List<String>.of(cubit.state.amenities);
@@ -417,9 +428,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Filter', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(l10n.fun_filterTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-              const Text('Rentang harga per malam (\$)', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(l10n.fun_priceRangeLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -428,7 +439,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       controller: minCtrl,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        hintText: 'Min',
+                        hintText: l10n.fun_minHint,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         isDense: true,
                       ),
@@ -440,7 +451,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       controller: maxCtrl,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        hintText: 'Max',
+                        hintText: l10n.fun_maxHint,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         isDense: true,
                       ),
@@ -449,14 +460,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Rating minimum', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(l10n.fun_minRatingLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 children: [0.0, 3.0, 4.0, 4.5].map((r) {
                   final selected = minRating == r;
                   return ChoiceChip(
-                    label: Text(r == 0 ? 'Semua' : '$r+'),
+                    label: Text(r == 0 ? l10n.fun_allLabel : '$r+'),
                     selected: selected,
                     selectedColor: AppTheme.primaryColor.withOpacity(0.15),
                     labelStyle: TextStyle(
@@ -468,7 +479,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-              const Text('Fasilitas (harus ada semua)', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(l10n.fun_amenitiesMustAll, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -507,7 +518,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     Navigator.pop(sheetContext);
                   },
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                  child: const Text('Terapkan Filter', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(l10n.fun_applyFilter, style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -518,6 +529,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
  
   void _openSortSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<HotelSearchCubit>();
     showModalBottomSheet(
       context: context,
@@ -526,15 +538,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Urutkan berdasarkan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(l10n.fun_sortByTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-            _SortTile('Rekomendasi', HotelSortOption.recommended, cubit, sheetContext),
-            _SortTile('Harga terendah', HotelSortOption.priceLowHigh, cubit, sheetContext),
-            _SortTile('Harga tertinggi', HotelSortOption.priceHighLow, cubit, sheetContext),
-            _SortTile('Rating tertinggi', HotelSortOption.ratingHigh, cubit, sheetContext),
-            _SortTile('Terbaru', HotelSortOption.newest, cubit, sheetContext),
+            _SortTile(l10n.fun_sortRecommended, HotelSortOption.recommended, cubit, sheetContext),
+            _SortTile(l10n.fun_sortPriceLow, HotelSortOption.priceLowHigh, cubit, sheetContext),
+            _SortTile(l10n.fun_sortPriceHigh, HotelSortOption.priceHighLow, cubit, sheetContext),
+            _SortTile(l10n.fun_sortRatingHigh, HotelSortOption.ratingHigh, cubit, sheetContext),
+            _SortTile(l10n.fun_sortNewest, HotelSortOption.newest, cubit, sheetContext),
             const SizedBox(height: 12),
           ],
         ),
@@ -690,16 +702,11 @@ class _HotelResultCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleLarge),
                       ),
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                                text: '\$${price.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                    color: AppTheme.secondary, fontWeight: FontWeight.w700, fontSize: 15)),
-                          ],
-                        ),
-                      ),
+                      MoneyText(price,
+                          style: const TextStyle(
+                              color: AppTheme.secondary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15)),
                     ],
                   ),
                   const SizedBox(height: 4),

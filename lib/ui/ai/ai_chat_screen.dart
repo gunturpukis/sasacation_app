@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
  
 /// AiChatScreen — restyle mengikuti mockup `sasa_ai_chatbot`.
@@ -51,6 +53,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
@@ -69,8 +72,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sasa AI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('TRAVEL ASSISTANT',
+                Text(l10n.ait_chatTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(l10n.ait_chatSubtitle,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.primary)),
               ],
             ),
@@ -79,7 +82,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Reset chat',
+            tooltip: l10n.ait_chatResetTooltip,
             onPressed: () => context.read<AiBloc>().add(AiChatCleared()),
           ),
         ],
@@ -142,6 +145,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
  
   Widget _buildWelcome(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final suggestions = [
       '🏖️ Rekomendasikan pantai terbaik di Lombok',
       '🏨 Hotel dengan kolam renang di bawah \$200',
@@ -163,10 +167,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
             child: Icon(Icons.smart_toy_outlined, size: 40, color: AppTheme.primary),
           ),
           const SizedBox(height: 16),
-          Text('Halo! Saya Sasa 👋', style: Theme.of(context).textTheme.headlineMedium),
+          Text(l10n.ait_chatWelcomeTitle, style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
-            'AI travel assistant kamu untuk menjelajahi Lombok. Tanya apa saja!',
+            l10n.ait_chatWelcomeSubtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -193,6 +197,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
  
   Widget _buildInputBar() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).viewInsets.bottom + 12),
       decoration: BoxDecoration(
@@ -208,7 +213,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: _sendMessage,
               decoration: InputDecoration(
-                hintText: 'Ask Sasa anything...',
+                hintText: l10n.ait_chatHint,
                 filled: true,
                 fillColor: AppTheme.surfaceContainerLow,
                 border: OutlineInputBorder(
@@ -305,6 +310,7 @@ class _TripPlanCard extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: InkWell(
@@ -333,8 +339,11 @@ class _TripPlanCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
-                    Text('${plan.days.length} hari • \$${plan.totalEstimatedCost.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+                    Text(
+                        l10n.ait_chatPlanMeta(plan.days.length, Money.formatSync(plan.totalEstimatedCost)),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -354,6 +363,7 @@ class _ErrorBubble extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -371,7 +381,7 @@ class _ErrorBubble extends StatelessWidget {
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-            child: const Text('Coba Lagi', style: TextStyle(fontSize: 13)),
+            child: Text(l10n.common_retry, style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -384,6 +394,7 @@ class _TypingIndicator extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
@@ -407,7 +418,7 @@ class _TypingIndicator extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             const SizedBox(width: 8),
-            const Text('Sasa sedang mengetik...', style: TextStyle(color: Colors.white, fontSize: 13)),
+            Text(l10n.ait_chatTyping, style: const TextStyle(color: Colors.white, fontSize: 13)),
           ],
         ),
       ),

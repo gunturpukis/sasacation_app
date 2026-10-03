@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
@@ -39,9 +40,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
+        final l10n = AppLocalizations.of(context);
         if (state is AuthProfileUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil berhasil diperbarui')),
+            SnackBar(content: Text(l10n.me_profileUpdated)),
           );
           // Kembalikan state global ke AuthAuthenticated agar layar lain
           // (yang hanya membaca AuthAuthenticated) tetap menampilkan user.
@@ -59,6 +61,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         }
       },
       builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
         final user = switch (state) {
           AuthAuthenticated(user: final u) => u,
           AuthProfileUpdated(user: final u) => u,
@@ -69,7 +72,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         return Scaffold(
           backgroundColor: AppTheme.surface,
           appBar: AppBar(
-              title: const Text('Personal Information'),
+              title: Text(l10n.me_menuPersonalInfo),
               centerTitle: true),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -93,22 +96,22 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text('Nama Lengkap',
+                  Text(l10n.me_fullNameLabel,
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameCtrl,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      hintText: 'Nama lengkap',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      hintText: l10n.me_fullNameHint,
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (v) => v == null || v.trim().isEmpty
-                        ? 'Nama wajib diisi'
+                        ? l10n.me_nameRequired
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  Text('Email',
+                  Text(l10n.me_emailLabel,
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   Container(
@@ -137,7 +140,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Email terikat akun login dan tidak dapat diubah.',
+                    l10n.me_emailLockedNote,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 28),
@@ -163,7 +166,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                                   strokeWidth: 2,
                                   color: Colors.white),
                             )
-                          : const Text('Simpan Perubahan'),
+                          : Text(l10n.common_save),
                     ),
                   ),
                 ],

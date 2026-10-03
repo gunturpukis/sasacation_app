@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,6 +34,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 2));
+    // S1.1: muat kurs di background (gagal = tetap mode USD, non-blocking).
+    unawaited(ForexService.refresh());
     if (!mounted) return;
     // FIX: baca SharedPreferences — tidak hardcode
     final prefs = await SharedPreferences.getInstance();
@@ -54,6 +60,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -81,13 +88,13 @@ class _SplashScreenState extends State<SplashScreen>
                     child: const Icon(Icons.travel_explore, size: 48, color: Colors.white),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Sasacation',
-                      style: TextStyle(
+                  Text(l10n.auth_splashAppName,
+                      style: const TextStyle(
                           color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold,
                           letterSpacing: 1)),
                   const SizedBox(height: 8),
-                  const Text('Explore the Beauty of Lombok',
-                      style: TextStyle(color: Colors.white70, fontSize: 15)),
+                  Text(l10n.auth_splashTagline,
+                      style: const TextStyle(color: Colors.white70, fontSize: 15)),
                 ],
               ),
             ),

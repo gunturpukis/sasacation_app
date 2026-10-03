@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/checkout_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/info_card.dart';
+import 'package:sasacation/utils/info_money_row.dart';
+import 'package:sasacation/utils/info_row.dart';
 
 /// View: BookingConfirmScreen
 /// Ditampilkan setelah pembayaran berhasil — full confirmation page.
@@ -15,6 +19,7 @@ class BookingConfirmScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fmt = DateFormat('EEE, dd MMM yyyy');
 
     return Scaffold(
@@ -46,14 +51,14 @@ class BookingConfirmScreen extends StatelessWidget {
                       child: const Icon(Icons.check_circle, color: Colors.white, size: 50),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Pembayaran Berhasil! 🎉',
-                      style: TextStyle(
+                    Text(
+                      l10n.fun_paymentSuccessTitle,
+                      style: const TextStyle(
                           color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Booking kamu sudah dikonfirmasi.\nSelamat berlibur di Lombok!',
+                      l10n.fun_paymentSuccessSub,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14),
                     ),
@@ -76,7 +81,7 @@ class BookingConfirmScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          Text('Kode Booking',
+                          Text(l10n.fun_bookingCodeLabel,
                               style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                           const SizedBox(height: 6),
                           Row(
@@ -96,13 +101,13 @@ class BookingConfirmScreen extends StatelessWidget {
                                 onPressed: () {
                                   Clipboard.setData(ClipboardData(text: result.bookingCode));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Kode booking disalin!')),
+                                    SnackBar(content: Text(l10n.fun_bookingCodeCopied)),
                                   );
                                 },
                               ),
                             ],
                           ),
-                          Text('Simpan kode ini untuk referensi kamu',
+                          Text(l10n.fun_saveCodeHint,
                               style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
                         ],
                       ),
@@ -110,28 +115,28 @@ class BookingConfirmScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // ─── Booking details ──────────────────────────────────
-                    _InfoCard(
-                      title: 'Detail Hotel',
+                    InfoCard(
+                      title: l10n.fun_hotelDetailTitle,
                       rows: [
-                        _InfoRow('Hotel', result.hotelName),
-                        _InfoRow('Check-in', fmt.format(result.checkIn)),
-                        _InfoRow('Check-out', fmt.format(result.checkOut)),
-                        _InfoRow('Durasi', '${result.nights} malam'),
+                        InfoRow(l10n.fun_infoHotelLabel, result.hotelName),
+                        InfoRow(l10n.fun_checkInLabel, fmt.format(result.checkIn)),
+                        InfoRow(l10n.fun_checkOutLabel, fmt.format(result.checkOut)),
+                        InfoRow(l10n.fun_durationLabel, l10n.fun_nightsCount(result.nights)),
                       ],
                     ),
                     const SizedBox(height: 16),
 
                     // ─── Payment details ──────────────────────────────────
-                    _InfoCard(
-                      title: 'Detail Pembayaran',
+                    InfoCard(
+                      title: l10n.fun_paymentDetailTitle,
                       rows: [
-                        _InfoRow('Metode', _methodLabel(result.method)),
-                        _InfoRow('Total', '\$${result.amount.toStringAsFixed(0)}'),
-                        _InfoRow('Transaction ID', result.transactionId),
-                        _InfoRow('Waktu Bayar',
+                        InfoRow(l10n.fun_methodRowLabel, _methodLabel(result.method)),
+                        InfoMoneyRow(icon: Icons.attach_money, label: l10n.fun_totalRowLabel, usd: result.amount),
+                        InfoRow(l10n.fun_transactionIdLabel, result.transactionId),
+                        InfoRow(l10n.fun_paidTimeLabel,
                             DateFormat('dd MMM yyyy, HH:mm').format(result.paidAt)),
-                        _InfoRow('Status',
-                            result.status == 'success' ? '✅ Berhasil' : result.status),
+                        InfoRow(l10n.fun_statusRowLabel,
+                            result.status == 'success' ? l10n.fun_statusSuccess : result.status),
                       ],
                     ),
                     const SizedBox(height: 28),
@@ -142,8 +147,8 @@ class BookingConfirmScreen extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => context.go(AppRouter.home),
                         icon: const Icon(Icons.home_outlined),
-                        label: const Text('Kembali ke Beranda',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                        label: Text(l10n.fun_backToHome,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -156,8 +161,8 @@ class BookingConfirmScreen extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () => context.push(AppRouter.myBookings),
                         icon: const Icon(Icons.bookmark_outlined),
-                        label: const Text('Lihat Semua Booking',
-                            style: TextStyle(fontSize: 15)),
+                        label: Text(l10n.fun_viewAllBookings,
+                            style: const TextStyle(fontSize: 15)),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -189,57 +194,5 @@ class BookingConfirmScreen extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  final String title;
-  final List<_InfoRow> rows;
-  const _InfoCard({required this.title, required this.rows});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-          const Divider(height: 20),
-          ...rows,
-        ],
-      ),
-    );
-  }
-}
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(label,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/data/model/trip_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 
 class TripPlannerScreen extends StatefulWidget {
@@ -30,14 +32,15 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Trip Planner'),
+        title: Text(l10n.ait_plannerTitle),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: 'Lihat Trip yang Disimpan',
+            tooltip: l10n.ait_plannerSavedTooltip,
             onPressed: () => context.push(AppRouter.tripManagement),
           ),
         ],
@@ -55,7 +58,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                       controller: _controller,
                       onSubmitted: _generateTripPlan,
                       decoration: InputDecoration(
-                        hintText: 'Deskripsikan rencana liburan impian Anda...',
+                        hintText: l10n.ait_plannerHint,
                         prefixIcon: const Icon(
                           Icons.auto_awesome,
                           color: AppTheme.primary,
@@ -115,9 +118,9 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                           size: 18,
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Contoh permintaan:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Text(
+                          l10n.ait_plannerExamplesTitle,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -156,17 +159,17 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             // Results or Error
             Expanded(
               child: _isGenerating
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(
+                          const CircularProgressIndicator(
                             color: AppTheme.primary,
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
-                            'Membuat rencana perjalanan...',
-                            style: TextStyle(color: AppTheme.onSurfaceVariant),
+                            l10n.ait_plannerGenerating,
+                            style: const TextStyle(color: AppTheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -198,7 +201,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                     });
                                   },
                                   icon: const Icon(Icons.refresh),
-                                  label: const Text('Coba Lagi'),
+                                  label: Text(l10n.common_retry),
                                 ),
                               ],
                             ),
@@ -206,11 +209,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                         )
                       : _generatedPlan != null
                           ? _buildResult(_generatedPlan!)
-                          : const Center(
+                          : Center(
                               child: Text(
-                                'Deskripsikan liburan impian Anda dan biarkan Sasa membuatkan rencana terbaik!',
+                                l10n.ait_plannerEmpty,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: AppTheme.onSurfaceVariant,
                                   fontSize: 16,
                                 ),
@@ -225,6 +228,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
 
   void _generateTripPlan(String query) {
     if (query.trim().isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isGenerating = true;
       _errorMessage = null;
@@ -250,7 +254,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       if (!mounted) return;
       setState(() {
         _isGenerating = false;
-        _errorMessage = 'Gagal membuat rencana: $error';
+        _errorMessage = l10n.ait_plannerCreateFailed(error);
       });
     });
   }
@@ -558,6 +562,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   }
 
   Widget _buildResult(TripPlan plan) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -582,12 +587,23 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   children: [
                     const Icon(Icons.payments_outlined, size: 16),
                     const SizedBox(width: 6),
-                    Text(
-                      'Estimasi total: \$${plan.totalEstimatedCost.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.ait_planTotalLabel,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                        MoneyText(plan.totalEstimatedCost,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -614,7 +630,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
 
           if (plan.tips.isNotEmpty) ...[
             const SizedBox(height: 8),
-            const Text('Tips', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text(l10n.ait_planTipsTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 8),
             ...plan.tips.map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
@@ -636,7 +652,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _saveTrip(plan),
               icon: const Icon(Icons.save),
-              label: const Text('Simpan Trip ini'),
+              label: Text(l10n.ait_plannerSaveTrip),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -680,8 +696,8 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   ),
                 ),
               ),
-              Text(
-                '\$${day.dailyCost.toStringAsFixed(0)}',
+              MoneyText(
+                day.dailyCost,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -766,6 +782,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   }
 
   Future<void> _saveTrip(TripPlan plan) async {
+    final l10n = AppLocalizations.of(context);
     try {
       // Convert TripPlan to TripModel for persistence
       final tripModel = TripModel.fromTripPlan(
@@ -785,8 +802,8 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Trip berhasil disimpan!'),
+          SnackBar(
+            content: Text(l10n.ait_plannerSavedSuccess),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -798,7 +815,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan trip: $e'),
+            content: Text(l10n.ait_plannerSaveFailed(e.toString())),
             backgroundColor: AppTheme.error,
           ),
         );

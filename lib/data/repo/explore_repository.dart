@@ -127,6 +127,17 @@ class BookingRepository {
     }
   }
 
+  /// S1.3: info resume penuh (termasuk `expiresAt` untuk countdown).
+  /// 404 = tidak ada pembayaran aktif (null, bukan error).
+  Future<Map<String, dynamic>?> getResumeInfo(String bookingId) async {
+    try {
+      final res = await ApiClient.get('/checkout/resume/$bookingId');
+      return Map<String, dynamic>.from(res.data['data'] as Map);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Lanjutkan pembayaran booking pending (F1): ambil Snap `redirectUrl`
   /// yang masih aktif. 404 = tidak ada pembayaran aktif → panggil
   /// `/checkout/pay` ulang (di luar scope fungsi ini).

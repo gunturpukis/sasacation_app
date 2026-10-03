@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -7,6 +8,7 @@ import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/data/repo/hotel_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
  
 /// WishlistScreen — restyle mengikuti mockup `saved_destinations`.
@@ -50,6 +52,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocListener<WishlistCubit, Set<String>>(
       listener: (context, _) => _loadHotels(),
       child: Scaffold(
@@ -65,9 +68,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Saved Destinations', style: Theme.of(context).textTheme.headlineMedium),
+                            Text(l10n.fun_savedTitle, style: Theme.of(context).textTheme.headlineMedium),
                             const SizedBox(height: 4),
-                            Text('Discover your dream vacations waiting for you.',
+                            Text(l10n.fun_savedSubtitle,
                                 style: Theme.of(context).textTheme.bodyMedium),
                             const SizedBox(height: 16),
                           ],
@@ -83,9 +86,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             children: [
                               Icon(Icons.favorite_border, size: 72, color: AppTheme.outlineVariant),
                               const SizedBox(height: 16),
-                              Text('Belum ada hotel tersimpan', style: Theme.of(context).textTheme.titleLarge),
+                              Text(l10n.fun_emptyWishlistTitle, style: Theme.of(context).textTheme.titleLarge),
                               const SizedBox(height: 6),
-                              Text('Ketuk ikon hati pada hotel untuk menyimpannya',
+                              Text(l10n.fun_emptyWishlistHint,
                                   style: Theme.of(context).textTheme.bodyMedium),
                             ],
                           ),
@@ -118,17 +121,19 @@ class _WishlistScreenState extends State<WishlistScreen> {
 }
  
 /// Heuristik badge dari data nyata (lihat catatan di atas file).
-String? _badgeLabel(HotelModel hotel) {
-  if (hotel.rating >= 4.8) return 'BEST SELLER';
-  if (hotel.featured) return 'SPECIAL OFFER';
-  if (hotel.reviewCount >= 100) return 'TRENDING';
+String? _badgeLabel(HotelModel hotel, BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  if (hotel.rating >= 4.8) return l10n.fun_badgeBestSeller;
+  if (hotel.featured) return l10n.fun_badgeSpecialOffer;
+  if (hotel.reviewCount >= 100) return l10n.fun_badgeTrending;
   return null;
 }
 
 /// Warna badge mengikuti mockup: teal untuk Best Seller/Trending,
 /// oranye untuk Special Offer.
-Color _badgeColor(HotelModel hotel) {
-  if (_badgeLabel(hotel) == 'SPECIAL OFFER') {
+Color _badgeColor(BuildContext context, String? badgeLabel) {
+  final l10n = AppLocalizations.of(context);
+  if (badgeLabel == l10n.fun_badgeSpecialOffer) {
     return AppTheme.secondaryContainer;
   }
   return AppTheme.primaryContainer;
@@ -143,6 +148,8 @@ class _SavedDestinationCard extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final badge = _badgeLabel(hotel, context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -174,13 +181,13 @@ class _SavedDestinationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (_badgeLabel(hotel) != null)
+                if (badge != null)
                   Positioned(
                     bottom: 44,
                     left: 14,
                     child: PillBadge(
-                      label: _badgeLabel(hotel)!,
-                      backgroundColor: _badgeColor(hotel),
+                      label: badge,
+                      backgroundColor: _badgeColor(context, badge),
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -235,18 +242,17 @@ class _SavedDestinationCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                  text: '\$${hotel.price.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      color: AppTheme.secondary, fontWeight: FontWeight.w700, fontSize: 15)),
-                              TextSpan(
-                                  text: ' / night',
-                                  style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 12)),
-                            ],
-                          ),
+                        MoneyText(
+                          hotel.price,
+                          style: const TextStyle(
+                              color: AppTheme.secondary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15),
+                          suffix: l10n.common_perNight,
+                          suffixStyle: const TextStyle(
+                              color: AppTheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 12),
                         ),
                       ],
                     ),
@@ -260,7 +266,7 @@ class _SavedDestinationCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusFull)),
                     ),
-                    child: const Text('Book Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    child: Text(l10n.common_bookNow, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),

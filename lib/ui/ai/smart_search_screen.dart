@@ -340,11 +340,13 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/utils/json_helper.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/ai/ai_bloc.dart';
 
 class SmartSearchScreen extends StatefulWidget {
@@ -367,9 +369,10 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smart Search'),
+        title: Text(l10n.ait_searchTitle),
         centerTitle: true,
       ),
       body: Column(
@@ -383,7 +386,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     controller: _controller,
                     onSubmitted: _doSearch,
                     decoration: InputDecoration(
-                      hintText: 'Cari dengan bahasa natural...',
+                      hintText: l10n.ait_searchHint,
                       prefixIcon: const Icon(Icons.auto_awesome, color: AppTheme.primaryColor),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                       suffixIcon: _controller.text.isNotEmpty
@@ -422,7 +425,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       children: [
                         const CircularProgressIndicator(),
                         const SizedBox(height: 16),
-                        Text('🤖 Menganalisis "${state.query}"...',
+                        Text(l10n.ait_searchAnalyzing(state.query),
                             style: TextStyle(color: Colors.grey.shade600)),
                       ],
                     ),
@@ -443,6 +446,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   Widget _buildExamples() {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -452,7 +456,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
             children: [
               Icon(Icons.lightbulb_outline, color: AppTheme.primaryColor, size: 18),
               const SizedBox(width: 8),
-              const Text('Contoh pencarian cerdas:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(l10n.ait_searchExamplesTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
@@ -480,6 +484,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   Widget _buildResults(AiSearchLoaded state) {
+    final l10n = AppLocalizations.of(context);
     final result = state.result;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -505,7 +510,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('${result.totalResults} tempat ditemukan',
+          Text(l10n.ait_searchResultCount(result.totalResults),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
           GridView.builder(
@@ -607,7 +612,7 @@ class _ResultCard extends StatelessWidget {
                       // FIX: bandingkan `price` (double hasil parseDouble),
                       // bukan `item['price']` mentah — ini akar penyebab crash.
                       if (price > 0)
-                        Text('\$${price.toStringAsFixed(0)}',
+                        MoneyText(price,
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
                     ],

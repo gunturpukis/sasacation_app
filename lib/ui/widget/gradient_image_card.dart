@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 
 /// GradientImageCard — pola "Product Card" dari DESIGN.md: full-bleed image,
 /// 20px radius, gradient bottom-up hitam untuk keterbacaan teks overlay.
@@ -39,6 +41,7 @@ class GradientImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -122,20 +125,16 @@ class GradientImageCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '\$${price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                        color: AppTheme.secondary, fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                  TextSpan(
-                    text: ' / night',
-                    style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 12),
-                  ),
-                ],
-              ),
+            MoneyText(price,
+              style: const TextStyle(
+                  color: AppTheme.secondary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15),
+              suffix: l10n.common_perNight,
+              suffixStyle: TextStyle(
+                  color: AppTheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12),
             ),
           ],
         ),

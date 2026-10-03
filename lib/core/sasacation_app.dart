@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
+import 'package:sasacation/core/app_locale.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/repo/ai_repository.dart';
 import 'package:sasacation/data/repo/auth_repository.dart';
@@ -56,21 +58,27 @@ class LombokApp extends StatelessWidget {
           create: (_) => TripBloc(tripRepository: TripRepository()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Sasacation',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        routerConfig: Routes.router,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en', 'GB'),
-          Locale('id', 'ID'),
-          Locale('en', 'US'),
-        ],
+      child: ValueListenableBuilder<Locale?>(
+        valueListenable: AppLocale.locale,
+        builder: (context, locale, _) => MaterialApp.router(
+          title: 'Sasacation',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          routerConfig: Routes.router,
+          locale: locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('id', 'ID'),
+            Locale('en', 'US'),
+          ],
+          localeResolutionCallback: (device, supported) =>
+              AppLocale.resolve(device),
+        ),
       ),
     );
   }

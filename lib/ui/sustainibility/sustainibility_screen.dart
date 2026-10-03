@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/api/api_client.dart';
@@ -106,7 +107,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _discoveryError = 'Gagal memuat rekomendasi';
+        _discoveryError = AppLocalizations.of(context).me_discoveryFailed;
         _loadingDiscovery = false;
         _shuffling = false;
       });
@@ -115,9 +116,10 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Komitmen Sasacation'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.me_menuSustainability), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -133,14 +135,12 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
               children: [
                 const Icon(Icons.eco_outlined, color: Colors.white, size: 32),
                 const SizedBox(height: 12),
-                Text('Wisata yang Bertanggung Jawab',
+                Text(l10n.me_heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white)),
                 const SizedBox(height: 8),
-                const Text(
-                  'Sasacation percaya pariwisata Lombok yang berkelanjutan dimulai dari '
-                  'pilihan kecil setiap wisatawan — dari akomodasi yang dipilih sampai '
-                  'siapa yang menerima manfaatnya.',
-                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                Text(
+                  l10n.me_heroBody,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
                 ),
               ],
             ),
@@ -150,38 +150,29 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
           _principle(
             context,
             icon: Icons.storefront_outlined,
-            title: 'Dukungan ke Pelaku Usaha Lokal',
-            description:
-                'Kami mendorong penginapan, restoran, dan penyedia aktivitas yang '
-                'dikelola langsung oleh warga Lombok untuk lebih mudah ditemukan di '
-                'platform ini.',
+            title: l10n.me_principleLocalTitle,
+            description: l10n.me_principleLocalDesc,
           ),
           _principle(
             context,
             icon: Icons.recycling_outlined,
-            title: 'Minim Sampah, Hormati Alam',
-            description:
-                'Kami merekomendasikan mitra yang menerapkan praktik ramah lingkungan — '
-                'pengelolaan sampah, konservasi terumbu karang, dan penggunaan sumber '
-                'daya yang bertanggung jawab.',
+            title: l10n.me_principleEcoTitle,
+            description: l10n.me_principleEcoDesc,
           ),
           _principle(
             context,
             icon: Icons.groups_outlined,
-            title: 'Hormat pada Budaya Lokal',
-            description:
-                'Kami mendorong wisatawan untuk mengenal dan menghormati adat serta '
-                'kebiasaan masyarakat Sasak dan komunitas lokal lainnya di Lombok.',
+            title: l10n.me_principleCultureTitle,
+            description: l10n.me_principleCultureDesc,
           ),
           const SizedBox(height: 28),
 
           // ─── Anti-Algorithm Discovery (F2, data nyata) ──────────────
-          Text('Anti-Algorithm Discovery',
+          Text(l10n.me_discoveryTitle,
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 4),
           Text(
-            'Bosan dengan rekomendasi yang dipersonalisasi? Temukan tempat '
-            'yang 100% berbeda dari kebiasaan Anda.',
+            l10n.me_discoverySubtitle,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -201,10 +192,8 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Skor dampak personal dan sertifikat per-user belum ditampilkan — '
-                    'fitur itu butuh sistem tracking yang belum ada. Bagian discovery '
-                    'di atas sudah memakai data rekomendasi nyata dari server.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant, height: 1.5),
+                    l10n.me_impactNote,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.onSurfaceVariant, height: 1.5),
                   ),
                 ),
               ],
@@ -216,6 +205,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
   }
  
   Widget _buildDiscoveryCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_loadingDiscovery) {
       return Container(
         height: 220,
@@ -235,11 +225,11 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
         ),
         child: Row(
           children: [
-            const Expanded(
-                child: Text('Rekomendasi belum tersedia saat ini')),
+            Expanded(
+                child: Text(l10n.me_discoveryEmpty)),
             TextButton(
               onPressed: () => _loadDiscovery(shuffle: false),
-              child: const Text('Coba lagi'),
+              child: Text(l10n.common_retry),
             ),
           ],
         ),
@@ -284,7 +274,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                             AppTheme.radiusFull),
                       ),
                       child: Text(
-                          '${item.matchPct}% Match with Your History',
+                          l10n.me_matchInfo(item.matchPct),
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -322,7 +312,7 @@ class _SustainabilityScreenState extends State<SustainabilityScreen> {
                   child:
                       CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.shuffle, size: 18),
-          label: const Text('Guncang untuk Temukan'),
+          label: Text(l10n.me_shuffleAction),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.primary,
             side: const BorderSide(color: AppTheme.primaryContainer),

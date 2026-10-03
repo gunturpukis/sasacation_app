@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
+import 'package:sasacation/utils/info_money_row.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Detail screen untuk destinasi wisata dan restoran.
@@ -14,9 +17,10 @@ class DestinationDetailScreen extends StatelessWidget {
   bool get _isRestaurant => item.type == 'restaurant';
 
   Future<void> _onPrimaryAction(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     if (_isRestaurant) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fitur reservasi akan segera hadir!')),
+        SnackBar(content: Text(l10n.fun_reservationSoon)),
       );
       return;
     }
@@ -25,13 +29,14 @@ class DestinationDetailScreen extends StatelessWidget {
     final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+        SnackBar(content: Text(l10n.fun_cannotOpenMaps)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -93,7 +98,7 @@ class DestinationDetailScreen extends StatelessWidget {
                   child: const Icon(Icons.favorite_border, color: Colors.black87),
                 ),
                 onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${item.name} disimpan ke favorit (segera hadir penuh)')),
+                  SnackBar(content: Text(AppLocalizations.of(context).fun_savedFavoriteSoon(item.name))),
                 ),
               ),
             ],
@@ -112,7 +117,7 @@ class DestinationDetailScreen extends StatelessWidget {
                       _RatingBadge(rating: item.rating),
                       const SizedBox(width: 8),
                       Text(
-                        '(${item.reviewCount} ulasan)',
+                        l10n.fun_reviewCountLabel(item.reviewCount),
                         style: const TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(width: 8),
@@ -146,15 +151,14 @@ class DestinationDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Description
-                  const Text(
-                    'Tentang Tempat Ini',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.fun_aboutPlace,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     item.description ??
-                        'Nikmati keindahan ${item.name} yang terletak di ${item.location}. '
-                        'Salah satu destinasi terbaik di Lombok dengan berbagai daya tarik yang memukau.',
+                        l10n.fun_placeDescFallback(item.name, item.location),
                     style: TextStyle(
                       height: 1.6,
                       color: Colors.grey.shade700,
@@ -172,9 +176,9 @@ class DestinationDetailScreen extends StatelessWidget {
 
                   // Photo gallery jika ada
                   if (item.images.length > 1) ...[
-                    const Text(
-                      'Galeri Foto',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Text(
+                      l10n.fun_photoGallery,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -218,7 +222,7 @@ class DestinationDetailScreen extends StatelessWidget {
                         Icon(Icons.map, size: 48, color: Colors.grey.shade400),
                         const SizedBox(height: 10),
                         Text(
-                          'Peta lokasi ${item.name}',
+                          l10n.fun_mapLocationName(item.name),
                           style: TextStyle(color: Colors.grey.shade500),
                         ),
                       ],
@@ -254,19 +258,24 @@ class DestinationDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isRestaurant ? 'Rata-rata per orang' : 'Tiket masuk',
+                      _isRestaurant ? l10n.fun_avgPerPerson : l10n.fun_entryTicket,
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    Text(
-                      item.price > 0
-                          ? '\$${item.price.toStringAsFixed(0)}'
-                          : 'Gratis',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
+                    item.price > 0
+                        ? MoneyText(item.price,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ))
+                        : Text(
+                            l10n.fun_freeLabel,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                   ],
                 ),
               ),
@@ -276,7 +285,7 @@ class DestinationDetailScreen extends StatelessWidget {
                   onPressed: () => _onPrimaryAction(context),
                   icon: Icon(_isRestaurant ? Icons.restaurant : Icons.directions),
                   label: Text(
-                    _isRestaurant ? 'Reservasi' : 'Petunjuk Arah',
+                    _isRestaurant ? l10n.fun_reserveAction : l10n.fun_directionsAction,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -353,26 +362,27 @@ class _RestaurantInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _InfoCard(
       rows: [
         _InfoRow(
           icon: Icons.restaurant_menu,
-          label: 'Jenis Masakan',
+          label: l10n.fun_cuisineType,
           // Gunakan field cuisine dari model, fallback ke 'Masakan Lokal'
           value: item.cuisine ?? 'Masakan Lokal',
         ),
         _InfoRow(
           icon: Icons.schedule,
-          label: 'Jam Buka',
+          label: l10n.fun_openHours,
           // Gunakan field openHours dari model, fallback ke string default
           value: item.openHours ?? '10:00 - 22:00',
         ),
-        _InfoRow(
+        InfoMoneyRow(
           icon: Icons.attach_money,
-          label: 'Harga rata-rata',
-          value: item.price > 0
-              ? '\$${item.price.toStringAsFixed(0)} / orang'
-              : 'Variatif',
+          label: l10n.fun_avgPrice,
+          usd: item.price,
+          suffix: l10n.fun_perPerson,
+          emptyText: l10n.fun_priceVaried,
         ),
       ],
     );
@@ -386,24 +396,24 @@ class _DestinationInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _InfoCard(
       rows: [
         _InfoRow(
           icon: Icons.category,
-          label: 'Kategori',
+          label: l10n.fun_categoryLabel,
           value: item.subCategory ?? item.category,
         ),
         _InfoRow(
           icon: Icons.location_city,
-          label: 'Lokasi',
+          label: l10n.fun_locationLabel,
           value: item.location,
         ),
-        _InfoRow(
+        _InfoMoneyRow(
           icon: Icons.confirmation_number,
-          label: 'Tiket Masuk',
-          value: item.price > 0
-              ? '\$${item.price.toStringAsFixed(0)}'
-              : 'Gratis',
+          label: l10n.fun_entryTicket,
+          usd: item.price,
+          emptyText: l10n.fun_freeLabel,
         ),
       ],
     );
@@ -411,7 +421,7 @@ class _DestinationInfoCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  final List<_InfoRow> rows;
+  final List<Widget> rows;
   const _InfoCard({required this.rows});
 
   @override
@@ -424,6 +434,53 @@ class _InfoCard extends StatelessWidget {
         border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
       ),
       child: Column(children: rows),
+    );
+  }
+}
+
+// Varian _InfoRow untuk nominal uang (ikut kurs via MoneyText).
+// Bila [usd] <= 0 tampil [emptyText] polos (mis. 'Gratis', 'Variatif').
+class _InfoMoneyRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final double usd;
+  final String suffix;
+  final String emptyText;
+  const _InfoMoneyRow({
+    required this.icon,
+    required this.label,
+    required this.usd,
+    this.suffix = '',
+    this.emptyText = '-',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppTheme.primaryColor),
+          const SizedBox(width: 10),
+          Text(
+            '$label:  ',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          ),
+          Expanded(
+            child: usd > 0
+                ? MoneyText(usd,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 14),
+                    suffix: suffix)
+                : Text(
+                    emptyText,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 14),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

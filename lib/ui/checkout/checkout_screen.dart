@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,7 @@ import 'package:sasacation/data/model/checkout_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/data/repo/checkout_repository.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/checkout/checkout_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
  
@@ -69,6 +71,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocConsumer<CheckoutBloc, CheckoutState>(
       listener: (context, state) {
         if (state is CheckoutAwaitingPayment) {
@@ -85,7 +88,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final isPaymentInFlight = state is CheckoutPaymentProcessing || state is CheckoutAwaitingPayment;
         return Scaffold(
           appBar: AppBar(
-            title: Text(_step == _CheckoutStep.review ? 'Review Booking' : 'Pembayaran'),
+            title: Text(_step == _CheckoutStep.review ? l10n.fun_reviewBookingTitle : l10n.fun_paymentTitle),
             centerTitle: true,
             // Dikunci selama proses bayar berjalan (termasuk saat polling
             // menunggu webhook Midtrans) — polling jalan di background bloc
@@ -121,28 +124,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
  
   Widget _buildBody(BuildContext ctx, CheckoutState state) {
+    final l10n = AppLocalizations.of(ctx);
     if (state is CheckoutLoading || state is CheckoutInitial) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 12),
-            Text('Menyiapkan checkout...', style: TextStyle(color: AppTheme.outline)),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 12),
+            Text(l10n.fun_preparingCheckout, style: const TextStyle(color: AppTheme.outline)),
           ],
         ),
       );
     }
     if (state is CheckoutPaymentProcessing) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Memproses pembayaran...', style: TextStyle(fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Mohon tunggu sebentar', style: TextStyle(color: AppTheme.outline)),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(l10n.fun_processingPayment, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text(l10n.fun_pleaseWait, style: const TextStyle(color: AppTheme.outline)),
           ],
         ),
       );
@@ -156,18 +160,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 20),
-              const Text('Menunggu pembayaran...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(l10n.fun_waitingPayment, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text(
-                'Halaman pembayaran sudah dibuka di browser. Selesaikan pembayaran Anda, lalu kembali ke sini — statusnya akan terupdate otomatis.',
+                l10n.fun_paymentBrowserDesc,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 13),
+                style: const TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 13),
               ),
               const SizedBox(height: 20),
               OutlinedButton.icon(
                 onPressed: () => _launchPaymentUrl(ctx, state.redirectUrl),
                 icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Buka Lagi Halaman Pembayaran'),
+                label: Text(l10n.fun_reopenPayment),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
                   side: const BorderSide(color: AppTheme.primaryContainer),
@@ -196,7 +200,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     guestCount: widget.guestCount,
                     notes: widget.notes,
                   )),
-              child: const Text('Coba Lagi'),
+              child: Text(l10n.common_retry),
             ),
           ],
         ),
@@ -254,12 +258,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     .read<CheckoutBloc>()
                     .add(CheckoutSaveCardChanged(save: v)),
                 activeThumbColor: AppTheme.primaryContainer,
-                title: const Text('Simpan kartu ini',
+                title: Text(l10n.fun_saveCardTitle,
                     style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                subtitle: const Text(
-                    'Munculkan opsi simpan di halaman pembayaran untuk pemakaian berikutnya',
-                    style: TextStyle(fontSize: 12)),
+                        const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: Text(
+                    l10n.fun_saveCardSubtitle,
+                    style: const TextStyle(fontSize: 12)),
               ),
             ],
             const SizedBox(height: 100),
@@ -276,12 +280,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal membuka halaman pembayaran'), backgroundColor: Colors.red),
+        SnackBar(content: Text(AppLocalizations.of(context).fun_failedOpenPayment), backgroundColor: Colors.red),
       );
     }
   }
  
   Widget _buildPayButton(BuildContext ctx, CheckoutState state) {
+    final l10n = AppLocalizations.of(ctx);
     if (state is! CheckoutSessionLoaded) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -296,9 +301,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.w500)),
-                Text('\$${state.session.pricing.total.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                Text(l10n.fun_totalPayment, style: const TextStyle(fontWeight: FontWeight.w500)),
+                MoneyText(state.session.pricing.total,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    estimateSuffix: l10n.fun_estimateSuffix),
               ],
             ),
             const SizedBox(height: 12),
@@ -313,8 +319,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: AppTheme.heroButtonStyle,
                 child: Text(
                   _step == _CheckoutStep.review
-                      ? 'Lanjutkan ke Pembayaran'
-                      : (state.canPay ? 'Bayar Sekarang' : 'Pilih Metode Pembayaran'),
+                      ? l10n.fun_continueToPayment
+                      : (state.canPay ? l10n.fun_payNow : l10n.fun_selectPayMethod),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -333,11 +339,12 @@ class _StepIndicator extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: Row(
         children: [
-          _StepDot(label: '1. Review', active: true),
+          _StepDot(label: l10n.fun_stepReview, active: true),
           Expanded(
             child: Container(
               height: 2,
@@ -347,7 +354,7 @@ class _StepIndicator extends StatelessWidget {
                   : AppTheme.outlineVariant,
             ),
           ),
-          _StepDot(label: '2. Pembayaran', active: step == _CheckoutStep.payment),
+          _StepDot(label: l10n.fun_stepPayment, active: step == _CheckoutStep.payment),
         ],
       ),
     );
@@ -440,16 +447,17 @@ class _StayDetailsCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fmt = DateFormat('EEE, dd MMM yyyy');
     return _Card(
-      title: 'Detail Menginap',
+      title: l10n.fun_stayDetailTitle,
       child: Column(
         children: [
-          _Row('Check-in', fmt.format(checkIn)),
-          _Row('Check-out', fmt.format(checkOut)),
-          _Row('Durasi', '$nights malam'),
-          _Row('Tamu', '$guestCount orang'),
-          if (notes.isNotEmpty) _Row('Catatan', notes),
+          _Row(l10n.fun_checkInLabel, fmt.format(checkIn)),
+          _Row(l10n.fun_checkOutLabel, fmt.format(checkOut)),
+          _Row(l10n.fun_durationLabel, l10n.fun_nightsCount(nights)),
+          _Row(l10n.fun_guestsLabel, l10n.fun_guestCountValue(guestCount)),
+          if (notes.isNotEmpty) _Row(l10n.fun_notesLabel, notes),
         ],
       ),
     );
@@ -457,30 +465,76 @@ class _StayDetailsCard extends StatelessWidget {
 }
  
 class _PriceBreakdownCard extends StatelessWidget {
-  final pricing;
+  // Diketik eksplisit (bukan dynamic) agar salah tipe ketahuan saat
+  // analyze, bukan saat runtime di tangan user.
+  final CheckoutPricing pricing;
   const _PriceBreakdownCard({required this.pricing});
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _Card(
-      title: 'Rincian Harga',
+      title: l10n.fun_priceBreakdown,
       child: Column(
         children: [
-          _Row('Harga per malam', '\$${pricing.pricePerNight.toStringAsFixed(0)}'),
-          _Row('Subtotal', '\$${pricing.subtotal.toStringAsFixed(0)}'),
-          _Row('Pajak (${pricing.taxRate.toStringAsFixed(0)}%)', '\$${pricing.tax.toStringAsFixed(0)}'),
-          _Row('Biaya layanan', '\$${pricing.serviceFee.toStringAsFixed(0)}'),
+          _MoneyRow(l10n.fun_pricePerNightRow, pricing.pricePerNight),
+          _MoneyRow(l10n.fun_subtotalLabel, pricing.subtotal),
+          _MoneyRow(l10n.fun_taxLabel(pricing.taxRate.toStringAsFixed(0)), pricing.tax),
+          _MoneyRow(l10n.fun_serviceFeeLabel, pricing.serviceFee),
           // F4: baris cleaning fee hanya bila backend mengirim nilai > 0.
           if (pricing.cleaningFee > 0)
-            _Row('Cleaning fee', '\$${pricing.cleaningFee.toStringAsFixed(0)}'),
+            _MoneyRow(l10n.fun_cleaningFeeLabel, pricing.cleaningFee),
           const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('\$${pricing.total.toStringAsFixed(0)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary)),
+              Text(l10n.fun_totalRowLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              MoneyText(pricing.total,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary),
+                  estimateSuffix: l10n.fun_estimateSuffix),
             ],
           ),
+          const SizedBox(height: 4),
+          const _EstimateNote(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Penjelasan jujur: nominal Rp memakai kurs estimasi — yang ditagih
+/// mengikuti hitungan server/Midtrans. Hanya tampil saat mode Rp aktif.
+class _EstimateNote extends StatelessWidget {
+  const _EstimateNote();
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double?>(
+      valueListenable: ForexService.rateListenable,
+      builder: (context, rate, _) {
+        if (rate == null) return const SizedBox.shrink();
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Text(AppLocalizations.of(context).fun_estimateRateNote,
+              style: const TextStyle(fontSize: 11, color: AppTheme.outline)),
+        );
+      },
+    );
+  }
+}
+
+class _MoneyRow extends StatelessWidget {
+  final String label;
+  final double usd;
+  const _MoneyRow(this.label, this.usd);
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 14)),
+          MoneyText(usd,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         ],
       ),
     );
@@ -495,16 +549,17 @@ class _PaymentMethodsCard extends StatelessWidget {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final groups = {
-      'Kartu': methods.where((m) => m.id == 'credit_card').toList(),
-      'E-Wallet': methods.where((m) => ['gopay','ovo','dana'].contains(m.id)).toList(),
+      l10n.fun_payGroupCard: methods.where((m) => m.id == 'credit_card').toList(),
+      l10n.fun_payGroupEWallet: methods.where((m) => ['gopay','ovo','dana'].contains(m.id)).toList(),
       // F4: PayPal kini dikirim backend — grup sendiri agar tidak hilang
       // (sebelumnya id 'paypal' tidak masuk grup mana pun).
       'PayPal': methods.where((m) => m.id == 'paypal').toList(),
-      'Lainnya': methods.where((m) => ['bank_transfer','qris'].contains(m.id)).toList(),
+      l10n.fun_payGroupOther: methods.where((m) => ['bank_transfer','qris'].contains(m.id)).toList(),
     };
     return _Card(
-      title: 'Metode Pembayaran',
+      title: l10n.fun_payMethodsTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: groups.entries.map((entry) {
@@ -540,25 +595,26 @@ class _SavedMethodsCard extends StatelessWidget {
   const _SavedMethodsCard({required this.methods, required this.onRenamed});
 
   Future<void> _rename(BuildContext context, SavedPaymentMethod m) async {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController(text: m.label ?? '');
     final label = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Julukan Kartu'),
+        title: Text(l10n.fun_cardNicknameTitle),
         content: TextField(
           controller: ctrl,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            hintText: 'mis. Business',
+          decoration: InputDecoration(
+            hintText: l10n.fun_cardNicknameHint,
           ),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal')),
+              child: Text(l10n.common_cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: const Text('Simpan'),
+            child: Text(l10n.common_save),
           ),
         ],
       ),
@@ -570,8 +626,8 @@ class _SavedMethodsCard extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['success'] == true
-            ? 'Julukan kartu diperbarui'
-            : result['message'] ?? 'Gagal mengganti nama kartu'),
+            ? l10n.fun_nicknameUpdated
+            : result['message'] ?? l10n.fun_renameCardFailed),
         backgroundColor: result['success'] == true
             ? AppTheme.successColor
             : AppTheme.error,
@@ -582,8 +638,9 @@ class _SavedMethodsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _Card(
-      title: 'Kartu Tersimpan',
+      title: l10n.fun_savedCardsTitle,
       child: Column(
         children: methods
             .map((m) => Padding(
@@ -602,7 +659,7 @@ class _SavedMethodsCard extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14)),
                             if (m.exp != null)
-                              Text('Exp ${m.exp}',
+                              Text(l10n.fun_cardExp(m.exp!),
                                   style: const TextStyle(
                                       fontSize: 12,
                                       color: AppTheme.onSurfaceVariant)),
@@ -619,14 +676,14 @@ class _SavedMethodsCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(
                                 AppTheme.radiusFull),
                           ),
-                          child: const Text('Utama',
-                              style: TextStyle(
+                          child: Text(l10n.fun_primaryBadge,
+                              style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.primary)),
                         ),
                       IconButton(
-                        tooltip: 'Ganti julukan',
+                        tooltip: l10n.fun_changeNicknameTip,
                         icon: const Icon(Icons.edit_outlined, size: 18),
                         color: AppTheme.outline,
                         onPressed: () => _rename(context, m),

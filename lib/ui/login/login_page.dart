@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/data/repo/auth_repository.dart';
@@ -38,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
@@ -66,14 +68,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Title
                 Text(
-                  _isRegisterMode ? 'Buat Akun Baru' : 'Selamat Datang! 👋',
+                  _isRegisterMode ? l10n.auth_loginCreateAccountTitle : l10n.auth_loginWelcomeTitle,
                   style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   _isRegisterMode
-                      ? 'Daftar dan mulai jelajahi Lombok'
-                      : 'Masuk untuk melanjutkan ke Sasacation',
+                      ? l10n.auth_loginRegisterSubtitle
+                      : l10n.auth_loginSubtitle,
                   style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 28),
@@ -96,28 +98,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (_isRegisterMode) ...[
                         _TextField(
                           controller: _nameCtrl,
-                          label: 'Nama Lengkap',
+                          label: l10n.auth_loginFullNameLabel,
                           icon: Icons.person_outline,
                           validator: (v) =>
-                              v == null || v.isEmpty ? 'Nama wajib diisi' : null,
+                              v == null || v.isEmpty ? l10n.auth_loginNameRequired : null,
                         ),
                         const SizedBox(height: 14),
                       ],
                       _TextField(
                         controller: _emailCtrl,
-                        label: 'Email',
+                        label: l10n.auth_loginEmailLabel,
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email wajib diisi';
-                          if (!v.contains('@')) return 'Format email tidak valid';
+                          if (v == null || v.isEmpty) return l10n.auth_loginEmailRequired;
+                          if (!v.contains('@')) return l10n.auth_loginEmailInvalid;
                           return null;
                         },
                       ),
                       const SizedBox(height: 14),
                       _TextField(
                         controller: _passCtrl,
-                        label: 'Password',
+                        label: l10n.auth_loginPasswordLabel,
                         icon: Icons.lock_outline,
                         obscureText: _obscure,
                         suffix: IconButton(
@@ -125,9 +127,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Password wajib diisi';
+                          if (v == null || v.isEmpty) return l10n.auth_loginPasswordRequired;
                           if (_isRegisterMode && v.length < 6) {
-                            return 'Password minimal 6 karakter';
+                            return l10n.auth_loginPasswordTooShort;
                           }
                           return null;
                         },
@@ -142,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () => _handleForgotPassword(context),
-                      child: const Text('Lupa Password?'),
+                      child: Text(l10n.auth_loginForgotPassword),
                     ),
                   ),
                 ],
@@ -169,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : Text(
-                                _isRegisterMode ? 'Daftar' : 'Masuk',
+                                _isRegisterMode ? l10n.auth_loginRegisterButton : l10n.auth_loginButton,
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
@@ -184,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(child: Divider(color: Colors.grey.shade300)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('atau', style: TextStyle(color: Colors.grey.shade500)),
+                    child: Text(l10n.auth_loginOrDivider, style: TextStyle(color: Colors.grey.shade500)),
                   ),
                   Expanded(child: Divider(color: Colors.grey.shade300)),
                 ]),
@@ -195,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () =>
                       context.read<AuthBloc>().add(AuthGoogleSignInRequested()),
                   icon: _GoogleIcon(),
-                  label: 'Lanjutkan dengan Google',
+                  label: l10n.auth_loginContinueWithGoogle,
                 ),
                 const SizedBox(height: 12),
 
@@ -205,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () =>
                         context.read<AuthBloc>().add(AuthAppleSignInRequested()),
                     icon: const Icon(Icons.apple, size: 22, color: Colors.black),
-                    label: 'Lanjutkan dengan Apple',
+                    label: l10n.auth_loginContinueWithApple,
                     backgroundColor: Colors.black,
                     textColor: Colors.white,
                   ),
@@ -218,15 +220,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       _isRegisterMode
-                          ? 'Sudah punya akun? '
-                          : 'Belum punya akun? ',
+                          ? l10n.auth_loginAlreadyHaveAccount
+                          : l10n.auth_loginNoAccountYet,
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
                     TextButton(
                       onPressed: () =>
                           setState(() => _isRegisterMode = !_isRegisterMode),
                       child: Text(
-                        _isRegisterMode ? 'Masuk' : 'Daftar',
+                        _isRegisterMode ? l10n.auth_loginButton : l10n.auth_loginRegisterButton,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -241,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton.icon(
                     onPressed: () => context.go(AppRouter.home),
                     icon: const Icon(Icons.explore_outlined, size: 18),
-                    label: const Text('Lanjutkan sebagai Tamu'),
+                    label: Text(l10n.auth_loginContinueAsGuest),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -255,11 +257,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Reset password REAL via Firebase ke email yang diketik di form.
   Future<void> _handleForgotPassword(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final email = _emailCtrl.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Isi email kamu dulu, lalu ketuk Lupa Password lagi'),
+        SnackBar(
+          content: Text(l10n.auth_loginFillEmailFirst),
         ),
       );
       return;
@@ -267,15 +270,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final send = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Text('Kirim email reset password ke $email?'),
+        title: Text(l10n.auth_loginResetPasswordTitle),
+        content: Text(l10n.auth_loginResetPasswordConfirm(email)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal')),
+              child: Text(l10n.common_cancel)),
           ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Kirim')),
+              child: Text(l10n.auth_loginSend)),
         ],
       ),
     );
@@ -285,8 +288,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(result['success'] == true
-            ? 'Email reset terkirim ke $email'
-            : result['message'] ?? 'Gagal mengirim email reset'),
+            ? l10n.auth_loginResetEmailSent(email)
+            : (result['message'] as String? ?? l10n.auth_loginResetEmailFailed)),
       ),
     );
   }

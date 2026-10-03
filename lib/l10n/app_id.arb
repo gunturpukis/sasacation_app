@@ -1,0 +1,942 @@
+{
+  "@@locale": "id",
+  "auth_aiAskSasa": "Tanya Sasa",
+  "auth_aiAskSasaSubtitle": "AI travel assistant untuk rekomendasi wisata",
+  "auth_aiMenuSubtitle": "Powered by Sasa AI",
+  "auth_aiMenuTitle": "Fitur AI Sasacation",
+  "auth_aiSmartSearch": "Smart Search",
+  "auth_aiSmartSearchSubtitle": "Cari dengan bahasa natural, AI yang memahami",
+  "auth_aiTooltip": "Sasa AI",
+  "auth_aiTripPlanner": "Trip Planner",
+  "auth_aiTripPlannerSubtitle": "Buat itinerary Lombok otomatis dengan AI",
+  "auth_loginAlreadyHaveAccount": "Sudah punya akun? ",
+  "auth_loginButton": "Masuk",
+  "auth_loginContinueAsGuest": "Lanjutkan sebagai Tamu",
+  "auth_loginContinueWithApple": "Lanjutkan dengan Apple",
+  "auth_loginContinueWithGoogle": "Lanjutkan dengan Google",
+  "auth_loginCreateAccountTitle": "Buat Akun Baru",
+  "auth_loginEmailInvalid": "Format email tidak valid",
+  "auth_loginEmailLabel": "Email",
+  "auth_loginEmailRequired": "Email wajib diisi",
+  "auth_loginFillEmailFirst": "Isi email kamu dulu, lalu ketuk Lupa Password lagi",
+  "auth_loginForgotPassword": "Lupa Password?",
+  "auth_loginFullNameLabel": "Nama Lengkap",
+  "auth_loginGateAction": "Masuk / Daftar",
+  "auth_loginGateContinueAsGuest": "Lanjut sebagai tamu",
+  "auth_loginGateMessage": "Riwayat booking dan profil tersimpan di akunmu. Masuk atau daftar untuk mengaksesnya.",
+  "auth_loginGateTitle": "Masuk untuk melanjutkan",
+  "auth_loginNameRequired": "Nama wajib diisi",
+  "auth_loginNoAccountYet": "Belum punya akun? ",
+  "auth_loginOrDivider": "atau",
+  "auth_loginPasswordLabel": "Password",
+  "auth_loginPasswordRequired": "Password wajib diisi",
+  "auth_loginPasswordTooShort": "Password minimal 6 karakter",
+  "auth_loginRegisterButton": "Daftar",
+  "auth_loginRegisterSubtitle": "Daftar dan mulai jelajahi Lombok",
+  "auth_loginResetEmailFailed": "Gagal mengirim email reset",
+  "auth_loginResetEmailSent": "Email reset terkirim ke {email}",
+  "@auth_loginResetEmailSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "auth_loginResetPasswordConfirm": "Kirim email reset password ke {email}?",
+  "@auth_loginResetPasswordConfirm": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "auth_loginResetPasswordTitle": "Reset Password",
+  "auth_loginSend": "Kirim",
+  "auth_loginSubtitle": "Masuk untuk melanjutkan ke Sasacation",
+  "auth_loginWelcomeTitle": "Selamat Datang! 👋",
+  "auth_navBookings": "Bookings",
+  "auth_navExplore": "Explore",
+  "auth_navHome": "Home",
+  "auth_navProfile": "Profile",
+  "auth_onboardingDescBooking": "Easy booking for hotels, transport, and tour packages",
+  "auth_onboardingDescCulinary": "Taste authentic Sasak cuisine and local delicacies",
+  "auth_onboardingDescExplore": "Discover beautiful beaches, mountains, and cultural heritage in Lombok",
+  "auth_onboardingExploreAsGuest": "Jelajahi sebagai Tamu",
+  "auth_onboardingNext": "Next",
+  "auth_onboardingSkip": "Skip",
+  "auth_onboardingTitleBooking": "Book Hotels & Transport",
+  "auth_onboardingTitleCulinary": "Enjoy Local Culinary",
+  "auth_onboardingTitleExplore": "Explore Lombok",
+  "auth_splashAppName": "Sasacation",
+  "auth_splashTagline": "Explore the Beauty of Lombok",
+  "common_cancel": "Batal",
+  "common_bookNow": "Book Now",
+  "common_ok": "OK",
+  "common_perNight": " / night",
+  "common_retry": "Coba Lagi",
+  "common_save": "Simpan",
+  "common_seeAll": "See all",
+  "fun_aboutExperience": "About the Experience",
+  "fun_aboutFallback": "Nikmati pengalaman menginap yang tak terlupakan di {name}. Dengan fasilitas lengkap dan layanan prima, hotel ini menawarkan kenyamanan terbaik.",
+  "@fun_aboutFallback": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_aboutPlace": "Tentang Tempat Ini",
+  "fun_aiPickDesc": "Rating tertinggi ({rating}) untuk pencarianmu saat ini.",
+  "@fun_aiPickDesc": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_aiPickTitle": "AI Pick for You",
+  "fun_allLabel": "Semua",
+  "fun_amenitiesMustAll": "Fasilitas (harus ada semua)",
+  "fun_applyFilter": "Terapkan Filter",
+  "fun_avgPerPerson": "Rata-rata per orang",
+  "fun_avgPrice": "Harga rata-rata",
+  "fun_backToHome": "Kembali ke Beranda",
+  "fun_badgeBestSeller": "BEST SELLER",
+  "fun_badgeMostPopular": "Most Popular",
+  "fun_badgeNewArrivals": "New Arrivals",
+  "fun_badgePremium": "PREMIUM ESCAPE",
+  "fun_badgeSpecialOffer": "SPECIAL OFFER",
+  "fun_badgeTrending": "TRENDING",
+  "fun_bookingCancelledMsg": "Booking berhasil dibatalkan",
+  "fun_bookingCodeCopied": "Kode booking disalin!",
+  "fun_bookingCodeLabel": "Kode Booking",
+  "fun_bookingCodeWith": "Kode: {code}",
+  "@fun_bookingCodeWith": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_bookYourStay": "Book Your Stay",
+  "fun_cannotOpenMaps": "Tidak dapat membuka Google Maps",
+  "fun_cannotOpenPayment": "Tidak dapat membuka halaman pembayaran",
+  "fun_cancelBookingAction": "Batalkan",
+  "fun_cancelBookingConfirm": "Yakin ingin membatalkan booking ini?",
+  "fun_cancelBookingTitle": "Batalkan Booking",
+  "fun_cardExp": "Exp {exp}",
+  "@fun_cardExp": {
+    "placeholders": {
+      "exp": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_cardNicknameHint": "mis. Business",
+  "fun_cardNicknameTitle": "Julukan Kartu",
+  "fun_categoryLabel": "Kategori",
+  "fun_changeNicknameTip": "Ganti julukan",
+  "fun_checkInLabel": "Check-in",
+  "fun_checkInUpper": "CHECK-IN",
+  "fun_checkOutLabel": "Check-out",
+  "fun_checkOutUpper": "CHECK-OUT",
+  "fun_cleaningFeeLabel": "Cleaning fee",
+  "fun_clearAll": "Hapus Semua",
+  "fun_comingSoonName": "{name} — coming soon",
+  "@fun_comingSoonName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_completeBooking": "Complete Booking",
+  "fun_continueToPayment": "Lanjutkan ke Pembayaran",
+  "fun_cuisineType": "Jenis Masakan",
+  "fun_dialogNo": "Tidak",
+  "fun_dialogYesCancel": "Ya, Batalkan",
+  "fun_directionsAction": "Petunjuk Arah",
+  "fun_distanceFromYou": "{distance} km dari Anda",
+  "@fun_distanceFromYou": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_durationLabel": "Durasi",
+  "fun_emptyBookingsSubtitle": "Yuk mulai jelajahi Lombok!",
+  "fun_emptyBookingsTitle": "Belum ada booking",
+  "fun_emptyCategoryBookings": "Tidak ada booking di kategori ini",
+  "fun_emptyExploreHint": "Coba kata kunci lain",
+  "fun_emptyExploreTitle": "Tidak ada tempat ditemukan",
+  "fun_emptyFeatured": "Tidak ada hotel featured",
+  "fun_emptyNearby": "Tidak ada hotel di sekitar Anda",
+  "fun_emptyWishlistHint": "Ketuk ikon hati pada hotel untuk menyimpannya",
+  "fun_emptyWishlistTitle": "Belum ada hotel tersimpan",
+  "fun_entryTicket": "Tiket Masuk",
+  "fun_estimateRateNote": "Kurs estimasi — tagihan mengikuti Midtrans",
+  "fun_estimateSuffix": " (estimasi)",
+  "fun_exploreCategory": "Explore {label}",
+  "@fun_exploreCategory": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_exploreTitle": "Explore Lombok",
+  "fun_failedOpenPayment": "Gagal membuka halaman pembayaran",
+  "fun_filterAll": "Semua filter",
+  "fun_filterAmenities": "Fasilitas",
+  "fun_filterAmenitiesCount": "Fasilitas ({count})",
+  "@fun_filterAmenitiesCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_filterPrice": "Harga",
+  "fun_filterPriceActive": "Harga •",
+  "fun_filterRating": "Rating",
+  "fun_filterRatingValue": "Rating {value}+",
+  "@fun_filterRatingValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_filterTitle": "Filter",
+  "fun_freeLabel": "Gratis",
+  "fun_guestCountValue": "{count} orang",
+  "@fun_guestCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_guestReviews": "Guest Reviews",
+  "fun_guestReviewsCount": "Guest Reviews ({count})",
+  "@fun_guestReviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_guestsLabel": "Tamu",
+  "fun_headlineSubtitle": "Find your dream vacation with AI assistance",
+  "fun_headlineWhereToNext": "Where to next?",
+  "fun_hotelDetailTitle": "Detail Hotel",
+  "fun_hotelMapHint": "Peta lokasi hotel — ketuk untuk buka Maps",
+  "fun_infoHotelLabel": "Hotel",
+  "fun_locationLabel": "Lokasi",
+  "fun_locationPermissionNeeded": "Izin lokasi dibutuhkan untuk fitur ini",
+  "fun_mapLocationName": "Peta lokasi {name}",
+  "@fun_mapLocationName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_maxHint": "Max",
+  "fun_methodRowLabel": "Metode",
+  "fun_minHint": "Min",
+  "fun_minRatingLabel": "Rating minimum",
+  "fun_myBookingsTitle": "My Bookings",
+  "fun_nearbyTitle": "Hotel Terdekat",
+  "fun_nicknameUpdated": "Julukan kartu diperbarui",
+  "fun_nightsCount": "{count} malam",
+  "@fun_nightsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_nightsLabel": "Malam",
+  "fun_nightsMultiply": "× {count} malam",
+  "@fun_nightsMultiply": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_noActivePayment": "Tidak ada sesi pembayaran aktif untuk booking ini",
+  "fun_noChargeYet": "Tidak dikenakan biaya sekarang",
+  "fun_noResults": "Tidak ada hasil",
+  "fun_notesHint": "Mis: kamar di lantai atas, dekat kolam...",
+  "fun_notesLabel": "Catatan",
+  "fun_openHours": "Jam Buka",
+  "fun_paidTimeLabel": "Waktu Bayar",
+  "fun_payGroupCard": "Kartu",
+  "fun_payGroupEWallet": "E-Wallet",
+  "fun_payGroupOther": "Lainnya",
+  "fun_payMethodsTitle": "Metode Pembayaran",
+  "fun_payNow": "Bayar Sekarang",
+  "fun_paymentBrowserDesc": "Halaman pembayaran sudah dibuka di browser. Selesaikan pembayaran Anda, lalu kembali ke sini — statusnya akan terupdate otomatis.",
+  "fun_paymentDetailTitle": "Detail Pembayaran",
+  "fun_paymentExpired": "Masa bayar habis — tarik untuk memuat ulang status",
+  "fun_paymentSuccessSub": "Booking kamu sudah dikonfirmasi.\nSelamat berlibur di Lombok!",
+  "fun_paymentSuccessTitle": "Pembayaran Berhasil! 🎉",
+  "fun_paymentTitle": "Pembayaran",
+  "fun_payWithin": "Bayar dalam {time}",
+  "@fun_payWithin": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_perPerson": " / orang",
+  "fun_photoGallery": "Galeri Foto",
+  "fun_placeDescFallback": "Nikmati keindahan {name} yang terletak di {location}. Salah satu destinasi terbaik di Lombok dengan berbagai daya tarik yang memukau.",
+  "@fun_placeDescFallback": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_placesFound": "{count} tempat ditemukan",
+  "@fun_placesFound": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_pleaseWait": "Mohon tunggu sebentar",
+  "fun_preparingCheckout": "Menyiapkan checkout...",
+  "fun_priceBreakdown": "Rincian Harga",
+  "fun_pricePerNightRow": "Harga per malam",
+  "fun_pricePerNightTitle": "Price per night",
+  "fun_priceRangeLabel": "Rentang harga per malam ($)",
+  "fun_priceVaried": "Variatif",
+  "fun_primaryBadge": "Utama",
+  "fun_proceedCheckout": "Lanjut ke Checkout",
+  "fun_processingPayment": "Memproses pembayaran...",
+  "fun_propertiesFound": "{count} properti ditemukan",
+  "@fun_propertiesFound": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_propertyTitle": "The Property",
+  "fun_quickMenuBookings": "My Bookings",
+  "fun_quickMenuNotifications": "Notifications",
+  "fun_quickMenuSaved": "Saved Destinations",
+  "fun_quickMenuSettings": "Settings",
+  "fun_ratingReviews": "{rating} ({count} reviews)",
+  "@fun_ratingReviews": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_recentSearches": "Terakhir dicari",
+  "fun_renameCardFailed": "Gagal mengganti nama kartu",
+  "fun_reopenPayment": "Buka Lagi Halaman Pembayaran",
+  "fun_rescheduleAction": "Jadwal Ulang",
+  "fun_rescheduleDiscount": "Total baru {total} (selisih {diff} akan disesuaikan).",
+  "@fun_rescheduleDiscount": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "diff": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_rescheduleExtraCost": "Total baru {total} (+{diff}). Pembayaran tambahan belum otomatis — hubungi CS bila perlu.",
+  "@fun_rescheduleExtraCost": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "diff": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_rescheduleFailed": "Gagal menjadwalkan ulang",
+  "fun_rescheduleNoDiff": "Tanggal berhasil diubah tanpa selisih harga.",
+  "fun_rescheduleUpdated": "Jadwal Diperbarui",
+  "fun_reservationSoon": "Fitur reservasi akan segera hadir!",
+  "fun_reserveAction": "Reservasi",
+  "fun_reviewBookingTitle": "Review Booking",
+  "fun_reviewCountLabel": "({count} ulasan)",
+  "@fun_reviewCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_saveCardSubtitle": "Munculkan opsi simpan di halaman pembayaran untuk pemakaian berikutnya",
+  "fun_saveCardTitle": "Simpan kartu ini",
+  "fun_saveCodeHint": "Simpan kode ini untuk referensi kamu",
+  "fun_savedFavoriteSoon": "{name} disimpan ke favorit (segera hadir penuh)",
+  "@fun_savedFavoriteSoon": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_savedSubtitle": "Discover your dream vacations waiting for you.",
+  "fun_savedTitle": "Saved Destinations",
+  "fun_savedCardsTitle": "Kartu Tersimpan",
+  "fun_searchHint": "Search destinations, villas, or activities...",
+  "fun_searchHotelHint": "Cari hotel atau lokasi...",
+  "fun_sectionPopularCategories": "Popular Categories",
+  "fun_sectionRecommended": "Recommended for You",
+  "fun_sectionTrending": "Trending This Week",
+  "fun_selectPayMethod": "Pilih Metode Pembayaran",
+  "fun_sortByTitle": "Urutkan berdasarkan",
+  "fun_sortCheapest": "Termurah",
+  "fun_sortDefault": "Urutkan",
+  "fun_sortExpensive": "Termahal",
+  "fun_sortNewest": "Terbaru",
+  "fun_sortPriceHigh": "Harga tertinggi",
+  "fun_sortPriceLow": "Harga terendah",
+  "fun_sortRatingHigh": "Rating tertinggi",
+  "fun_specialNotesLabel": "Catatan khusus (opsional)",
+  "fun_statusCancelled": "Cancelled",
+  "fun_statusCompleted": "Completed",
+  "fun_statusConfirmed": "Confirmed",
+  "fun_statusPending": "Pending",
+  "fun_statusRowLabel": "Status",
+  "fun_statusSuccess": "✅ Berhasil",
+  "fun_stayDetailTitle": "Detail Menginap",
+  "fun_staySummary": "{nights} malam · {guests} tamu",
+  "@fun_staySummary": {
+    "placeholders": {
+      "nights": {
+        "type": "num"
+      },
+      "guests": {
+        "type": "num"
+      }
+    }
+  },
+  "fun_stayedWith": "Stayed: {stayed}",
+  "@fun_stayedWith": {
+    "placeholders": {
+      "stayed": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_stepPayment": "2. Pembayaran",
+  "fun_stepReview": "1. Review",
+  "fun_subtotalLabel": "Subtotal",
+  "fun_tabActive": "Aktif",
+  "fun_tabCancelled": "Batal",
+  "fun_tabCompleted": "Selesai",
+  "fun_taxLabel": "Pajak ({rate}%)",
+  "@fun_taxLabel": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_taxServiceNote": "+ pajak & biaya layanan",
+  "fun_totalLabel": "Total:",
+  "fun_totalPayment": "Total Pembayaran",
+  "fun_totalRowLabel": "Total",
+  "fun_transactionIdLabel": "Transaction ID",
+  "fun_viewAllBookings": "Lihat Semua Booking",
+  "fun_viewDetail": "Lihat Detail",
+  "fun_waitingPayment": "Menunggu pembayaran...",
+  "fun_whatsIncluded": "What's Included",
+  "fun_resetFilters": "Reset",
+  "fun_serviceFeeLabel": "Biaya layanan",
+  "fun_sortRecommended": "Rekomendasi",
+  "common_signOut": "Sign Out",
+  "me_actionRequired": "Action Required",
+  "me_actionViewBooking": "Lihat Booking",
+  "me_actionViewGroup": "Lihat Grup",
+  "me_actionViewHotel": "Lihat Hotel",
+  "me_actionViewImpact": "Lihat Dampak",
+  "me_actionViewItinerary": "Lihat Itinerary",
+  "me_actionViewTasks": "Lihat Tasks",
+  "me_actionViewWallet": "Lihat Wallet",
+  "me_actionVoteNow": "Vote now",
+  "me_adminBadge": "Admin",
+  "me_aiDisabledMsg": "Personalisasi AI dimatikan — kartu AI Pick disembunyikan dari hasil pencarian",
+  "me_aiEnabledMsg": "Personalisasi AI diaktifkan",
+  "me_aiSubtitle": "Rekomendasi AI berdasarkan riwayat dan preferensimu",
+  "me_aiTitle": "Personalisasi AI",
+  "me_amountUsd": "Jumlah (USD)",
+  "me_appVersion": "App Version",
+  "me_categoryBooking": "Booking",
+  "me_categoryInfo": "Info",
+  "me_categoryPayment": "Pembayaran",
+  "me_changePassword": "Ubah Password",
+  "me_chooseLanguage": "Pilih Bahasa / Choose Language",
+  "me_confirmMismatch": "Konfirmasi tidak sama",
+  "me_confirmPasswordHint": "Konfirmasi password baru",
+  "me_confirmedBadge": "CONFIRMED",
+  "me_currentPasswordHint": "Password saat ini",
+  "me_currentPasswordRequired": "Password saat ini wajib diisi",
+  "me_daysAgo": "{days} hari lalu",
+  "@me_daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "num"
+      }
+    }
+  },
+  "me_daysLeft": "Dalam {daysLeft} Hari",
+  "@me_daysLeft": {
+    "placeholders": {
+      "daysLeft": {
+        "type": "num"
+      }
+    }
+  },
+  "me_discoveryEmpty": "Rekomendasi belum tersedia saat ini",
+  "me_discoveryFailed": "Gagal memuat rekomendasi",
+  "me_discoverySubtitle": "Bosan dengan rekomendasi yang dipersonalisasi? Temukan tempat yang 100% berbeda dari kebiasaan Anda.",
+  "me_discoveryTitle": "Anti-Algorithm Discovery",
+  "me_emailLabel": "Email",
+  "me_emailLockedNote": "Email terikat akun login dan tidak dapat diubah.",
+  "me_emailUnavailable": "Email akun tidak tersedia. Silakan login ulang.",
+  "me_emptyFilter": "Tidak ada notifikasi {filter}",
+  "@me_emptyFilter": {
+    "placeholders": {
+      "filter": {
+        "type": "String"
+      }
+    }
+  },
+  "me_emptySubtitle": "Notifikasi tentang booking & pembayaranmu akan muncul di sini",
+  "me_emptyTitle": "Belum ada notifikasi",
+  "me_fallbackDone": "Selesai",
+  "me_filterAll": "Semua",
+  "me_fullNameHint": "Nama lengkap",
+  "me_fullNameLabel": "Nama Lengkap",
+  "me_groupOlder": "Lebih lama",
+  "me_groupToday": "Hari ini",
+  "me_groupWeek": "Minggu ini",
+  "me_guestName": "Guest",
+  "me_helpCenterSoon": "Pusat bantuan segera hadir di versi berikutnya",
+  "me_heroBody": "Sasacation percaya pariwisata Lombok yang berkelanjutan dimulai dari pilihan kecil setiap wisatawan — dari akomodasi yang dipilih sampai siapa yang menerima manfaatnya.",
+  "me_heroTitle": "Wisata yang Bertanggung Jawab",
+  "me_hoursAgo": "{hours} jam lalu",
+  "@me_hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "num"
+      }
+    }
+  },
+  "me_impactNote": "Skor dampak personal dan sertifikat per-user belum ditampilkan — fitur itu butuh sistem tracking yang belum ada. Bagian discovery di atas sudah memakai data rekomendasi nyata dari server.",
+  "me_justNow": "Baru saja",
+  "me_langEnSubtitle": "Secondary language",
+  "me_langIdSubtitle": "Bahasa utama aplikasi",
+  "me_languageTitle": "Bahasa / Language",
+  "me_logoutConfirm": "Yakin ingin keluar dari akun?",
+  "me_logoutTitle": "Logout",
+  "me_loyaltyPoints": "{points} pts",
+  "@me_loyaltyPoints": {
+    "placeholders": {
+      "points": {
+        "type": "num"
+      }
+    }
+  },
+  "me_matchInfo": "{matchPct}% Match with Your History",
+  "@me_matchInfo": {
+    "placeholders": {
+      "matchPct": {
+        "type": "num"
+      }
+    }
+  },
+  "me_menuHelpCenter": "Help Center",
+  "me_menuMyBookings": "My Bookings",
+  "me_menuMyGroups": "My Groups",
+  "me_menuNotifications": "Notifications",
+  "me_menuPaymentHistory": "Payment History",
+  "me_menuPersonalInfo": "Personal Information",
+  "me_menuSavedPlaces": "Saved Places",
+  "me_menuSettings": "Settings",
+  "me_menuSustainability": "Komitmen Sasacation",
+  "me_menuTestPush": "Test Push Notification",
+  "me_menuTravelTasks": "Travel Tasks",
+  "me_minutesAgo": "{minutes} menit lalu",
+  "@me_minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "num"
+      }
+    }
+  },
+  "me_nameRequired": "Nama wajib diisi",
+  "me_newPasswordHint": "Password baru (min. 8 karakter)",
+  "me_newPasswordRequired": "Password baru wajib diisi",
+  "me_nightsCount": "{nights} malam",
+  "@me_nightsCount": {
+    "placeholders": {
+      "nights": {
+        "type": "num"
+      }
+    }
+  },
+  "me_noTransactions": "Belum ada transaksi",
+  "me_notifHistory": "Riwayat Notifikasi",
+  "me_notificationsTitle": "Notifications",
+  "me_passMeta": "ID {passId} • {tripsCompleted} trip selesai",
+  "@me_passMeta": {
+    "placeholders": {
+      "passId": {
+        "type": "String"
+      },
+      "tripsCompleted": {
+        "type": "num"
+      }
+    }
+  },
+  "me_passwordChangeFailed": "Gagal mengubah password",
+  "me_passwordChanged": "Password berhasil diubah",
+  "me_passwordMinLength": "Password minimal 8 karakter",
+  "me_passwordRule": "Password baru minimal 8 karakter (aturan server).",
+  "me_personalInfoSubtitle": "Update your details",
+  "me_principleCultureDesc": "Kami mendorong wisatawan untuk mengenal dan menghormati adat serta kebiasaan masyarakat Sasak dan komunitas lokal lainnya di Lombok.",
+  "me_principleCultureTitle": "Hormat pada Budaya Lokal",
+  "me_principleEcoDesc": "Kami merekomendasikan mitra yang menerapkan praktik ramah lingkungan — pengelolaan sampah, konservasi terumbu karang, dan penggunaan sumber daya yang bertanggung jawab.",
+  "me_principleEcoTitle": "Minim Sampah, Hormati Alam",
+  "me_principleLocalDesc": "Kami mendorong penginapan, restoran, dan penyedia aktivitas yang dikelola langsung oleh warga Lombok untuk lebih mudah ditemukan di platform ini.",
+  "me_principleLocalTitle": "Dukungan ke Pelaku Usaha Lokal",
+  "me_profileTitle": "Profile",
+  "me_profileUpdated": "Profil berhasil diperbarui",
+  "me_pushDisabledMsg": "Push notification dimatikan — kamu tidak akan menerima notifikasi booking di device ini",
+  "me_pushEnabledMsg": "Push notification diaktifkan",
+  "me_pushSubtitle": "Update booking, konfirmasi pembayaran, dan info penting lainnya",
+  "me_pushTitle": "Push Notifications",
+  "me_recipientEmail": "Email penerima",
+  "me_resetFailed": "Gagal mengirim email reset",
+  "me_resetSent": "Email reset terkirim ke {email}",
+  "@me_resetSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "me_saveFailed": "Gagal menyimpan ke server",
+  "me_sectionAbout": "ABOUT",
+  "me_sectionAccount": "ACCOUNT",
+  "me_sectionAccountMgmt": "ACCOUNT MANAGEMENT",
+  "me_sectionGeneral": "GENERAL",
+  "me_sectionNotifications": "NOTIFICATIONS",
+  "me_sectionSasaAi": "SASA AI",
+  "me_securitySubtitle": "Change your credentials",
+  "me_securityTitle": "Security & Password",
+  "me_seeAll": "Lihat semua",
+  "me_sendAction": "Kirim",
+  "me_sendResetEmail": "Kirim email reset password",
+  "me_sending": "Mengirim...",
+  "me_sendingTestNotification": "Mengirim test notification...",
+  "me_settingsTitle": "Settings",
+  "me_shuffleAction": "Guncang untuk Temukan",
+  "me_statusFailed": "Gagal",
+  "me_statusRefunded": "Dikembalikan",
+  "me_statusSuccess": "Berhasil",
+  "me_successTxCount": "{count} transaksi berhasil",
+  "@me_successTxCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "me_totalSpent": "Total Dibelanjakan",
+  "me_transferFailed": "Transfer gagal",
+  "me_transferNote": "Catatan (opsional)",
+  "me_transferSuccess": "Transfer berhasil",
+  "me_transferTitle": "Transfer Saldo",
+  "me_travelPass": "Sasacation Travel Pass",
+  "me_tripsCompleted": "{completedCount} Trips Completed",
+  "@me_tripsCompleted": {
+    "placeholders": {
+      "completedCount": {
+        "type": "num"
+      }
+    }
+  },
+  "me_txHistory": "Riwayat Transaksi",
+  "me_upcomingTrips": "Upcoming Trips",
+  "ait_chatHint": "Ask Sasa anything...",
+  "ait_chatPlanMeta": "{days} hari • {cost}",
+  "@ait_chatPlanMeta": {
+    "placeholders": {
+      "days": {
+        "type": "num"
+      },
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_chatResetTooltip": "Reset chat",
+  "ait_chatSubtitle": "TRAVEL ASSISTANT",
+  "ait_chatTitle": "Sasa AI",
+  "ait_chatTyping": "Sasa sedang mengetik...",
+  "ait_chatWelcomeSubtitle": "AI travel assistant kamu untuk menjelajahi Lombok. Tanya apa saja!",
+  "ait_chatWelcomeTitle": "Halo! Saya Sasa 👋",
+  "ait_expenseAdd": "Tambah",
+  "ait_expenseAddFailed": "Gagal menambah pengeluaran",
+  "ait_expenseAmountLabel": "Jumlah (USD)",
+  "ait_expenseDeleteFailed": "Gagal menghapus pengeluaran",
+  "ait_expenseEmpty": "Belum ada pengeluaran tercatat.",
+  "ait_expenseFab": "Pengeluaran",
+  "ait_expenseListTitle": "Pengeluaran ({count})",
+  "@ait_expenseListTitle": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_expenseNameLabel": "Keterangan",
+  "ait_expenseNewTitle": "Pengeluaran Baru",
+  "ait_gapDetectedDesc": "Pengeluaran grup {pct}% di atas budget bersama. Pertimbangkan alternatif yang lebih hemat.",
+  "@ait_gapDetectedDesc": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_gapDetectedTitle": "Spending Gap Detected",
+  "ait_groupBudgetBadge": "GROUP BUDGET",
+  "ait_groupBudgetLabel": "Budget total (opsional)",
+  "ait_groupCreateFailed": "Gagal membuat grup",
+  "ait_groupDestLabel": "Destinasi (opsional)",
+  "ait_groupDetailTitle": "Group",
+  "ait_groupEmptySubtitle": "Buat grup untuk patungan budget trip bareng.",
+  "ait_groupEmptyTitle": "Belum ada grup",
+  "ait_groupEquityBadge": "GROUP BUDGET EQUITY",
+  "ait_groupListTitle": "My Groups",
+  "ait_groupMembers": "{count} anggota",
+  "@ait_groupMembers": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_groupMembersTitle": "Anggota ({count})",
+  "@ait_groupMembersTitle": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_groupNameLabel": "Nama grup",
+  "ait_groupNewTitle": "Grup Baru",
+  "ait_groupNotFound": "Grup tidak ditemukan",
+  "ait_groupOf": "dari",
+  "ait_groupOverBadge": "+{pct}% over",
+  "@ait_groupOverBadge": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_groupRemaining": "Sisa",
+  "ait_groupUsedFrom": "terpakai dari",
+  "ait_memberPaidShare": "Bayar {paid} • Bagian {share}",
+  "@ait_memberPaidShare": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "share": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_planTipsTitle": "Tips",
+  "ait_planTotalLabel": "Estimasi total: ",
+  "ait_plannerCreateFailed": "Gagal membuat rencana: {error}",
+  "@ait_plannerCreateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_plannerEmpty": "Deskripsikan liburan impian Anda dan biarkan Sasa membuatkan rencana terbaik!",
+  "ait_plannerExamplesTitle": "Contoh permintaan:",
+  "ait_plannerGenerating": "Membuat rencana perjalanan...",
+  "ait_plannerHint": "Deskripsikan rencana liburan impian Anda...",
+  "ait_plannerSaveFailed": "Gagal menyimpan trip: {error}",
+  "@ait_plannerSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_plannerSaveTrip": "Simpan Trip ini",
+  "ait_plannerSavedSuccess": "Trip berhasil disimpan!",
+  "ait_plannerSavedTooltip": "Lihat Trip yang Disimpan",
+  "ait_plannerTitle": "AI Trip Planner",
+  "ait_pollChangeVote": "Ganti ke ini",
+  "ait_pollClosed": "Closed",
+  "ait_pollNotFound": "Vote tidak ditemukan",
+  "ait_pollOpen": "Open",
+  "ait_pollOptionStats": "{pct}% • {votes} suara",
+  "@ait_pollOptionStats": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      },
+      "votes": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_pollTitle": "Vote",
+  "ait_pollTotalVotes": "{count} suara",
+  "@ait_pollTotalVotes": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_pollVoteFailed": "Gagal memberikan suara",
+  "ait_pollVoteNow": "Vote now",
+  "ait_pollVoted": "Suara tercatat",
+  "ait_searchAnalyzing": "🤖 Menganalisis \"{query}\"...",
+  "@ait_searchAnalyzing": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_searchExamplesTitle": "Contoh pencarian cerdas:",
+  "ait_searchHint": "Cari dengan bahasa natural...",
+  "ait_searchResultCount": "{count} tempat ditemukan",
+  "@ait_searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_searchTitle": "Smart Search",
+  "ait_taskCreateFailed": "Gagal membuat task",
+  "ait_taskDeleteFailed": "Gagal menghapus task",
+  "ait_taskDetailLabel": "Detail (opsional)",
+  "ait_taskFlight": "Penerbangan {flightNo}{seats}",
+  "@ait_taskFlight": {
+    "placeholders": {
+      "flightNo": {
+        "type": "String"
+      },
+      "seats": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_taskKindDocument": "Dokumen",
+  "ait_taskKindFlight": "Check-in Penerbangan",
+  "ait_taskKindLabel": "Jenis",
+  "ait_taskKindOther": "Lainnya",
+  "ait_taskKindPayment": "Pembayaran",
+  "ait_taskKindReminder": "Pengingat",
+  "ait_taskNewTitle": "Task Baru",
+  "ait_taskSeats": " • Kursi: {seats}",
+  "@ait_taskSeats": {
+    "placeholders": {
+      "seats": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_taskTitleLabel": "Judul",
+  "ait_tasksAllDone": "Semua task selesai 🎉",
+  "ait_tasksEmptyTitle": "Belum ada task",
+  "ait_tasksHideDone": "Sembunyikan selesai",
+  "ait_tasksShowDone": "Tampilkan selesai",
+  "ait_tasksTitle": "Travel Tasks",
+  "ait_tripCardBadge": "TRIP SAVED",
+  "ait_tripCardDays": "{count} Hari",
+  "@ait_tripCardDays": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_tripCardEstimate": "Est. {cost}",
+  "@ait_tripCardEstimate": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_tripDayNumber": "Day {number}",
+  "@ait_tripDayNumber": {
+    "placeholders": {
+      "number": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_tripDeleteTooltip": "Hapus trip",
+  "ait_tripDetailBadge": "TRIP DETAIL",
+  "ait_tripDetailTitle": "Trip Detail",
+  "ait_tripItineraryTitle": "Itinerary",
+  "ait_tripNotFound": "Trip tidak ditemukan",
+  "ait_tripSavedDate": "Disimpan: {date}",
+  "@ait_tripSavedDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ait_tripsEmptyCta": "Buat Itinerary Pertama",
+  "ait_tripsEmptySubtitle": "Buat itinerary dengan AI lalu simpan untuk keesokan harinya",
+  "ait_tripsEmptyTitle": "Belum ada trip yang disimpan",
+  "ait_tripsHeaderTitle": "Trip Anda",
+  "ait_tripsReloadTooltip": "Reload trips",
+  "ait_tripsSavedCount": "{count} trip disimpan",
+  "@ait_tripsSavedCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "ait_tripsTitle": "My Trips",
+  "common_create": "Buat",
+  "common_delete": "Hapus"
+}

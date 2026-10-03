@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -6,6 +7,7 @@ import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/ui/widget/booking_sheets.dart';
 import 'package:sasacation/ui/widget/glass_icon_button.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,6 +48,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocBuilder<HotelBloc, HotelState>(
       builder: (context, state) {
         if (state is HotelCompositeState) {
@@ -67,7 +70,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                       onPressed: () => context
                           .read<HotelBloc>()
                           .add(HotelDetailRequested(hotelId: widget.hotelId)),
-                      child: const Text('Coba Lagi'),
+                      child: Text(l10n.common_retry),
                     ),
                   ],
                 ),
@@ -106,8 +109,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                               Row(
                                 children: [
                                   if (hotel.featured) ...[
-                                    const PillBadge(
-                                      label: 'PREMIUM ESCAPE',
+                                    PillBadge(
+                                      label: l10n.fun_badgePremium,
                                       backgroundColor: AppTheme.primaryContainer,
                                       foregroundColor: Colors.white,
                                     ),
@@ -115,7 +118,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                                   ],
                                   Icon(Icons.star_rounded, size: 16, color: AppTheme.ratingColor),
                                   const SizedBox(width: 2),
-                                  Text('${hotel.rating.toStringAsFixed(1)} (${hotel.reviewCount} reviews)',
+                                  Text(l10n.fun_ratingReviews(hotel.rating.toStringAsFixed(1), hotel.reviewCount),
                                       style: const TextStyle(color: Colors.white, fontSize: 12)),
                                 ],
                               ),
@@ -206,18 +209,17 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                         const SizedBox(height: AppTheme.spacingSectionGap),
  
                         // ─── About ──────────────────────────────────────────
-                        Text('About the Experience', style: Theme.of(context).textTheme.headlineMedium),
+                        Text(l10n.fun_aboutExperience, style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 10),
                         Text(
                           hotel.description ??
-                              'Nikmati pengalaman menginap yang tak terlupakan di ${hotel.name}. '
-                              'Dengan fasilitas lengkap dan layanan prima, hotel ini menawarkan kenyamanan terbaik.',
+                              l10n.fun_aboutFallback(hotel.name),
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: AppTheme.spacingSectionGap),
  
                         // ─── What's Included ────────────────────────────────
-                        Text("What's Included", style: Theme.of(context).textTheme.headlineMedium),
+                        Text(l10n.fun_whatsIncluded, style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 12,
@@ -232,7 +234,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
  
                         // ─── Gallery bento — hanya kalau gambar cukup ──────
                         if (hotel.images.length >= 3) ...[
-                          Text('The Property', style: Theme.of(context).textTheme.headlineMedium),
+                          Text(l10n.fun_propertyTitle, style: Theme.of(context).textTheme.headlineMedium),
                           const SizedBox(height: 12),
                           _GalleryBento(images: hotel.images),
                           const SizedBox(height: AppTheme.spacingSectionGap),
@@ -246,13 +248,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Guest Reviews',
+                              Text(l10n.fun_guestReviews,
                                   style: Theme.of(context).textTheme.headlineMedium),
                               TextButton(
                                 onPressed: () =>
                                     _showAllReviews(context, hotel.reviews),
-                                child: const Text('See all',
-                                    style: TextStyle(fontSize: 13)),
+                                child: Text(l10n.common_seeAll,
+                                    style: const TextStyle(fontSize: 13)),
                               ),
                             ],
                           ),
@@ -274,8 +276,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                                 url, mode: LaunchMode.externalApplication);
                             if (!opened && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Tidak dapat membuka Google Maps')),
+                                SnackBar(
+                                    content: Text(l10n.fun_cannotOpenMaps)),
                               );
                             }
                           },
@@ -293,7 +295,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                                   Icon(Icons.map_outlined,
                                       size: 40, color: AppTheme.outline),
                                   const SizedBox(height: 10),
-                                  Text('Peta lokasi hotel — ketuk untuk buka Maps',
+                                  Text(l10n.fun_hotelMapHint,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium),
@@ -324,9 +326,9 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Price per night', style: Theme.of(context).textTheme.labelSmall),
+                          Text(l10n.fun_pricePerNightTitle, style: Theme.of(context).textTheme.labelSmall),
                           const SizedBox(height: 2),
-                          Text('\$${hotel.price.toStringAsFixed(0)}',
+                          MoneyText(hotel.price,
                               style: const TextStyle(
                                   fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.primary)),
                         ],
@@ -346,7 +348,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           );
                         },
                         style: AppTheme.heroButtonStyle,
-                        child: const Text('Book Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(l10n.common_bookNow, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -494,6 +496,7 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -532,7 +535,7 @@ class _ReviewCard extends StatelessWidget {
                         style: const TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 14)),
                     if (review.stayed != null)
-                      Text('Stayed: ${review.stayed}',
+                      Text(l10n.fun_stayedWith(review.stayed!),
                           style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
@@ -595,7 +598,7 @@ void _showAllReviews(BuildContext context, List<HotelReview> reviews) {
               ),
             ),
             const SizedBox(height: 12),
-            Text('Guest Reviews (${reviews.length})',
+                    Text(AppLocalizations.of(sheetContext).fun_guestReviewsCount(reviews.length),
                 style: Theme.of(sheetContext).textTheme.titleLarge),
             const SizedBox(height: 12),
             Expanded(

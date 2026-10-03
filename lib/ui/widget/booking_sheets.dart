@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/auth/auth_bloc.dart';
  
 /// View: BookingSheet
@@ -44,6 +46,7 @@ class _BookingSheetState extends State<BookingSheet> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final totalPrice = widget.hotel.price.toInt() * nights;
     return Container(
       padding: EdgeInsets.only(
@@ -62,7 +65,7 @@ class _BookingSheetState extends State<BookingSheet> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Book Your Stay', style: Theme.of(context).textTheme.headlineMedium),
+                    Text(l10n.fun_bookYourStay, style: Theme.of(context).textTheme.headlineMedium),
                     Text(widget.hotel.name, style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
@@ -102,7 +105,7 @@ class _BookingSheetState extends State<BookingSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('CHECK-IN', style: Theme.of(context).textTheme.labelSmall),
+                          Text(l10n.fun_checkInUpper, style: Theme.of(context).textTheme.labelSmall),
                           const SizedBox(height: 4),
                           Text(_formatDate(checkIn),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -123,7 +126,7 @@ class _BookingSheetState extends State<BookingSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('CHECK-OUT', style: Theme.of(context).textTheme.labelSmall),
+                        Text(l10n.fun_checkOutUpper, style: Theme.of(context).textTheme.labelSmall),
                         const SizedBox(height: 4),
                         Text(_formatDate(checkOut),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -137,7 +140,7 @@ class _BookingSheetState extends State<BookingSheet> {
  
             // Counters
             _Counter(
-              label: 'Malam',
+              label: l10n.fun_nightsLabel,
               icon: Icons.nights_stay_outlined,
               value: nights,
               onDecrement: nights > 1
@@ -147,7 +150,7 @@ class _BookingSheetState extends State<BookingSheet> {
             ),
             const SizedBox(height: 12),
             _Counter(
-              label: 'Tamu',
+              label: l10n.fun_guestsLabel,
               icon: Icons.people_outline,
               value: guestCount,
               onDecrement: guestCount > 1 ? () => setState(() => guestCount--) : null,
@@ -160,8 +163,8 @@ class _BookingSheetState extends State<BookingSheet> {
               controller: _notesCtrl,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Catatan khusus (opsional)',
-                hintText: 'Mis: kamar di lantai atas, dekat kolam...',
+                labelText: l10n.fun_specialNotesLabel,
+                hintText: l10n.fun_notesHint,
                 prefixIcon: const Icon(Icons.note_outlined),
                 filled: true,
                 fillColor: AppTheme.surfaceContainerLow,
@@ -186,13 +189,25 @@ class _BookingSheetState extends State<BookingSheet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('\$${widget.hotel.price.toStringAsFixed(0)} × $nights malam',
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      Text('+ pajak & biaya layanan',
-                          style: TextStyle(color: AppTheme.outline, fontSize: 11)),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          MoneyText(widget.hotel.price,
+                              style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium ??
+                                  const TextStyle()),
+                          Text(l10n.fun_nightsMultiply(nights),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium),
+                        ],
+                      ),
+                      Text(l10n.fun_taxServiceNote,
+                          style: const TextStyle(color: AppTheme.outline, fontSize: 11)),
                     ],
                   ),
-                  Text('\$$totalPrice',
+                  MoneyText(totalPrice.toDouble(),
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary)),
                 ],
               ),
@@ -205,15 +220,15 @@ class _BookingSheetState extends State<BookingSheet> {
               child: ElevatedButton.icon(
                 onPressed: _proceedToCheckout,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Lanjut ke Checkout',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: Text(l10n.fun_proceedCheckout,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: AppTheme.heroButtonStyle,
               ),
             ),
             const SizedBox(height: 8),
             Center(
-              child: Text('Tidak dikenakan biaya sekarang',
-                  style: TextStyle(color: AppTheme.outline, fontSize: 12)),
+              child: Text(l10n.fun_noChargeYet,
+                  style: const TextStyle(color: AppTheme.outline, fontSize: 12)),
             ),
           ],
         ),

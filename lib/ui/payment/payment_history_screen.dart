@@ -1,8 +1,10 @@
 
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/payment_model.dart';
 import 'package:sasacation/data/repo/payment_repository.dart';
+import 'package:sasacation/utils/money.dart';
  
 /// PaymentHistoryScreen
 ///
@@ -62,6 +64,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   /// F9: transfer saldo ke user lain via email. Gagal (mis. saldo kurang)
   /// tampil sebagai snackbar error backend apa adanya.
   Future<void> _transfer() async {
+    final l10n = AppLocalizations.of(context);
     final emailCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
@@ -70,7 +73,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       context: context,
       builder: (dlg) => StatefulBuilder(
         builder: (dlg, setDlg) => AlertDialog(
-          title: const Text('Transfer Saldo'),
+          title: Text(l10n.me_transferTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -78,23 +81,23 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email penerima',
+                  decoration: InputDecoration(
+                    labelText: l10n.me_recipientEmail,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: amountCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Jumlah (USD)',
+                  decoration: InputDecoration(
+                    labelText: l10n.me_amountUsd,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: noteCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Catatan (opsional)',
+                  decoration: InputDecoration(
+                    labelText: l10n.me_transferNote,
                   ),
                 ),
               ],
@@ -103,7 +106,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dlg, false),
-                child: const Text('Batal')),
+                child: Text(l10n.common_cancel)),
             ElevatedButton(
               onPressed: saving
                   ? null
@@ -129,13 +132,13 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(res['message'] ??
-                                'Transfer gagal'),
+                                l10n.me_transferFailed),
                             backgroundColor: AppTheme.error,
                           ),
                         );
                       }
                     },
-              child: const Text('Kirim'),
+              child: Text(l10n.me_sendAction),
             ),
           ],
         ),
@@ -143,12 +146,13 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     );
     if (ok == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transfer berhasil')),
+        SnackBar(content: Text(l10n.me_transferSuccess)),
       );
     }
   }
  
   Widget _loyaltyCard(BuildContext context, LoyaltyInfo info) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -165,9 +169,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text('Sasacation Travel Pass',
-                    style: TextStyle(
+              Expanded(
+                child: Text(l10n.me_travelPass,
+                    style: const TextStyle(
                         color: Colors.white70, fontSize: 13)),
               ),
               Container(
@@ -187,14 +191,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text('${info.points} pts',
+          Text(l10n.me_loyaltyPoints(info.points),
               style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
-            'ID ${info.passId} • ${info.tripsCompleted} trip selesai',
+            l10n.me_passMeta(info.passId, info.tripsCompleted),
             style:
                 const TextStyle(color: Colors.white70, fontSize: 12),
           ),
@@ -233,14 +237,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     }
   }
  
-  String _statusLabel(String status) {
+  String _statusLabel(AppLocalizations l10n, String status) {
     switch (status) {
       case 'success':
-        return 'Berhasil';
+        return l10n.me_statusSuccess;
       case 'failed':
-        return 'Gagal';
+        return l10n.me_statusFailed;
       case 'refunded':
-        return 'Dikembalikan';
+        return l10n.me_statusRefunded;
       default:
         return status;
     }
@@ -248,9 +252,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Payment History'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.me_menuPaymentHistory), centerTitle: true),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -268,7 +273,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _transfer,
                         icon: const Icon(Icons.send_outlined, size: 18),
-                        label: const Text('Transfer Saldo'),
+                        label: Text(l10n.me_transferTitle),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.primary,
                           side: const BorderSide(
@@ -296,20 +301,21 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total Dibelanjakan',
-                            style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text(l10n.me_totalSpent,
+                            style: const TextStyle(color: Colors.white70, fontSize: 13)),
                         const SizedBox(height: 6),
-                        Text('\$${_totalSpent.toStringAsFixed(2)}',
+                        MoneyText(_totalSpent,
+                            usdDecimals: 2,
                             style: const TextStyle(
                                 color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
-                        Text('${_payments.where((p) => p.status == 'success').length} transaksi berhasil',
+                        Text(l10n.me_successTxCount(_payments.where((p) => p.status == 'success').length),
                             style: const TextStyle(color: Colors.white70, fontSize: 12)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text('Riwayat Transaksi', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.me_txHistory, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 12),
  
                   if (_payments.isEmpty)
@@ -320,7 +326,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           children: [
                             Icon(Icons.receipt_long_outlined, size: 64, color: AppTheme.outlineVariant),
                             const SizedBox(height: 12),
-                            Text('Belum ada transaksi', style: Theme.of(context).textTheme.bodyMedium),
+                            Text(l10n.me_noTransactions, style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
                       ),
@@ -362,7 +368,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('\$${p.amount.toStringAsFixed(0)}',
+                                  MoneyText(p.amount,
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                   const SizedBox(height: 4),
                                   Container(
@@ -371,7 +377,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                       color: _statusColor(p.status).withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(AppTheme.radiusFull),
                                     ),
-                                    child: Text(_statusLabel(p.status),
+                                    child: Text(_statusLabel(l10n, p.status),
                                         style: TextStyle(fontSize: 10, color: _statusColor(p.status), fontWeight: FontWeight.w600)),
                                   ),
                                 ],

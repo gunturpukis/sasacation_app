@@ -1,12 +1,14 @@
 // ─── Trip Detail Screen ─────────────────────────────────────────────────────
 // Screen to view a specific saved trip in detail
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/data/model/trip_model.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
 
 class TripDetailScreen extends StatefulWidget {
@@ -28,10 +30,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        title: const Text('Trip Detail'),
+        title: Text(l10n.ait_tripDetailTitle),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -42,7 +45,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             icon: const Icon(Icons.delete_outline),
             onPressed: () =>
                 context.read<TripBloc>().add(TripDeleteRequested(tripId: widget.tripId)),
-            tooltip: 'Hapus trip',
+            tooltip: l10n.ait_tripDeleteTooltip,
           ),
         ],
       ),
@@ -72,7 +75,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       onPressed: () =>
                           context.read<TripBloc>().add(TripLoadRequested(tripId: widget.tripId)),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Coba Lagi'),
+                      label: Text(l10n.common_retry),
                     ),
                   ],
                 ),
@@ -84,7 +87,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
           if (trip == null) {
             return Center(
-              child: Text('Trip tidak ditemukan',
+              child: Text(l10n.ait_tripNotFound,
                   style: Theme.of(context).textTheme.bodyLarge),
             );
           }
@@ -102,7 +105,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                           const Icon(Icons.timeline, size: 14,
                               color: AppTheme.tertiary),
                           const SizedBox(width: 4),
-                          Text('TRIP DETAIL',
+                          Text(l10n.ait_tripDetailBadge,
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(color: AppTheme.tertiary)),
                         ],
@@ -117,14 +120,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       Row(
                         children: [
                           PillBadge(
-                            label: 'Est. \$${trip.totalEstimatedCost.toInt()}',
+                            label: l10n.ait_tripCardEstimate(
+                                Money.formatSync(trip.totalEstimatedCost, usdDecimals: 0)),
                             icon: Icons.payments_outlined,
                             backgroundColor: AppTheme.surfaceContainerLow,
                             foregroundColor: AppTheme.primary,
                           ),
                           const SizedBox(width: 8),
                           PillBadge(
-                            label: '${trip.days.length} Hari',
+                            label: l10n.ait_tripCardDays(trip.days.length),
                             icon: Icons.calendar_today_outlined,
                             backgroundColor: AppTheme.surfaceContainerLow,
                             foregroundColor: AppTheme.primary,
@@ -139,7 +143,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                             ),
                           const SizedBox(width: 8),
                           PillBadge(
-                            label: 'Disimpan: ${_formatDate(trip.createdAt)}',
+                            label: l10n.ait_tripSavedDate(_formatDate(trip.createdAt)),
                             icon: Icons.save_outlined,
                             backgroundColor: AppTheme.surfaceContainerLow,
                             foregroundColor: AppTheme.primary,
@@ -147,7 +151,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Text('Itinerary',
+                      Text(l10n.ait_tripItineraryTitle,
                           style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 8),
                       _buildItinerary(trip),
@@ -193,7 +197,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               Text(activity.time,
                   style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 12)),
               if (activity.estimatedCost > 0)
-                Text('\$${activity.estimatedCost.toInt()}',
+                MoneyText(activity.estimatedCost,
                     style: TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 12)),
             ],
           ),
@@ -215,8 +219,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   }
 
   Widget _DaySection({required TripDay day, required int dayNumber}) {
+    final l10n = AppLocalizations.of(context);
     return ExpansionTile(
-      title: Text('Day $dayNumber',
+      title: Text(l10n.ait_tripDayNumber(dayNumber),
           style: Theme.of(context).textTheme.titleMedium),
       childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       children: [

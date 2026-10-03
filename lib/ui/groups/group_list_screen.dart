@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/group_model.dart';
 import 'package:sasacation/data/repo/group_repository.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 
 /// F8: daftar grup budget user + buat grup baru.
 /// Entry point: menu "My Groups" di profil + tombol notifikasi group_detail.
@@ -36,6 +38,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
   }
 
   Future<void> _createGroup() async {
+    final l10n = AppLocalizations.of(context);
     final nameCtrl = TextEditingController();
     final destCtrl = TextEditingController();
     final budgetCtrl = TextEditingController();
@@ -44,7 +47,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
       context: context,
       builder: (dlg) => StatefulBuilder(
         builder: (dlg, setDlg) => AlertDialog(
-          title: const Text('Grup Baru'),
+          title: Text(l10n.ait_groupNewTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -52,8 +55,8 @@ class _GroupListScreenState extends State<GroupListScreen> {
                 TextField(
                   controller: nameCtrl,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama grup',
+                  decoration: InputDecoration(
+                    labelText: l10n.ait_groupNameLabel,
                     hintText: 'mis. Bali Trip',
                   ),
                 ),
@@ -61,16 +64,16 @@ class _GroupListScreenState extends State<GroupListScreen> {
                 TextField(
                   controller: destCtrl,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Destinasi (opsional)',
+                  decoration: InputDecoration(
+                    labelText: l10n.ait_groupDestLabel,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: budgetCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Budget total (opsional)',
+                  decoration: InputDecoration(
+                    labelText: l10n.ait_groupBudgetLabel,
                     hintText: 'mis. 1000',
                   ),
                 ),
@@ -80,7 +83,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dlg, false),
-                child: const Text('Batal')),
+                child: Text(l10n.common_cancel)),
             ElevatedButton(
               onPressed: saving
                   ? null
@@ -101,7 +104,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(res['message'] ??
-                                'Gagal membuat grup'),
+                                l10n.ait_groupCreateFailed),
                             backgroundColor: AppTheme.error,
                           ),
                         );
@@ -112,7 +115,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                       height: 16,
                       width: 16,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Buat'),
+                  : Text(l10n.common_create),
             ),
           ],
         ),
@@ -123,15 +126,16 @@ class _GroupListScreenState extends State<GroupListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('My Groups'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.ait_groupListTitle), centerTitle: true),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createGroup,
         backgroundColor: AppTheme.primaryContainer,
         icon: const Icon(Icons.group_add_outlined, color: Colors.white),
-        label: const Text('Grup Baru',
-            style: TextStyle(color: Colors.white)),
+        label: Text(l10n.ait_groupNewTitle,
+            style: const TextStyle(color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -143,12 +147,12 @@ class _GroupListScreenState extends State<GroupListScreen> {
                       const Icon(Icons.group_outlined,
                           size: 64, color: AppTheme.outlineVariant),
                       const SizedBox(height: 12),
-                      Text('Belum ada grup',
+                      Text(l10n.ait_groupEmptyTitle,
                           style:
                               Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 4),
                       Text(
-                        'Buat grup untuk patungan budget trip bareng.',
+                        l10n.ait_groupEmptySubtitle,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -204,7 +208,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                                 AppTheme.radiusFull),
                                       ),
                                       child: Text(
-                                        '+${g.pctOver.toStringAsFixed(0)}% over',
+                                        l10n.ait_groupOverBadge(g.pctOver.toStringAsFixed(0)),
                                         style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 11,
@@ -243,11 +247,31 @@ class _GroupListScreenState extends State<GroupListScreen> {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              Text(
-                                '\$${g.totalSpent.toStringAsFixed(0)} dari \$${g.budgetTotal.toStringAsFixed(0)} • ${g.memberCount} anggota',
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.outline),
+                              Wrap(
+                                crossAxisAlignment:
+                                    WrapCrossAlignment.center,
+                                children: [
+                                  MoneyText(g.totalSpent,
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.outline)),
+                                  Text(
+                                    ' ${l10n.ait_groupOf} ',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.outline),
+                                  ),
+                                  MoneyText(g.budgetTotal,
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.outline)),
+                                  Text(
+                                    ' • ${l10n.ait_groupMembers(g.memberCount)}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.outline),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

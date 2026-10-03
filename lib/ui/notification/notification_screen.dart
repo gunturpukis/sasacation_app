@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/notification_model.dart';
@@ -27,10 +28,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   /// Kategori mengikuti desain (All/Budget/Weather/Travel) tapi dipetakan ke
   /// tipe nyata yang dikirim backend — tanpa mengarang kategori kosong.
-  String _categoryFor(String type) {
-    if (type.startsWith('payment')) return 'Pembayaran';
-    if (type.startsWith('booking')) return 'Booking';
-    return 'Info';
+  String _categoryFor(BuildContext context, String type) {
+    final l10n = AppLocalizations.of(context);
+    if (type.startsWith('payment')) return l10n.me_categoryPayment;
+    if (type.startsWith('booking')) return l10n.me_categoryBooking;
+    return l10n.me_categoryInfo;
   }
  
   @override
@@ -55,20 +57,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Icons.notifications_outlined;
   }
  
-  String _timeAgo(DateTime dt) {
+  String _timeAgo(BuildContext context, DateTime dt) {
+    final l10n = AppLocalizations.of(context);
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    if (diff.inMinutes < 1) return l10n.me_justNow;
+    if (diff.inMinutes < 60) return l10n.me_minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.me_hoursAgo(diff.inHours);
+    if (diff.inDays < 7) return l10n.me_daysAgo(diff.inDays);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Notifications'), centerTitle: true),
+      appBar: AppBar(title: Text(l10n.me_notificationsTitle), centerTitle: true),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
@@ -78,9 +82,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     children: [
                       Icon(Icons.notifications_none_rounded, size: 72, color: AppTheme.outlineVariant),
                       const SizedBox(height: 16),
-                      Text('Belum ada notifikasi', style: Theme.of(context).textTheme.titleLarge),
+                      Text(l10n.me_emptyTitle, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 6),
-                      Text('Notifikasi tentang booking & pembayaranmu akan muncul di sini',
+                      Text(l10n.me_emptySubtitle,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium),
                     ],
@@ -93,14 +97,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// Body dengan filter chips + pengelompokan waktu mengikuti desain.
   /// Semua dihitung dari data nyata (client-side, tanpa backend baru).
   Widget _buildFilteredBody() {
+    final l10n = AppLocalizations.of(context);
+    final allLabel = l10n.me_filterAll;
     final categories = <String>[
-      'Semua',
-      ...{for (final n in _notifications) _categoryFor(n.type)},
+      allLabel,
+      ...{for (final n in _notifications) _categoryFor(context, n.type)},
     ];
-    if (!categories.contains(_filter)) _filter = 'Semua';
-    final filtered = _filter == 'Semua'
+    if (_filter == 'Semua' || !categories.contains(_filter)) _filter = allLabel;
+    final filtered = _filter == allLabel
         ? _notifications
-        : _notifications.where((n) => _categoryFor(n.type) == _filter).toList();
+        : _notifications.where((n) => _categoryFor(context, n.type) == _filter).toList();
 
     if (filtered.isEmpty) {
       return Center(
@@ -109,7 +115,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             const Icon(Icons.filter_list_off, size: 56, color: AppTheme.outlineVariant),
             const SizedBox(height: 12),
-            Text('Tidak ada notifikasi $_filter',
+            Text(l10n.me_emptyFilter(_filter),
                 style: Theme.of(context).textTheme.titleLarge),
           ],
         ),
@@ -169,15 +175,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
                 if (today.isNotEmpty) ...[
-                  _groupHeader('Hari ini'),
+                  _groupHeader(l10n.me_groupToday),
                   ...today.map(_buildCard),
                 ],
                 if (week.isNotEmpty) ...[
-                  _groupHeader('Minggu ini'),
+                  _groupHeader(l10n.me_groupWeek),
                   ...week.map(_buildCard),
                 ],
                 if (older.isNotEmpty) ...[
-                  _groupHeader('Lebih lama'),
+                  _groupHeader(l10n.me_groupOlder),
                   ...older.map(_buildCard),
                 ],
               ],
@@ -205,7 +211,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// Hanya route yang punya layar tujuan yang dirender — sisanya (mis.
   /// payment_methods, group_detail, task_detail sebelum UI-nya ada) TIDAK
   /// menampilkan tombol alih-alih navigasi buntu.
-  ({String label, String path})? _actionFor(NotificationModel n) {
+  ({String label, String path})? _actionFor(BuildContext context, NotificationModel n) {
+    final l10n = AppLocalizations.of(context);
     final data = n.data;
     final rawAction = data['action'];
     String? route;
@@ -223,32 +230,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final pollId = param('pollId', 'poll_id');
     if ((route == 'poll_detail' || (route == null && pollId != null)) &&
         pollId != null) {
-      return (label: label ?? 'Vote now', path: AppRouter.pollDetailPath(pollId));
+      return (label: label ?? l10n.me_actionVoteNow, path: AppRouter.pollDetailPath(pollId));
     }
     final hotelId = param('hotelId', 'hotel_id');
     if (route == 'hotel_detail' && hotelId != null) {
-      return (label: label ?? 'Lihat Hotel', path: AppRouter.hotelDetailPath(hotelId));
+      return (label: label ?? l10n.me_actionViewHotel, path: AppRouter.hotelDetailPath(hotelId));
     }
     if (route == 'booking_detail') {
-      return (label: label ?? 'Lihat Booking', path: AppRouter.myBookings);
+      return (label: label ?? l10n.me_actionViewBooking, path: AppRouter.myBookings);
     }
     final tripId = param('itineraryId', 'itinerary_id');
     if (route == 'itinerary_detail' && tripId != null) {
-      return (label: label ?? 'Lihat Itinerary', path: AppRouter.tripDetailPath(tripId));
+      return (label: label ?? l10n.me_actionViewItinerary, path: AppRouter.tripDetailPath(tripId));
     }
     final groupId = param('groupId', 'group_id');
     if (route == 'group_detail' && groupId != null) {
-      return (label: label ?? 'Lihat Grup', path: AppRouter.groupDetailPath(groupId));
+      return (label: label ?? l10n.me_actionViewGroup, path: AppRouter.groupDetailPath(groupId));
     }
     if (route == 'impact_summary') {
-      return (label: label ?? 'Lihat Dampak', path: AppRouter.sustainability);
+      return (label: label ?? l10n.me_actionViewImpact, path: AppRouter.sustainability);
     }
     if (route == 'wallet') {
-      return (label: label ?? 'Lihat Wallet', path: AppRouter.paymentHistory);
+      return (label: label ?? l10n.me_actionViewWallet, path: AppRouter.paymentHistory);
     }
     if (route == 'task_detail') {
       // Tanpa layar detail per-task — arahkan ke daftar tasks.
-      return (label: label ?? 'Lihat Tasks', path: AppRouter.tasks);
+      return (label: label ?? l10n.me_actionViewTasks, path: AppRouter.tasks);
     }
     return null;
   }
@@ -307,7 +314,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   fontSize: 14)),
                         ),
                         const SizedBox(width: 8),
-                        Text(_categoryFor(n.type),
+                        Text(_categoryFor(context, n.type),
                             style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -317,10 +324,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 3),
                     Text(n.body, style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 6),
-                    Text(_timeAgo(n.createdAt),
+                    Text(_timeAgo(context, n.createdAt),
                         style: const TextStyle(fontSize: 11, color: AppTheme.outline)),
                     // Tombol aksi backend (F7+): hanya bila route terpetakan.
-                    if (_actionFor(n) case (label: final label, path: final path))
+                    if (_actionFor(context, n) case (label: final label, path: final path))
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
                         child: SizedBox(

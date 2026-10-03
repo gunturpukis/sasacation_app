@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
@@ -46,6 +47,7 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   void _showLoginGate(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -71,11 +73,11 @@ class _MainNavigationState extends State<MainNavigation> {
             const Icon(Icons.lock_outline,
                 size: 44, color: AppTheme.primary),
             const SizedBox(height: 12),
-            Text('Masuk untuk melanjutkan',
+            Text(l10n.auth_loginGateTitle,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 6),
             Text(
-              'Riwayat booking dan profil tersimpan di akunmu. Masuk atau daftar untuk mengaksesnya.',
+              l10n.auth_loginGateMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -87,12 +89,12 @@ class _MainNavigationState extends State<MainNavigation> {
                   Navigator.pop(sheetContext);
                   context.push(AppRouter.login);
                 },
-                child: const Text('Masuk / Daftar'),
+                child: Text(l10n.auth_loginGateAction),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(sheetContext),
-              child: const Text('Lanjut sebagai tamu'),
+              child: Text(l10n.auth_loginGateContinueAsGuest),
             ),
           ],
         ),
@@ -102,6 +104,7 @@ class _MainNavigationState extends State<MainNavigation> {
  
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: _screens[_currentIndex],
       // ─── AI FAB — dibuat lebih menonjol sesuai semangat "Sasa AI" dari
@@ -117,7 +120,7 @@ class _MainNavigationState extends State<MainNavigation> {
         child: FloatingActionButton(
           onPressed: () => _showAiMenu(context),
           backgroundColor: AppTheme.primaryContainer,
-          tooltip: 'Sasa AI',
+          tooltip: l10n.auth_aiTooltip,
           child: const Icon(Icons.auto_awesome, color: Colors.white),
         ),
       ),
@@ -139,26 +142,26 @@ class _MainNavigationState extends State<MainNavigation> {
               const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           unselectedLabelStyle:
               const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: l10n.auth_navHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.explore_outlined),
-              activeIcon: Icon(Icons.explore),
-              label: 'Explore',
+              icon: const Icon(Icons.explore_outlined),
+              activeIcon: const Icon(Icons.explore),
+              label: l10n.auth_navExplore,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark_border_outlined),
-              activeIcon: Icon(Icons.bookmark),
-              label: 'Bookings',
+              icon: const Icon(Icons.bookmark_border_outlined),
+              activeIcon: const Icon(Icons.bookmark),
+              label: l10n.auth_navBookings,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: l10n.auth_navProfile,
             ),
           ],
         ),
@@ -167,6 +170,7 @@ class _MainNavigationState extends State<MainNavigation> {
   }
  
   void _showAiMenu(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -203,8 +207,8 @@ class _MainNavigationState extends State<MainNavigation> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Fitur AI Sasacation', style: Theme.of(context).textTheme.titleLarge),
-                    Text('Powered by Sasa AI', style: Theme.of(context).textTheme.bodyMedium),
+                    Text(l10n.auth_aiMenuTitle, style: Theme.of(context).textTheme.titleLarge),
+                    Text(l10n.auth_aiMenuSubtitle, style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ],
@@ -213,8 +217,8 @@ class _MainNavigationState extends State<MainNavigation> {
             _AiMenuItem(
               icon: Icons.chat_bubble_outline,
               color: const Color(0xFF00A896),
-              title: 'Tanya Sasa',
-              subtitle: 'AI travel assistant untuk rekomendasi wisata',
+              title: l10n.auth_aiAskSasa,
+              subtitle: l10n.auth_aiAskSasaSubtitle,
               onTap: () {
                 Navigator.pop(context);
                 context.push(AppRouter.aiChat);
@@ -224,8 +228,8 @@ class _MainNavigationState extends State<MainNavigation> {
             _AiMenuItem(
               icon: Icons.auto_awesome,
               color: const Color(0xFF4299E1),
-              title: 'Smart Search',
-              subtitle: 'Cari dengan bahasa natural, AI yang memahami',
+              title: l10n.auth_aiSmartSearch,
+              subtitle: l10n.auth_aiSmartSearchSubtitle,
               onTap: () {
                 Navigator.pop(context);
                 context.push(AppRouter.smartSearch);
@@ -235,8 +239,8 @@ class _MainNavigationState extends State<MainNavigation> {
             _AiMenuItem(
               icon: Icons.map_outlined,
               color: const Color(0xFF48BB78),
-              title: 'Trip Planner',
-              subtitle: 'Buat itinerary Lombok otomatis dengan AI',
+              title: l10n.auth_aiTripPlanner,
+              subtitle: l10n.auth_aiTripPlannerSubtitle,
               onTap: () {
                 Navigator.pop(context);
                 context.push(AppRouter.tripPlanner);

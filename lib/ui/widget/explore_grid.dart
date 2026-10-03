@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/route/approuter.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 
 class ExploreGrid extends StatelessWidget {
@@ -11,6 +13,7 @@ class ExploreGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocBuilder<ExploreBloc, ExploreState>(
       builder: (context, state) {
         if (state is ExploreLoading || state is ExploreInitial) {
@@ -32,7 +35,7 @@ class ExploreGrid extends StatelessWidget {
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => context.read<ExploreBloc>().add(ExploreItemsRequested()),
-                    child: const Text('Coba Lagi'),
+                    child: Text(l10n.common_retry),
                   ),
                 ],
               ),
@@ -42,19 +45,19 @@ class ExploreGrid extends StatelessWidget {
         if (state is ExploreLoaded) {
           final items = state.items;
           if (items.isEmpty) {
-            return const SizedBox(
+            return SizedBox(
               height: 200,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.search_off, size: 64, color: Colors.grey),
-                    SizedBox(height: 10),
-                    Text('Tidak ada tempat ditemukan',
-                        style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    SizedBox(height: 4),
-                    Text('Coba kata kunci lain',
-                        style: TextStyle(fontSize: 13, color: Colors.grey)),
+                    const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 10),
+                    Text(l10n.fun_emptyExploreTitle,
+                        style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                    const SizedBox(height: 4),
+                    Text(l10n.fun_emptyExploreHint,
+                        style: const TextStyle(fontSize: 13, color: Colors.grey)),
                   ],
                 ),
               ),
@@ -95,12 +98,13 @@ class ExploreGridCard extends StatelessWidget {
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${item.name} — coming soon')));
+          SnackBar(content: Text(AppLocalizations.of(context).fun_comingSoonName(item.name))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => _onTap(context),
       child: Container(
@@ -180,15 +184,16 @@ class ExploreGridCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   if (item.price > 0) ...[
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text('\$${item.price.toStringAsFixed(0)}',
+                        MoneyText(item.price,
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
                         if (item.type == 'hotel')
-                          const Text(' / malam', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                          Text(l10n.common_perNight, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                         if (item.type == 'restaurant')
-                          const Text(' / orang', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                          Text(l10n.fun_perPerson, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                       ],
                     ),
                   ] else ...[
@@ -198,7 +203,7 @@ class ExploreGridCard extends StatelessWidget {
                         color: AppTheme.secondaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text('Gratis',
+                      child: Text(l10n.fun_freeLabel,
                           style: TextStyle(
                               fontSize: 10, fontWeight: FontWeight.w500,
                               color: AppTheme.secondaryColor)),

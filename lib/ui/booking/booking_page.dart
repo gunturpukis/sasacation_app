@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/repo/explore_repository.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/booking/booking_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,8 +42,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Tidak dapat membuka halaman pembayaran'),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).fun_cannotOpenPayment),
             backgroundColor: Colors.red),
       );
     }
@@ -47,23 +51,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return DefaultTabController(
       length: 5,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Bookings'),
+          title: Text(l10n.fun_myBookingsTitle),
           centerTitle: true,
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             labelColor: AppTheme.primaryColor,
             unselectedLabelColor: Colors.grey,
             indicatorColor: AppTheme.primaryColor,
             tabs: [
-              Tab(text: 'Semua'),
-              Tab(text: 'Pending'),
-              Tab(text: 'Aktif'),
-              Tab(text: 'Selesai'),
-              Tab(text: 'Batal'),
+              Tab(text: l10n.fun_allLabel),
+              Tab(text: l10n.fun_statusPending),
+              Tab(text: l10n.fun_tabActive),
+              Tab(text: l10n.fun_tabCompleted),
+              Tab(text: l10n.fun_tabCancelled),
             ],
           ),
         ),
@@ -73,8 +78,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               // Reload list setelah cancel
               context.read<BookingBloc>().add(BookingListRequested());
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Booking berhasil dibatalkan'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).fun_bookingCancelledMsg),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -124,16 +129,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.hotel_outlined, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text('Belum ada booking',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.fun_emptyBookingsTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text('Yuk mulai jelajahi Lombok!', style: TextStyle(color: Colors.grey.shade600)),
+          Text(l10n.fun_emptyBookingsSubtitle, style: TextStyle(color: Colors.grey.shade600)),
         ],
       ),
     );
@@ -142,7 +148,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget _bookingsList(BuildContext context, List<BookingModel> bookings) {
     if (bookings.isEmpty) {
       return Center(
-        child: Text('Tidak ada booking di kategori ini',
+        child: Text(AppLocalizations.of(context).fun_emptyCategoryBookings,
             style: TextStyle(color: Colors.grey.shade500)),
       );
     }
@@ -157,6 +163,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildBookingCard(BuildContext context, BookingModel booking) {
+    final l10n = AppLocalizations.of(context);
     final fmt = DateFormat('dd MMM yyyy');
     final statusColor = booking.isPending
         ? AppTheme.secondaryContainer
@@ -166,12 +173,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 ? Colors.red
                 : Colors.blue;
     final statusLabel = booking.isPending
-        ? 'Pending'
+        ? l10n.fun_statusPending
         : booking.isConfirmed
-            ? 'Confirmed'
+            ? l10n.fun_statusConfirmed
             : booking.isCancelled
-                ? 'Cancelled'
-                : 'Completed';
+                ? l10n.fun_statusCancelled
+                : l10n.fun_statusCompleted;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -229,11 +236,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text('Kode: ${booking.bookingCode}',
+                Text(l10n.fun_bookingCodeWith(booking.bookingCode),
                     style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade500,
                         letterSpacing: 1)),
+                // S1.3: countdown kedaluwarsa pembayaran (dari expiresAt
+                // resume aktif). Tanpa info = tidak tampil (jujur).
+                if (booking.isPending) ...[
+                  const SizedBox(height: 6),
+                  _PendingCountdown(bookingId: booking.id),
+                ],
                 const SizedBox(height: 10),
                 Row(children: [
                   const Icon(Icons.calendar_today,
@@ -252,7 +265,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       size: 14, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(
-                      '${booking.nights} malam · ${booking.guestCount} tamu',
+                      l10n.fun_staySummary(booking.nights, booking.guestCount),
                       style: TextStyle(
                           color: Colors.grey.shade700,
                           fontSize: 13)),
@@ -262,12 +275,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   mainAxisAlignment:
                       MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Total: \$${booking.totalPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${l10n.fun_totalLabel} ',
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor),
+                        ),
+                        MoneyText(booking.totalPrice,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor)),
+                      ],
                     ),
                     if (booking.isPending)
                       ElevatedButton(
@@ -299,7 +322,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                     strokeWidth: 2,
                                     color: Colors.white),
                               )
-                            : const Text('Complete Booking'),
+                            : Text(l10n.fun_completeBooking),
                       )
                     else if (booking.isConfirmed)
                       Row(
@@ -311,7 +334,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             icon: const Icon(
                                 Icons.calendar_month_outlined,
                                 size: 16),
-                            label: const Text('Jadwal Ulang'),
+                            label: Text(l10n.fun_rescheduleAction),
                           ),
                           TextButton.icon(
                             onPressed: () =>
@@ -319,7 +342,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             icon: const Icon(
                                 Icons.cancel_outlined,
                                 size: 16),
-                            label: const Text('Batalkan'),
+                            label: Text(l10n.fun_cancelBookingAction),
                             style: TextButton.styleFrom(
                                 foregroundColor: Colors.red),
                           ),
@@ -339,6 +362,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   /// Selisih harga ditampilkan apa adanya dari respons server.
   Future<void> _reschedule(
       BuildContext context, BookingModel booking) async {
+    final l10n = AppLocalizations.of(context);
     DateTime checkIn = booking.checkIn;
     DateTime checkOut = booking.checkOut;
     var saving = false;
@@ -356,13 +380,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       context: context,
       builder: (dlg) => StatefulBuilder(
         builder: (dlg, setDlg) => AlertDialog(
-          title: const Text('Jadwal Ulang'),
+          title: Text(l10n.fun_rescheduleAction),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Check-in'),
+                title: Text(l10n.fun_checkInLabel),
                 subtitle: Text(fmt.format(checkIn)),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: () async {
@@ -381,7 +405,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Check-out'),
+                title: Text(l10n.fun_checkOutLabel),
                 subtitle: Text(fmt.format(checkOut)),
                 trailing: const Icon(Icons.calendar_today_outlined),
                 onTap: () async {
@@ -397,7 +421,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(dlg, false),
-                child: const Text('Batal')),
+                child: Text(l10n.common_cancel)),
             ElevatedButton(
               onPressed: saving
                   ? null
@@ -412,7 +436,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       if (!dlg.mounted) return;
                       Navigator.pop(dlg, result);
                     },
-              child: const Text('Simpan'),
+              child: Text(l10n.common_save),
             ),
           ],
         ),
@@ -427,20 +451,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         await showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Jadwal Diperbarui'),
+            title: Text(l10n.fun_rescheduleUpdated),
             content: Text(
               diff > 0
-                  ? 'Total baru \$${total?.toStringAsFixed(0) ?? '-'} '
-                      '(+\$${diff.toStringAsFixed(0)}). Pembayaran tambahan belum otomatis — hubungi CS bila perlu.'
+                  ? l10n.fun_rescheduleExtraCost(
+                      total != null ? Money.formatSync(total) : '-',
+                      Money.formatSync(diff))
                   : diff < 0
-                      ? 'Total baru \$${total?.toStringAsFixed(0) ?? '-'} '
-                          '(selisih \$${(-diff).toStringAsFixed(0)} akan disesuaikan).'
-                      : 'Tanggal berhasil diubah tanpa selisih harga.',
+                      ? l10n.fun_rescheduleDiscount(
+                          total != null ? Money.formatSync(total) : '-',
+                          Money.formatSync(-diff))
+                      : l10n.fun_rescheduleNoDiff,
             ),
             actions: [
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+                child: Text(l10n.common_ok),
               ),
             ],
           ),
@@ -451,7 +477,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(confirmed['message'] ?? 'Gagal menjadwalkan ulang'),
+            content: Text(confirmed['message'] ?? l10n.fun_rescheduleFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -460,17 +486,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   void _confirmCancel(BuildContext context, String bookingId) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Batalkan Booking'),
-        content: const Text('Yakin ingin membatalkan booking ini?'),
+        title: Text(l10n.fun_cancelBookingTitle),
+        content: Text(l10n.fun_cancelBookingConfirm),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Tidak')),
+              child: Text(l10n.fun_dialogNo)),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -481,8 +508,101 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red),
-            child: const Text('Ya, Batalkan'),
+            child: Text(l10n.fun_dialogYesCancel),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// S1.3: pill countdown "Bayar dalam HH:MM:SS" untuk booking pending.
+/// Sumber: `expiresAt` dari `GET /checkout/resume/:id` (Opsi B — tanpa
+/// perlu perubahan backend). Bila tidak ada pembayaran aktif (404) atau
+/// sudah kedaluwarsa, tampil penjelasan jujur, bukan angka karangan.
+class _PendingCountdown extends StatefulWidget {
+  final String bookingId;
+  const _PendingCountdown({required this.bookingId});
+
+  @override
+  State<_PendingCountdown> createState() => _PendingCountdownState();
+}
+
+class _PendingCountdownState extends State<_PendingCountdown> {
+  Timer? _timer;
+  DateTime? _expiresAt;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    final info =
+        await BookingRepository().getResumeInfo(widget.bookingId);
+    if (!mounted) return;
+    DateTime? expires;
+    final raw = info?['expiresAt'];
+    if (raw is String) expires = DateTime.tryParse(raw)?.toLocal();
+    setState(() {
+      _expiresAt = expires;
+      _loaded = true;
+    });
+    if (expires != null) {
+      _timer = Timer.periodic(
+          const Duration(seconds: 1), (_) => mounted ? setState(() {}) : null);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _format(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (!_loaded) return const SizedBox.shrink();
+    if (_expiresAt == null) {
+      return Text(l10n.fun_noActivePayment,
+          style: const TextStyle(fontSize: 12, color: AppTheme.outline));
+    }
+    final remaining = _expiresAt!.difference(DateTime.now());
+    if (remaining.isNegative) {
+      return Text(
+          l10n.fun_paymentExpired,
+          style: const TextStyle(
+              fontSize: 12,
+              color: AppTheme.error,
+              fontWeight: FontWeight.w600));
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppTheme.secondaryContainer.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.timer_outlined,
+              size: 14, color: AppTheme.secondary),
+          const SizedBox(width: 6),
+          Text(l10n.fun_payWithin(_format(remaining)),
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.secondary)),
         ],
       ),
     );

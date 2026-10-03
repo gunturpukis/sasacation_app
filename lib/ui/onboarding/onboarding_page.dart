@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/route/approuter.dart';
@@ -15,29 +16,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingData> _onboardingData = [
+  List<OnboardingData> _onboardingData(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return [
     OnboardingData(
-      title: 'Explore Lombok',
-      description: 'Discover beautiful beaches, mountains, and cultural heritage in Lombok',
+      title: l10n.auth_onboardingTitleExplore,
+      description: l10n.auth_onboardingDescExplore,
       icon: Icons.explore,
       color: AppTheme.primaryColor,
     ),
     OnboardingData(
-      title: 'Book Hotels & Transport',
-      description: 'Easy booking for hotels, transport, and tour packages',
+      title: l10n.auth_onboardingTitleBooking,
+      description: l10n.auth_onboardingDescBooking,
       icon: Icons.book_online,
       color: AppTheme.secondaryColor,
     ),
     OnboardingData(
-      title: 'Enjoy Local Culinary',
-      description: 'Taste authentic Sasak cuisine and local delicacies',
+      title: l10n.auth_onboardingTitleCulinary,
+      description: l10n.auth_onboardingDescCulinary,
       icon: Icons.restaurant,
       color: AppTheme.accentColor,
     ),
-  ];
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final onboardingData = _onboardingData(context);
     return Scaffold(
       body: Column(
         children: [
@@ -49,9 +55,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _currentPage = index;
                 });
               },
-              itemCount: _onboardingData.length,
+              itemCount: onboardingData.length,
               itemBuilder: (context, index) {
-                return OnboardingPage(data: _onboardingData[index]);
+                return OnboardingPage(data: onboardingData[index]);
               },
             ),
           ),
@@ -62,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    _onboardingData.length,
+                    onboardingData.length,
                     (index) => Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       width: 8,
@@ -83,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (_currentPage == _onboardingData.length - 1) {
+                      if (_currentPage == onboardingData.length - 1) {
                         await _saveOnboardingStatus();
                         if (mounted) {
                           // Guest mode: langsung ke home, login menyusul
@@ -104,9 +110,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                     child: Text(
-                      _currentPage == _onboardingData.length - 1
-                          ? 'Jelajahi sebagai Tamu'
-                          : 'Next',
+                      _currentPage == onboardingData.length - 1
+                          ? l10n.auth_onboardingExploreAsGuest
+                          : l10n.auth_onboardingNext,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -116,7 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 12),
                 // Tombol Skip (hanya muncul jika belum di halaman terakhir)
-                if (_currentPage != _onboardingData.length - 1)
+                if (_currentPage != onboardingData.length - 1)
                   TextButton(
                     onPressed: () async {
                       // Simpan status bahwa user skip onboarding
@@ -126,9 +132,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         context.go(AppRouter.home);
                       }
                     },
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(fontSize: 14),
+                    child: Text(
+                      l10n.auth_onboardingSkip,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
               ],
