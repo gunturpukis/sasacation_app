@@ -3031,6 +3031,102 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Hapus'**
   String get common_delete;
+
+  /// No description provided for @fun_invoiceButton.
+  ///
+  /// In id, this message translates to:
+  /// **'Invoice'**
+  String get fun_invoiceButton;
+
+  /// No description provided for @fun_invoiceNoPdfApp.
+  ///
+  /// In id, this message translates to:
+  /// **'Tersimpan: {path} — tidak ada aplikasi PDF'**
+  String fun_invoiceNoPdfApp(String path);
+
+  /// No description provided for @fun_weatherAlertTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Destination Alert'**
+  String get fun_weatherAlertTitle;
+
+  /// No description provided for @fun_weatherCurrentTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Cuaca Saat Ini'**
+  String get fun_weatherCurrentTitle;
+
+  /// No description provided for @fun_policyReschedule.
+  ///
+  /// In id, this message translates to:
+  /// **'Dengan melanjutkan pembayaran, Anda menyetujui harga di atas. Jadwal ulang hanya untuk booking confirmed dan dapat menimbulkan selisih harga; pembatalan mengikuti kebijakan properti.'**
+  String get fun_policyReschedule;
+
+  /// No description provided for @fun_plannerDuration.
+  ///
+  /// In id, this message translates to:
+  /// **'Durasi (hari)'**
+  String get fun_plannerDuration;
+
+  /// No description provided for @fun_plannerBudget.
+  ///
+  /// In id, this message translates to:
+  /// **'Budget (USD)'**
+  String get fun_plannerBudget;
+
+  /// No description provided for @fun_plannerInterests.
+  ///
+  /// In id, this message translates to:
+  /// **'Minat'**
+  String get fun_plannerInterests;
+
+  /// No description provided for @fun_plannerGenerate.
+  ///
+  /// In id, this message translates to:
+  /// **'Buatkan Itinerary'**
+  String get fun_plannerGenerate;
+
+  /// No description provided for @fun_plannerNeedInterest.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih minimal 1 minat'**
+  String get fun_plannerNeedInterest;
+
+  /// No description provided for @fun_plannerInvalidBudget.
+  ///
+  /// In id, this message translates to:
+  /// **'Isi budget dengan angka lebih dari 0'**
+  String get fun_plannerInvalidBudget;
+
+  /// No description provided for @fun_interestBeach.
+  ///
+  /// In id, this message translates to:
+  /// **'Pantai'**
+  String get fun_interestBeach;
+
+  /// No description provided for @fun_interestCulinary.
+  ///
+  /// In id, this message translates to:
+  /// **'Kuliner'**
+  String get fun_interestCulinary;
+
+  /// No description provided for @fun_interestAdventure.
+  ///
+  /// In id, this message translates to:
+  /// **'Petualangan'**
+  String get fun_interestAdventure;
+
+  /// No description provided for @fun_interestCulture.
+  ///
+  /// In id, this message translates to:
+  /// **'Budaya'**
+  String get fun_interestCulture;
+
+  /// No description provided for @fun_interestIslands.
+  ///
+  /// In id, this message translates to:
+  /// **'Pulau'**
+  String get fun_interestIslands;
 }
 
 class _AppLocalizationsDelegate

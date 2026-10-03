@@ -938,5 +938,28 @@
   },
   "ait_tripsTitle": "My Trips",
   "common_create": "Buat",
-  "common_delete": "Hapus"
+  "common_delete": "Hapus",
+  "fun_invoiceButton": "Invoice",
+  "fun_invoiceNoPdfApp": "Tersimpan: {path} — tidak ada aplikasi PDF",
+  "@fun_invoiceNoPdfApp": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "fun_weatherAlertTitle": "Destination Alert",
+  "fun_weatherCurrentTitle": "Cuaca Saat Ini",
+  "fun_policyReschedule": "Dengan melanjutkan pembayaran, Anda menyetujui harga di atas. Jadwal ulang hanya untuk booking confirmed dan dapat menimbulkan selisih harga; pembatalan mengikuti kebijakan properti.",
+  "fun_plannerDuration": "Durasi (hari)",
+  "fun_plannerBudget": "Budget (USD)",
+  "fun_plannerInterests": "Minat",
+  "fun_plannerGenerate": "Buatkan Itinerary",
+  "fun_plannerNeedInterest": "Pilih minimal 1 minat",
+  "fun_plannerInvalidBudget": "Isi budget dengan angka lebih dari 0",
+  "fun_interestBeach": "Pantai",
+  "fun_interestCulinary": "Kuliner",
+  "fun_interestAdventure": "Petualangan",
+  "fun_interestCulture": "Budaya",
+  "fun_interestIslands": "Pulau"
 }

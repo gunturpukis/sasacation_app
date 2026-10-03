@@ -1,5 +1,8 @@
 
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../api/api_client.dart';
 import '../model/payment_model.dart';
@@ -17,6 +20,39 @@ class PaymentRepository {
       'payments': list,
       'totalSpent': double.parse((res.data['totalSpent'] ?? 0).toString()),
     };
+  }
+
+  /// F12: unduh invoice PDF (hanya status success, pemilik/admin — aturan
+  /// backend: pending → 422, asing/tak ada → 404). Berkas disimpan ke
+  /// direktori temporer dan path-nya dikembalikan untuk dibuka.
+  Future<Map<String, dynamic>> downloadInvoice(String transactionId) async {
+    try {
+      final res = await ApiClient.instance.get(
+        '/payments/$transactionId/invoice',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final bytes = res.data as List<int>;
+      final safeId = transactionId.replaceAll(RegExp(r'[^A-Za-z0-9-]'), '_');
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/INV-$safeId.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      return {'success': true, 'path': file.path};
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      return {
+        'success': false,
+        'message': code == 404
+            ? 'Invoice tidak ditemukan'
+            : code == 422
+                ? 'Invoice hanya tersedia untuk pembayaran sukses'
+                : e.response?.data is Map
+                    ? (e.response?.data['message'] ??
+                        'Gagal mengunduh invoice')
+                    : 'Gagal mengunduh invoice',
+      };
+    } catch (_) {
+      return {'success': false, 'message': 'Gagal menyimpan berkas invoice'};
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:sasacation/utils/money.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 
@@ -19,6 +20,14 @@ class SettingsRepository {
       }
       if (data['language'] is String) {
         await prefs.setString('language', data['language'] as String);
+      }
+      // F14: kurs global dari kontrak settings (tolerant — absen = mode USD).
+      final rateRaw = data['usd_to_idr_rate'];
+      final rate = rateRaw is num
+          ? rateRaw.toDouble()
+          : double.tryParse('$rateRaw');
+      if (rate != null && rate > 0) {
+        ForexService.setRate(rate);
       }
       return data;
     } catch (_) {

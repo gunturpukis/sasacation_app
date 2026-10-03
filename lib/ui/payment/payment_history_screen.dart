@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:sasacation/data/model/payment_model.dart';
 import 'package:sasacation/data/repo/payment_repository.dart';
 import 'package:sasacation/utils/money.dart';
@@ -380,6 +381,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     child: Text(_statusLabel(l10n, p.status),
                                         style: TextStyle(fontSize: 10, color: _statusColor(p.status), fontWeight: FontWeight.w600)),
                                   ),
+                                  // F12: tombol invoice hanya untuk baris
+                                  // sukses (aturan backend: pending → 422).
+                                  if (p.status == 'success')
+                                    _InvoiceButton(
+                                        transactionId: p.transactionId),
                                 ],
                               ),
                             ],
@@ -388,6 +394,66 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+/// F12: tombol unduh + buka invoice PDF (satu widget agar spinner
+/// loading-nya per-baris, bukan seluruh layar).
+class _InvoiceButton extends StatefulWidget {
+  final String transactionId;
+  const _InvoiceButton({required this.transactionId});
+
+  @override
+  State<_InvoiceButton> createState() => _InvoiceButtonState();
+}
+
+class _InvoiceButtonState extends State<_InvoiceButton> {
+  bool _busy = false;
+
+  Future<void> _download() async {
+    setState(() => _busy = true);
+    final result = await PaymentRepository()
+        .downloadInvoice(widget.transactionId);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (result['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Gagal mengunduh invoice'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+    final opened = await OpenFilex.open(result['path'] as String);
+    if (!mounted) return;
+    if (opened.type != ResultType.done) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(AppLocalizations.of(context)
+                .fun_invoiceNoPdfApp(result['path'] as String))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: _busy ? null : _download,
+      icon: _busy
+          ? const SizedBox(
+              height: 12,
+              width: 12,
+              child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.receipt_long_outlined, size: 14),
+      label: Text(AppLocalizations.of(context).fun_invoiceButton,
+          style: const TextStyle(fontSize: 12)),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
     );
   }
 }

@@ -1632,4 +1632,55 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get common_delete => 'Hapus';
+
+  @override
+  String get fun_invoiceButton => 'Invoice';
+
+  @override
+  String fun_invoiceNoPdfApp(String path) {
+    return 'Tersimpan: $path — tidak ada aplikasi PDF';
+  }
+
+  @override
+  String get fun_weatherAlertTitle => 'Destination Alert';
+
+  @override
+  String get fun_weatherCurrentTitle => 'Cuaca Saat Ini';
+
+  @override
+  String get fun_policyReschedule =>
+      'Dengan melanjutkan pembayaran, Anda menyetujui harga di atas. Jadwal ulang hanya untuk booking confirmed dan dapat menimbulkan selisih harga; pembatalan mengikuti kebijakan properti.';
+
+  @override
+  String get fun_plannerDuration => 'Durasi (hari)';
+
+  @override
+  String get fun_plannerBudget => 'Budget (USD)';
+
+  @override
+  String get fun_plannerInterests => 'Minat';
+
+  @override
+  String get fun_plannerGenerate => 'Buatkan Itinerary';
+
+  @override
+  String get fun_plannerNeedInterest => 'Pilih minimal 1 minat';
+
+  @override
+  String get fun_plannerInvalidBudget => 'Isi budget dengan angka lebih dari 0';
+
+  @override
+  String get fun_interestBeach => 'Pantai';
+
+  @override
+  String get fun_interestCulinary => 'Kuliner';
+
+  @override
+  String get fun_interestAdventure => 'Petualangan';
+
+  @override
+  String get fun_interestCulture => 'Budaya';
+
+  @override
+  String get fun_interestIslands => 'Pulau';
 }

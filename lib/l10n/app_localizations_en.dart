@@ -1632,4 +1632,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get common_delete => 'Delete';
+
+  @override
+  String get fun_invoiceButton => 'Invoice';
+
+  @override
+  String fun_invoiceNoPdfApp(String path) {
+    return 'Saved: $path — no PDF app found';
+  }
+
+  @override
+  String get fun_weatherAlertTitle => 'Destination Alert';
+
+  @override
+  String get fun_weatherCurrentTitle => 'Current Weather';
+
+  @override
+  String get fun_policyReschedule =>
+      'By proceeding with payment, you agree to the price above. Rescheduling applies to confirmed bookings only and may cause a price difference; cancellations follow the property policy.';
+
+  @override
+  String get fun_plannerDuration => 'Duration (days)';
+
+  @override
+  String get fun_plannerBudget => 'Budget (USD)';
+
+  @override
+  String get fun_plannerInterests => 'Interests';
+
+  @override
+  String get fun_plannerGenerate => 'Generate Itinerary';
+
+  @override
+  String get fun_plannerNeedInterest => 'Select at least 1 interest';
+
+  @override
+  String get fun_plannerInvalidBudget => 'Enter a budget greater than 0';
+
+  @override
+  String get fun_interestBeach => 'Beach';
+
+  @override
+  String get fun_interestCulinary => 'Culinary';
+
+  @override
+  String get fun_interestAdventure => 'Adventure';
+
+  @override
+  String get fun_interestCulture => 'Culture';
+
+  @override
+  String get fun_interestIslands => 'Islands';
 }

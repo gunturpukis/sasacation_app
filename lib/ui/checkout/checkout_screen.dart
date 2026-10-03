@@ -223,6 +223,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   notes: widget.notes ?? ''),
               const SizedBox(height: 16),
               _PriceBreakdownCard(pricing: state.session.pricing),
+              const SizedBox(height: 16),
+              // S2.2: kebijakan reschedule/refund tertulis SEBELUM bayar —
+              // syarat kepercayaan domestik (musim liburan = banyak ubah jadwal).
+              _PolicyBox(text: l10n.fun_policyReschedule),
               const SizedBox(height: 100),
             ],
           ),
@@ -303,6 +307,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 Text(l10n.fun_totalPayment, style: const TextStyle(fontWeight: FontWeight.w500)),
                 MoneyText(state.session.pricing.total,
+                    rate: state.session.pricing.fxRate,
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
                     estimateSuffix: l10n.fun_estimateSuffix),
               ],
@@ -476,25 +481,58 @@ class _PriceBreakdownCard extends StatelessWidget {
       title: l10n.fun_priceBreakdown,
       child: Column(
         children: [
-          _MoneyRow(l10n.fun_pricePerNightRow, pricing.pricePerNight),
-          _MoneyRow(l10n.fun_subtotalLabel, pricing.subtotal),
-          _MoneyRow(l10n.fun_taxLabel(pricing.taxRate.toStringAsFixed(0)), pricing.tax),
-          _MoneyRow(l10n.fun_serviceFeeLabel, pricing.serviceFee),
+          _MoneyRow(l10n.fun_pricePerNightRow, pricing.pricePerNight, rate: pricing.fxRate),
+          _MoneyRow(l10n.fun_subtotalLabel, pricing.subtotal, rate: pricing.fxRate),
+          _MoneyRow(l10n.fun_taxLabel(pricing.taxRate.toStringAsFixed(0)), pricing.tax, rate: pricing.fxRate),
+          _MoneyRow(l10n.fun_serviceFeeLabel, pricing.serviceFee, rate: pricing.fxRate),
           // F4: baris cleaning fee hanya bila backend mengirim nilai > 0.
           if (pricing.cleaningFee > 0)
-            _MoneyRow(l10n.fun_cleaningFeeLabel, pricing.cleaningFee),
+            _MoneyRow(l10n.fun_cleaningFeeLabel, pricing.cleaningFee, rate: pricing.fxRate),
           const Divider(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(l10n.fun_totalRowLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               MoneyText(pricing.total,
+                  rate: pricing.fxRate,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary),
                   estimateSuffix: l10n.fun_estimateSuffix),
             ],
           ),
           const SizedBox(height: 4),
           const _EstimateNote(),
+        ],
+      ),
+    );
+  }
+}
+
+/// S2.2: kotak kebijakan singkat — user membaca aturan main SEBELUM
+/// menekan bayar. Isi dari l10n (ID/EN), bukan hardcode.
+class _PolicyBox extends StatelessWidget {
+  final String text;
+  const _PolicyBox({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.verified_outlined,
+              size: 18, color: AppTheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text,
+                style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.onSurfaceVariant,
+                    height: 1.5)),
+          ),
         ],
       ),
     );
@@ -524,7 +562,8 @@ class _EstimateNote extends StatelessWidget {
 class _MoneyRow extends StatelessWidget {
   final String label;
   final double usd;
-  const _MoneyRow(this.label, this.usd);
+  final double? rate;
+  const _MoneyRow(this.label, this.usd, {this.rate});
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -534,6 +573,7 @@ class _MoneyRow extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: AppTheme.onSurfaceVariant, fontSize: 14)),
           MoneyText(usd,
+              rate: rate,
               style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
         ],
       ),
@@ -550,13 +590,25 @@ class _PaymentMethodsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final groups = {
-      l10n.fun_payGroupCard: methods.where((m) => m.id == 'credit_card').toList(),
+    // S2.2: urutan grup mengikuti locale — domisili ID melihat QRIS,
+    // e-wallet lokal, dan transfer bank lebih dulu; kartu & PayPal di
+    // bawah. Locale lain memakai urutan default (kartu di atas).
+    final isId = Localizations.localeOf(context).languageCode == 'id';
+    final groups = <String, List>{
+      if (isId)
+        'QRIS': methods.where((m) => m.id == 'qris').toList(),
+      if (!isId)
+        l10n.fun_payGroupCard: methods.where((m) => m.id == 'credit_card').toList(),
       l10n.fun_payGroupEWallet: methods.where((m) => ['gopay','ovo','dana'].contains(m.id)).toList(),
+      if (isId)
+        l10n.fun_payGroupOther: methods.where((m) => m.id == 'bank_transfer').toList(),
+      if (!isId)
+        l10n.fun_payGroupOther: methods.where((m) => ['bank_transfer','qris'].contains(m.id)).toList(),
+      if (isId)
+        l10n.fun_payGroupCard: methods.where((m) => m.id == 'credit_card').toList(),
       // F4: PayPal kini dikirim backend — grup sendiri agar tidak hilang
       // (sebelumnya id 'paypal' tidak masuk grup mana pun).
       'PayPal': methods.where((m) => m.id == 'paypal').toList(),
-      l10n.fun_payGroupOther: methods.where((m) => ['bank_transfer','qris'].contains(m.id)).toList(),
     };
     return _Card(
       title: l10n.fun_payMethodsTitle,

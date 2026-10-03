@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/ai_model.dart';
 import 'package:sasacation/data/model/trip_model.dart';
+import 'package:sasacation/data/repo/ai_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/utils/money.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
@@ -17,18 +18,57 @@ class TripPlannerScreen extends StatefulWidget {
 }
 
 class _TripPlannerScreenState extends State<TripPlannerScreen> {
-  final _controller = TextEditingController();
+  final _budgetCtrl = TextEditingController(text: '500');
   bool _isGenerating = false;
   String? _errorMessage;
   TripPlan? _generatedPlan;
 
-  final List<String> _suggestions = [
-    'Liburan 3 hari di Senggigi untuk pasangan baru menikah',
-    'Trip keluarga 5 hari ke Lombok dengan budget tengah',
-    'Petualangan solo 4 hari ke Gunung Rinjani',
-    'Liburan santai 3 hari di Gili Trawangan dengan snorkeling',
-    'Wisata budaya Sasak 2 hari di sekitar Mataram',
+  // S2.1: parameter terstruktur untuk POST /ai/trip-plan
+  // (menggantikan input teks bebas + mock keyword-matching).
+  int _duration = 3;
+  final Set<String> _interests = {'beach'};
+
+  static const _interestValues = [
+    'beach',
+    'culinary',
+    'adventure',
+    'culture',
+    'islands',
   ];
+
+  /// Preset cepat: label dirakit dari nama minat + angka (terlokalisasi
+  /// tanpa key baru) — ketuk untuk isi parameter + langsung generate.
+  List<Map<String, dynamic>> _presets(AppLocalizations l10n) => [
+        {
+          'interests': {'beach'},
+          'duration': 3,
+          'budget': '500',
+        },
+        {
+          'interests': {'culinary'},
+          'duration': 2,
+          'budget': '300',
+        },
+        {
+          'interests': {'adventure'},
+          'duration': 4,
+          'budget': '800',
+        },
+        {
+          'interests': {'culture'},
+          'duration': 2,
+          'budget': '300',
+        },
+      ];
+
+  String _interestLabel(AppLocalizations l10n, String value) => switch (value) {
+        'beach' => l10n.fun_interestBeach,
+        'culinary' => l10n.fun_interestCulinary,
+        'adventure' => l10n.fun_interestAdventure,
+        'culture' => l10n.fun_interestCulture,
+        'islands' => l10n.fun_interestIslands,
+        _ => value,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -48,63 +88,119 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search bar
+            // Parameter terstruktur (S2.1) — backend butuh duration,
+            // budget, interests; bukan teks bebas.
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      onSubmitted: _generateTripPlan,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLowest,
+                  borderRadius:
+                      BorderRadius.circular(AppTheme.radiusLg),
+                  boxShadow: AppTheme.softCardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(l10n.fun_plannerDuration,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: AppTheme.primary,
+                          onPressed: _isGenerating || _duration <= 1
+                              ? null
+                              : () => setState(() => _duration--),
+                        ),
+                        Text('$_duration',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: AppTheme.primary,
+                          onPressed: _isGenerating || _duration >= 14
+                              ? null
+                              : () => setState(() => _duration++),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _budgetCtrl,
+                      keyboardType: TextInputType.number,
+                      enabled: !_isGenerating,
                       decoration: InputDecoration(
-                        hintText: l10n.ait_plannerHint,
+                        labelText: l10n.fun_plannerBudget,
                         prefixIcon: const Icon(
-                          Icons.auto_awesome,
+                          Icons.payments_outlined,
                           color: AppTheme.primary,
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        suffixIcon: _controller.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _controller.clear();
-                                  setState(() {});
-                                },
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(l10n.fun_plannerInterests,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _interestValues.map((v) {
+                        final selected = _interests.contains(v);
+                        return FilterChip(
+                          label: Text(_interestLabel(l10n, v)),
+                          selected: selected,
+                          onSelected: _isGenerating
+                              ? null
+                              : (_) => setState(() {
+                                    if (selected) {
+                                      _interests.remove(v);
+                                    } else {
+                                      _interests.add(v);
+                                    }
+                                  }),
+                          selectedColor: AppTheme.primaryContainer
+                              .withOpacity(0.25),
+                          checkmarkColor: AppTheme.primary,
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isGenerating ? null : _generateTripPlan,
+                        icon: _isGenerating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
-                            : null,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _isGenerating ? null : () => _generateTripPlan(_controller.text),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                            : const Icon(Icons.auto_awesome),
+                        label: Text(l10n.fun_plannerGenerate),
                       ),
                     ),
-                    child: _isGenerating
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send_rounded),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
-            // Suggestions
-            if (!_isGenerating && _generatedPlan == null && _controller.text.isEmpty)
+            // Preset cepat
+            if (!_isGenerating && _generatedPlan == null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
@@ -128,23 +224,38 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _suggestions
+                      children: _presets(l10n)
                           .map(
-                            (suggestion) => ChoiceChip(
-                              label: Text(suggestion),
+                            (preset) => ChoiceChip(
+                              label: Text(
+                                '${(preset['interests'] as Set<String>).map((v) => _interestLabel(l10n, v)).join(', ')} • ${preset['duration']} ${l10n.fun_nightsLabel.toLowerCase()}',
+                              ),
                               selected: false,
                               onSelected: (_) {
-                                _controller.text = suggestion;
-                                _generateTripPlan(suggestion);
+                                setState(() {
+                                  _interests
+                                    ..clear()
+                                    ..addAll(preset['interests']
+                                        as Set<String>);
+                                  _duration =
+                                      preset['duration'] as int;
+                                  _budgetCtrl.text =
+                                      preset['budget'] as String;
+                                });
+                                _generateTripPlan();
                               },
-                              labelStyle: const TextStyle(fontSize: 12),
+                              labelStyle:
+                                  const TextStyle(fontSize: 12),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 8,
                               ),
-                              backgroundColor: AppTheme.surfaceContainerLow,
-                              selectedColor: AppTheme.primaryContainer,
-                              labelPadding: const EdgeInsets.symmetric(
+                              backgroundColor:
+                                  AppTheme.surfaceContainerLow,
+                              selectedColor:
+                                  AppTheme.primaryContainer,
+                              labelPadding:
+                                  const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 8,
                               ),
@@ -199,6 +310,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                       _errorMessage = null;
                                       _generatedPlan = null;
                                     });
+                                    _generateTripPlan();
                                   },
                                   icon: const Icon(Icons.refresh),
                                   label: Text(l10n.common_retry),
@@ -226,339 +338,42 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
     );
   }
 
-  void _generateTripPlan(String query) {
-    if (query.trim().isEmpty) return;
+  /// S2.1: generate BENAR via POST /ai/trip-plan (agent backend).
+  /// Timeout backend lega (180s, Ollama lokal lambat) — layar menampilkan
+  /// loading jujur + error backend apa adanya, tanpa mock/delay palsu.
+  Future<void> _generateTripPlan() async {
     final l10n = AppLocalizations.of(context);
+    final budget = double.tryParse(_budgetCtrl.text.trim());
+    if (_interests.isEmpty) {
+      setState(() => _errorMessage = l10n.fun_plannerNeedInterest);
+      return;
+    }
+    if (budget == null || budget <= 0) {
+      setState(() => _errorMessage = l10n.fun_plannerInvalidBudget);
+      return;
+    }
     setState(() {
       _isGenerating = true;
       _errorMessage = null;
       _generatedPlan = null;
     });
-    _controller.clear();
     FocusScope.of(context).unfocus();
 
-    // Simulate AI generation - in real app, this would call AI backend
-    // For now, we'll create a mock plan based on the query
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() {
-        _isGenerating = false;
-      });
-
-      // Create a mock trip plan based on query
-      final plan = _createMockTripPlan(query);
-      setState(() {
-        _generatedPlan = plan;
-      });
-    }).catchError((error) {
-      if (!mounted) return;
-      setState(() {
-        _isGenerating = false;
-        _errorMessage = l10n.ait_plannerCreateFailed(error);
-      });
-    });
-  }
-
-  TripPlan _createMockTripPlan(String query) {
-    // This is a mock implementation - in real app, this comes from AI backend
-    // We'll create a simple plan based on keywords in the query
-
-    final lowerQuery = query.toLowerCase();
-    String title;
-    String summary;
-    String bestTimeToVisit;
-
-    // Set values based on query keywords
-    if (lowerQuery.contains('senggigi') || lowerQuery.contains('pantai')) {
-      title = 'Liburan Pantai Senggigi';
-      summary = 'Nikmati keindahan pantai Senggigi dengan berbagai aktivitas marine';
-      bestTimeToVisit = 'Mei - Oktober'; // default
-    } else if (lowerQuery.contains('rinjani') || lowerQuery.contains('gunung') || lowerQuery.contains('trekking')) {
-      title = 'Trekking Gunung Rinjani';
-      summary = 'Petualangan mendaki Gunung Rinjani yang salah satu gunung tertinggi di Indonesia';
-      bestTimeToVisit = 'April - November';
-    } else if (lowerQuery.contains('gili') || lowerQuery.contains('snorkel')) {
-      title = 'Explorer Gili Islands';
-      summary = 'Jelajah keindahan bawah laut di tiga pulau Gili yang indah';
-      bestTimeToVisit = 'Mei - Oktober'; // default
-    } else if (lowerQuery.contains('budget') || lowerQuery.contains('murah') || lowerQuery.contains('hemat')) {
-      title = 'Trip Lombok Budget Friendly';
-      summary = 'Menjelajah Lombok dengan biaya terjangkau tanpa mengurangi pengalaman';
-      bestTimeToVisit = 'Mei - Oktober'; // default
-    } else if (lowerQuery.contains('keluarga') || lowerQuery.contains('family')) {
-      title = 'Liburan Keluarga di Lombok';
-      summary = 'Rencana liburan yang cocok untuk seluruh anggota keluarga';
-      bestTimeToVisit = 'Mei - Oktober'; // default
-    } else if (lowerQuery.contains('budaya') || lowerQuery.contains('sasak') || lowerQuery.contains('cultural')) {
-      title = 'Jejak Budaya Sasak';
-      summary = 'Mengenal keindahan budaya lokal Sasak melalui berbagai situs historis';
-      bestTimeToVisit = 'Jun - September';
-    } else {
-      // Default values if no keywords match
-      title = 'Trip ke Lombok';
-      summary = 'Rencana liburan yang disesuaikan dengan permintaan Anda';
-      bestTimeToVisit = 'Mei - Oktober';
-    }
-
-    if (lowerQuery.contains('senggigi') || lowerQuery.contains('pantai')) {
-      title = 'Liburan Pantai Senggigi';
-      summary = 'Nikmati keindahan pantai Senggigi dengan berbagai aktivitas marine';
-          } else if (lowerQuery.contains('rinjani') || lowerQuery.contains('gunung') || lowerQuery.contains('trekking')) {
-      title = 'Trekking Gunung Rinjani';
-      summary = 'Petualangan mendaki Gunung Rinjani yang salah satu gunung tertinggi di Indonesia';
-            bestTimeToVisit = 'April - November';
-    } else if (lowerQuery.contains('gili') || lowerQuery.contains('snorkel')) {
-      title = 'Explorer Gili Islands';
-      summary = 'Jelajah keindahan bawah laut di tiga pulau Gili yang indah';
-          } else if (lowerQuery.contains('budget') || lowerQuery.contains('murah') || lowerQuery.contains('hemat')) {
-      title = 'Trip Lombok Budget Friendly';
-      summary = 'Menjelajah Lombok dengan biaya terjangkau tanpa mengurangi pengalaman';
-          } else if (lowerQuery.contains('keluarga') || lowerQuery.contains('family')) {
-      title = 'Liburan Keluarga di Lombok';
-      summary = 'Rencana liburan yang cocok untuk seluruh anggota keluarga';
-          } else if (lowerQuery.contains('budaya') || lowerQuery.contains('sasak') || lowerQuery.contains('cultural')) {
-      title = 'Jejak Budaya Sasak';
-      summary = 'Mengenal keindahan budaya lokal Sasak melalui berbagai situs historis';
-            bestTimeToVisit = 'Jun - September';
-    }
-
-    // Create mock days
-    final days = <TripDay>[
-      TripDay(
-        day: 1,
-        title: 'Hari 1: Kedatangan dan Penginapan',
-        activities: [
-          TripActivity(
-            time: '09:00',
-            name: 'Kedatangan di Bandara Internasional Lombok',
-            type: 'transport',
-            location: 'Bandara Internasional Lombok',
-            duration: '1 jam',
-            estimatedCost: 0,
-            notes: 'Welcome drink dan transfer ke hotel',
-          ),
-          TripActivity(
-            time: '11:00',
-            name: 'Check-in Hotel',
-            type: 'hotel',
-            location: 'Hotel di Senggigi',
-            duration: '0.5 jam',
-            estimatedCost: 400000,
-            notes: 'Hotel 4 bintang dengan pemandangan laut',
-          ),
-          TripActivity(
-            time: '14:00',
-            name: 'Santai di Pantai',
-            type: 'restaurant',
-            location: 'Pantai Senggigi',
-            duration: '3 jam',
-            estimatedCost: 150000,
-            notes: 'Menikmati indahnya pantai sambil makan siang',
-          ),
-          TripActivity(
-            time: '19:00',
-            name: 'Dinner di Restoran Lokal',
-            type: 'restaurant',
-            location: 'Senggigi Centre',
-            duration: '2 jam',
-            estimatedCost: 200000,
-            notes: 'Mencoba kuliner khas Sasak seperti ayam taliwang',
-          ),
-        ],
-        dailyCost: 750000,
-      ),
-      TripDay(
-        day: 2,
-        title: 'Hari 2: Jelajah Alam dan Budaya',
-        activities: [
-          TripActivity(
-            time: '08:00',
-            name: 'Sarapan di Hotel',
-            type: 'restaurant',
-            location: 'Hotel',
-            duration: '1 jam',
-            estimatedCost: 0,
-            notes: 'Sarapan buffet termasuk dalam kamar',
-          ),
-          TripActivity(
-            time: '09:30',
-            name: 'Tour Desa Sasak Tradisional',
-            type: 'transport',
-            location: 'Desa Sasak Sade',
-            duration: '4 jam',
-            estimatedCost: 200000,
-            notes: 'Mengenal rumah adat dan tradisi lokal',
-          ),
-          TripActivity(
-            time: '14:30',
-            name: 'Makan Siang di Warung Lokal',
-            type: 'restaurant',
-            location: 'Praya',
-            duration: '1.5 jam',
-            estimatedCost: 100000,
-            notes: 'Makanan tradisional dengan harga terjangkau',
-          ),
-          TripActivity(
-            time: '16:30',
-            name: 'Berbelanja di Pasar Tradisional',
-            type: 'restaurant',
-            location: 'Pasar Kebon Roek',
-            duration: '2 jam',
-            estimatedCost: 150000,
-            notes: 'Membeli oleh-oleh khas Lombok',
-          ),
-          TripActivity(
-            time: '19:30',
-            name: 'Dinner dan Pertunjukan Tari Tradisional',
-            type: 'restaurant',
-            location: 'Hotel',
-            duration: '2.5 jam',
-            estimatedCost: 300000,
-            notes: 'Menikmati pertarian tari Sasak sambil makan malam',
-          ),
-        ],
-        dailyCost: 750000,
-      ),
-      TripDay(
-        day: 3,
-        title: 'Hari 3: Island Hopping dan Kehancuran',
-        activities: [
-          TripActivity(
-            time: '08:00',
-            name: 'Sarapan dan Check-out',
-            type: 'restaurant',
-            location: 'Hotel',
-            duration: '1.5 jam',
-            estimatedCost: 0,
-            notes: 'Sarapan pagi sebelum check-out',
-          ),
-          TripActivity(
-            time: '09:30',
-            name: 'Trip ke Gili Trawangan',
-            type: 'transport',
-            location: 'Pelabuhan Bangsal',
-            duration: '2 jam',
-            estimatedCost: 250000,
-            notes: 'Perahu ke Gili Trawangan dengan snorkeling gear',
-          ),
-          TripActivity(
-            time: '12:00',
-            name: 'Snorkeling dan Pantai',
-            type: 'restaurant',
-            location: 'Gili Trawangan',
-            duration: '3 jam',
-            estimatedCost: 150000,
-            notes: 'Menjijeli terumbu karang dan berjemur di pasir putih',
-          ),
-          TripActivity(
-            time: '16:00',
-            name: 'Explore Pulau Sepeda',
-            type: 'transport',
-            location: 'Gili Trawangan',
-            duration: '2 jam',
-            estimatedCost: 50000,
-            notes: 'Bersepeda mengelilingi pulau yang tidak ada kendaraan bermotor',
-          ),
-          TripActivity(
-            time: '19:00',
-            name: 'Sunset Dinner di Pantai',
-            type: 'restaurant',
-            location: 'Gili Trawangan',
-            duration: '2.5 jam',
-            estimatedCost: 250000,
-            notes: 'Menikmati sunset sambil makan seafood langsung dari pantai',
-          ),
-          TripActivity(
-            time: '21:30',
-            name: 'Kembali ke Senggigi',
-            type: 'transport',
-            location: 'Gili Trawangan ke Senggigi',
-            duration: '2 jam',
-            estimatedCost: 200000,
-            notes: 'Perahu malam kembali ke Senggigi untuk malam terakhir',
-          ),
-        ],
-        dailyCost: 900000,
-      ),
-    ];
-
-    // Adjust number of days based on query hints
-    int daysCount = 3; // default
-    if (lowerQuery.contains('2 hari') || lowerQuery.contains('dua hari')) {
-      daysCount = 2;
-    } else if (lowerQuery.contains('4 hari') || lowerQuery.contains('empat hari')) {
-      daysCount = 4;
-    } else if (lowerQuery.contains('5 hari') || lowerQuery.contains('lima hari')) {
-      daysCount = 5;
-    } else if (lowerQuery.contains('minggu') || lowerQuery.contains('pekan')) {
-      daysCount = 7;
-    }
-
-    // Trim or extend days list as needed
-    if (daysCount < days.length) {
-      days.length = daysCount;
-    } else if (daysCount > days.length) {
-      // Simple extension - duplicate last day with modifications
-      while (days.length < daysCount) {
-        final lastDay = days.last;
-        final newDay = TripDay(
-          day: lastDay.day + 1,
-          title: 'Hari ${lastDay.day + 1}: Aktivitas Bebas',
-          activities: [
-            TripActivity(
-              time: '09:00',
-              name: 'Sarapan dan Aktivitas Bebas',
-              type: 'restaurant',
-              location: 'Hotel',
-              duration: '3 jam',
-              estimatedCost: 100000,
-              notes: 'Waktu luang untuk menjelajah sesuai keinginan',
-            ),
-            TripActivity(
-              time: '14:00',
-              name: 'Explore Lokasi Baru',
-              type: 'restaurant',
-              location: 'Area Sekitar',
-              duration: '4 jam',
-              estimatedCost: 200000,
-              notes: 'Mengunjungi tempat-tempat yang belum dikunjungi',
-            ),
-            TripActivity(
-              time: '19:00',
-              name: 'Dinner dan Pernikahan',
-              type: 'restaurant',
-              location: 'Hotel atau Restoran Lokal',
-              duration: '2 jam',
-              estimatedCost: 200000,
-              notes: 'Makan malam bersama untuk menutup hari',
-            ),
-          ],
-          dailyCost: 500000,
-        );
-        days.add(newDay);
-      }
-    }
-
-    // Recalculate total cost
-    double totalCost = 0;
-    for (final day in days) {
-      totalCost += day.dailyCost;
-    }
-
-    return TripPlan(
-      title: title,
-      summary: summary,
-      totalEstimatedCost: totalCost,
-      days: days,
-      tips: [
-        'Bawa taman dan sunscreen karena sinar matahari di Lombok cukup tajam',
-        'Pastikan membawa uang tunai karena bukan semua tempat menerima kartu',
-        'Hormati budaya lokal dan baju saat mengunjungi tempat-tempat keagamaan',
-        'Gunakan sandal yang nyaman karena banyak jalan-jalan yang dilakukan',
-        'Coba kuliner lokal seperti ayam taliwang, plecing kangkung, dan bebek betutu',
-      ],
-      bestTimeToVisit: bestTimeToVisit,
+    final result = await AiRepository().generateTripPlan(
+      duration: _duration,
+      budget: budget,
+      interests: _interests.toList(),
     );
+    if (!mounted) return;
+    setState(() {
+      _isGenerating = false;
+      if (result['success'] == true) {
+        _generatedPlan = result['plan'] as TripPlan;
+      } else {
+        _errorMessage =
+            result['message'] as String? ?? l10n.ait_plannerCreateFailed('');
+      }
+    });
   }
 
   Widget _buildResult(TripPlan plan) {
@@ -784,14 +599,17 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   Future<void> _saveTrip(TripPlan plan) async {
     final l10n = AppLocalizations.of(context);
     try {
-      // Convert TripPlan to TripModel for persistence
+      // Convert TripPlan to TripModel for persistence — parameter
+      // diambil dari input terstruktur yang menghasilkan plan ini.
+      final budget =
+          double.tryParse(_budgetCtrl.text.trim()) ?? 0;
       final tripModel = TripModel.fromTripPlan(
         plan: plan,
-        destination: 'Lombok, Indonesia', // Could be extracted from plan
-        duration: plan.days.length,
-        budget: plan.totalEstimatedCost,
-        interests: [], // Could be extracted from plan
-        groupType: null, // Could be determined from plan
+        destination: 'Lombok, Indonesia',
+        duration: _duration,
+        budget: budget,
+        interests: _interests.toList(),
+        groupType: null,
       );
 
       // Save to repository
@@ -825,7 +643,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _budgetCtrl.dispose();
     super.dispose();
   }
 }

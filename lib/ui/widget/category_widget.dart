@@ -2,16 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/repo/explore_repository.dart';
 import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 
 
-class CategoryGrid extends StatelessWidget {
+class CategoryGrid extends StatefulWidget {
   /// Dipanggil setelah filter kategori diterapkan — induk (HomeScreen)
   /// menggunakannya untuk pindah ke tab Explore (index 1).
   final void Function(String category)? onExploreCategory;
 
   const CategoryGrid({super.key, this.onExploreCategory});
- 
+
+  @override
+  State<CategoryGrid> createState() => _CategoryGridState();
+}
+
+class _CategoryGridState extends State<CategoryGrid> {
+  /// Label yang available menurut backend (null = belum termuat → tampil
+  /// semua seperti semula). 'Destinations' selalu tampil (pseudo-kategori
+  /// yang terverifikasi mengembalikan item).
+  Set<String>? _available;
+
+  @override
+  void initState() {
+    super.initState();
+    ExploreRepository().getAvailableCategoryLabels().then((labels) {
+      if (!mounted) return;
+      setState(() => _available = labels);
+    });
+  }
+
   final List<Map<String, dynamic>> categories = const [
     {
       'icon': Icons.beach_access,
@@ -75,8 +95,18 @@ class CategoryGrid extends StatelessWidget {
     },
   ];
  
+  /// F16: hanya kartu yang available menurut backend (+ Destinations
+  /// yang selalu didukung). Sebelum daftar termuat: tampil semua.
+  List<Map<String, dynamic>> get _visible => categories.where((c) {
+        final label = c['label'] as String;
+        if (label == 'Destinations') return true;
+        final avail = _available;
+        return avail == null || avail.isEmpty || avail.contains(label);
+      }).toList();
+
   @override
   Widget build(BuildContext context) {
+    final visible = _visible;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -86,18 +116,19 @@ class CategoryGrid extends StatelessWidget {
         mainAxisSpacing: 12,
         childAspectRatio: 1.0,
       ),
-      itemCount: categories.length,
+      itemCount: visible.length,
       itemBuilder: (context, index) {
-        final category = categories[index];
-        return _buildAnimatedCategoryCard(context, category);
+        final category = visible[index];
+        return _buildAnimatedCategoryCard(context, category, index);
       },
     );
   }
  
-  Widget _buildAnimatedCategoryCard(BuildContext context, Map<String, dynamic> category) {
+  Widget _buildAnimatedCategoryCard(
+      BuildContext context, Map<String, dynamic> category, int index) {
     return TweenAnimationBuilder(
       tween: Tween<double>(begin: 0, end: 1),
-      duration: Duration(milliseconds: 300 + (categories.indexOf(category) * 40)),
+      duration: Duration(milliseconds: 300 + (index * 40)),
       curve: Curves.easeOutCubic,
       builder: (context, double value, child) {
         return Transform.scale(
@@ -257,7 +288,7 @@ class CategoryGrid extends StatelessWidget {
                     context
                         .read<ExploreBloc>()
                         .add(ExploreCategoryChanged(category: label));
-                    onExploreCategory?.call(label);
+                    widget.onExploreCategory?.call(label);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(category['color']),

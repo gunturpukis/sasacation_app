@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
+import 'package:sasacation/data/repo/weather_repository.dart';
+import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/booking_sheets.dart';
 import 'package:sasacation/ui/widget/glass_icon_button.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
@@ -239,6 +241,16 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                           _GalleryBento(images: hotel.images),
                           const SizedBox(height: AppTheme.spacingSectionGap),
                         ],
+
+                        // ─── Destination Alert (F13) — hanya bila hotel
+                        // punya koordinat DAN backend mengembalikan alert.
+                        // Tanpa keduanya section disembunyikan total.
+                        if (hotel.latitude != null &&
+                            hotel.longitude != null)
+                          _WeatherAlertCard(
+                            latitude: hotel.latitude!,
+                            longitude: hotel.longitude!,
+                          ),
 
                         // ─── Guest Reviews — mengikuti mockup. Hanya tampil
                         // bila backend mengirim ulasan individual (lihat
@@ -614,4 +626,110 @@ void _showAllReviews(BuildContext context, List<HotelReview> reviews) {
       ),
     ),
   );
+}
+/// F13: kartu "Destination Alert" — tampil HANYA bila backend mengembalikan
+/// `alert` untuk koordinat hotel. Tombol mengarah ke My Bookings (di sana
+/// tombol Reschedule per booking confirmed berada) — deep-link jujur,
+/// bukan reschedule tanpa konteks booking.
+class _WeatherAlertCard extends StatefulWidget {
+  final double latitude;
+  final double longitude;
+  const _WeatherAlertCard(
+      {required this.latitude, required this.longitude});
+
+  @override
+  State<_WeatherAlertCard> createState() => _WeatherAlertCardState();
+}
+
+class _WeatherAlertCardState extends State<_WeatherAlertCard> {
+  WeatherInfo? _info;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final info = await WeatherRepository().getWeather(
+      lat: widget.latitude,
+      lng: widget.longitude,
+    );
+    if (!mounted) return;
+    setState(() {
+      _info = info;
+      _loaded = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) return const SizedBox.shrink();
+    final alert = _info?.alert;
+    // Tanpa alert (cuaca normal) atau gagal muat: sembunyikan total.
+    if (alert == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingSectionGap),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: (alert.isHigh ? AppTheme.error : AppTheme.secondaryContainer)
+            .withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(
+          color: (alert.isHigh
+                  ? AppTheme.error
+                  : AppTheme.secondaryContainer)
+              .withOpacity(0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                alert.kind == 'thunderstorm'
+                    ? Icons.thunderstorm_outlined
+                    : Icons.water_drop_outlined,
+                color: alert.isHigh
+                    ? AppTheme.error
+                    : AppTheme.secondary,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.fun_weatherAlertTitle,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: AppTheme.secondary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(alert.title,
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            '${_info?.description ?? ''}${alert.window.isNotEmpty ? ' • ${alert.window}' : ''}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.push(AppRouter.myBookings),
+              style: AppTheme.heroButtonStyle,
+              child: Text(l10n.fun_rescheduleAction),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

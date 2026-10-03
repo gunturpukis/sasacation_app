@@ -10,6 +10,10 @@ class CheckoutPricing {
   final double total;
   final String currency;
 
+  /// F14: `pricing.fx.usd_to_idr_rate` — kurs resmi server untuk layar ini.
+  /// Null = ikut rate global (atau mode USD bila belum ada).
+  final double? fxRate;
+
   const CheckoutPricing({
     required this.pricePerNight,
     required this.subtotal,
@@ -19,6 +23,7 @@ class CheckoutPricing {
     this.cleaningFee = 0,
     required this.total,
     required this.currency,
+    this.fxRate,
   });
 
   factory CheckoutPricing.fromJson(Map<String, dynamic> json) {
@@ -28,6 +33,13 @@ class CheckoutPricing {
       return double.tryParse('$v') ?? 0;
     }
 
+    final fx = json['fx'];
+    double? fxRate;
+    if (fx is Map) {
+      final v = fx['usd_to_idr_rate'];
+      final r = v is num ? v.toDouble() : double.tryParse('$v');
+      if (r != null && r > 0) fxRate = r;
+    }
     return CheckoutPricing(
       pricePerNight: numVal('pricePerNight'),
       subtotal: numVal('subtotal'),
@@ -37,6 +49,7 @@ class CheckoutPricing {
       cleaningFee: numVal('cleaningFee'),
       total: numVal('total'),
       currency: json['currency'] ?? 'USD',
+      fxRate: fxRate,
     );
   }
 }

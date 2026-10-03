@@ -27,6 +27,23 @@ class ExploreRepository {
       return [];
     }
   }
+
+  /// F16: kategori yang boleh ditampilkan — hanya `available: true`
+  /// (dari isi DB). Kembalikan himpunan label persis seperti dikirim
+  /// backend. Kosong = backend tak terjangkau → panggil pakai fallback
+  /// lokal (perilaku lama) agar layar tidak kosong saat offline.
+  Future<Set<String>> getAvailableCategoryLabels() async {
+    try {
+      final cats = await getCategories();
+      return {
+        for (final c in cats)
+          if (c['available'] == true && c['label'] is String)
+            (c['label'] as String),
+      };
+    } catch (_) {
+      return {};
+    }
+  }
 }
 
 class BookingRepository {
