@@ -416,6 +416,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _divider(),
                       _buildMenuItem(
+                        icon: Icons.tune_outlined,
+                        title: Localizations.localeOf(context).languageCode == 'en'
+                            ? 'Travel Profile'
+                            : 'Profil Travel',
+                        onTap: () => context.push(AppRouter.travelProfile),
+                      ),
+                      _divider(),
+                      _buildMenuItem(
                         icon: Icons.confirmation_number_outlined,
                         title: l10n.me_menuMyBookings,
                         onTap: () => context.push(AppRouter.myBookings),

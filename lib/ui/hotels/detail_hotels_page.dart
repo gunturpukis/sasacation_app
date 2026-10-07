@@ -3,6 +3,7 @@ import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/api/api_client.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/data/repo/weather_repository.dart';
 import 'package:sasacation/route/approuter.dart';
@@ -252,6 +253,10 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                             longitude: hotel.longitude!,
                           ),
 
+                        // ─── F.2 AI Review Summary — kartu ringkasan pros/cons.
+                        // Fail-soft: sembunyi bila 404/kosong (no-fake-data).
+                        _ReviewSummaryCard(hotelId: hotel.id),
+
                         // ─── Guest Reviews — mengikuti mockup. Hanya tampil
                         // bila backend mengirim ulasan individual (lihat
                         // kontrak di HotelReview); kalau kosong, section
@@ -264,7 +269,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
                                   style: Theme.of(context).textTheme.headlineMedium),
                               TextButton(
                                 onPressed: () =>
-                                    _showAllReviews(context, hotel.reviews),
+                                    _showAllReviews(context, hotel.id, hotel.reviews),
                                 child: Text(l10n.common_seeAll,
                                     style: const TextStyle(fontSize: 13)),
                               ),
@@ -577,9 +582,131 @@ class _ReviewCard extends StatelessWidget {
   }
 }
 
-/// "See all" membuka bottom sheet berisi semua ulasan dari data yang sama —
-/// tanpa route baru karena datanya sudah ada di memori.
-void _showAllReviews(BuildContext context, List<HotelReview> reviews) {
+/// F.2: kartu "AI Review Summary" — pros/cons + baris personal.
+/// Fail-soft: kosong/404 → SizedBox.shrink (no-fake-data).
+class _ReviewSummaryCard extends StatelessWidget {
+  final String hotelId;
+  const _ReviewSummaryCard({required this.hotelId});
+
+  Future<Map<String, dynamic>?> _fetch() async {
+    try {
+      final res = await ApiClient.get('/hotels/$hotelId/review-summary');
+      final data = res.data['data'];
+      if (data is Map<String, dynamic>) return data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _fetch(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: AppTheme.spacingSectionGap),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            ),
+            child: const Row(children: [
+              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              SizedBox(width: 10),
+              Text('✨ AI meringkas ulasan...', style: TextStyle(fontSize: 12)),
+            ]),
+          );
+        }
+        final d = snap.data;
+        if (d == null || (d['count'] ?? 0) == 0) return const SizedBox.shrink();
+        final pros = List<String>.from(d['pros'] ?? []);
+        final cons = List<String>.from(d['cons'] ?? []);
+        final isSeeded = d['isSeeded'] == true;
+        return Container(
+          margin: const EdgeInsets.only(bottom: AppTheme.spacingSectionGap),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.auto_awesome, size: 15, color: AppTheme.primaryColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '⭐ ${d['avgRating'] ?? '-'} · ${d['count']} ulasan — ringkasan AI',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryColor),
+                ),
+              ),
+              // F.2: BE menandai ringkasan dari seed dummy (isSeeded) —
+              // tampilkan badge "contoh" sesuai kontrak, bukan diam-diam.
+              if (isSeeded)
+                Container(
+                  margin: const EdgeInsets.only(left: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    Localizations.localeOf(context).languageCode == 'en'
+                        ? 'sample'
+                        : 'contoh',
+                    style: const TextStyle(fontSize: 10, color: Colors.orange),
+                  ),
+                ),
+            ]),
+            if ((d['summaryText'] as String?)?.isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Text(d['summaryText'] as String, style: const TextStyle(fontSize: 12)),
+            ],
+            if (pros.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text('Paling disukai', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              const SizedBox(height: 4),
+              ...pros.map((p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(children: [
+                      const Icon(Icons.check_circle, size: 13, color: Colors.green),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(p, style: const TextStyle(fontSize: 12))),
+                    ]),
+                  )),
+            ],
+            if (cons.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              const Text('Sering dikeluhkan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              const SizedBox(height: 4),
+              ...cons.map((c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(children: [
+                      const Icon(Icons.info_outline, size: 13, color: Colors.orange),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(c, style: const TextStyle(fontSize: 12))),
+                    ]),
+                  )),
+            ],
+            if ((d['personalizedLine'] as String?)?.isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Text(d['personalizedLine'] as String,
+                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppTheme.primaryColor)),
+            ],
+          ]),
+        );
+      },
+    );
+  }
+}
+
+/// "See all" membuka bottom sheet berisi semua ulasan — paginasi dari
+/// GET /hotels/:id/reviews (bukan cuma 50 inline dari detail), dengan fallback
+/// ke data inline bila endpoint gagal (no-fake-data: tampilkan yang ada saja).
+void _showAllReviews(BuildContext context, String hotelId, List<HotelReview> inline) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -589,43 +716,150 @@ void _showAllReviews(BuildContext context, List<HotelReview> reviews) {
       initialChildSize: 0.75,
       minChildSize: 0.5,
       maxChildSize: 0.95,
-      builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppTheme.radiusSheet)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-                    Text(AppLocalizations.of(sheetContext).fun_guestReviewsCount(reviews.length),
-                style: Theme.of(sheetContext).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.separated(
-                controller: controller,
-                itemCount: reviews.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
-              ),
-            ),
-          ],
-        ),
+      builder: (_, controller) => _AllReviewsSheet(
+        hotelId: hotelId,
+        inline: inline,
+        scrollController: controller,
       ),
     ),
   );
+}
+
+class _AllReviewsSheet extends StatefulWidget {
+  final String hotelId;
+  final List<HotelReview> inline;
+  final ScrollController scrollController;
+  const _AllReviewsSheet({
+    required this.hotelId,
+    required this.inline,
+    required this.scrollController,
+  });
+
+  @override
+  State<_AllReviewsSheet> createState() => _AllReviewsSheetState();
+}
+
+class _AllReviewsSheetState extends State<_AllReviewsSheet> {
+  static const _limit = 10;
+  List<HotelReview> _items = [];
+  int _page = 1;
+  int _total = 0;
+  bool _loading = true;
+  bool _loadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = widget.inline;
+    _load(1);
+    widget.scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_onScroll);
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final c = widget.scrollController;
+    if (c.position.pixels >= c.position.maxScrollExtent - 200) _loadMore();
+  }
+
+  Future<void> _load(int page) async {
+    try {
+      final res = await ApiClient.get(
+        '/hotels/${widget.hotelId}/reviews',
+        params: {'page': page, 'limit': _limit},
+      );
+      final data = res.data['data'];
+      final list = data is List ? data : [];
+      final parsed = list
+          .whereType<Map<String, dynamic>>()
+          .map(HotelReview.fromJson)
+          .where((r) => r.text.isNotEmpty)
+          .toList();
+      final meta = res.data['meta'];
+      final total = meta is Map ? int.tryParse('${meta['total']}') ?? parsed.length : parsed.length;
+      if (!mounted) return;
+      setState(() {
+        if (page == 1 && parsed.isNotEmpty) {
+          // Server adalah sumber kebenaran; inline hanya fallback awal.
+          _items = parsed;
+        } else if (page > 1) {
+          final ids = _items.map((e) => e.id).toSet();
+          _items.addAll(parsed.where((e) => !ids.contains(e.id)));
+        }
+        _total = total;
+        _page = page;
+        _loading = false;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      // Endpoint gagal (mis. DB lama): pertahankan inline, jangan kosong.
+      if (!mounted) return;
+      setState(() {
+        _total = _items.length;
+        _loading = false;
+        _loadingMore = false;
+      });
+    }
+  }
+
+  void _loadMore() {
+    if (_loading || _loadingMore || _items.length >= _total) return;
+    setState(() => _loadingMore = true);
+    _load(_page + 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusSheet)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            AppLocalizations.of(context).fun_guestReviewsCount(_total == 0 ? _items.length : _total),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.separated(
+                    controller: widget.scrollController,
+                    itemCount: _items.length + (_loadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => i < _items.length
+                        ? _ReviewCard(review: _items[i])
+                        : const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 /// F13: kartu "Destination Alert" — tampil HANYA bila backend mengembalikan
 /// `alert` untuk koordinat hotel. Tombol mengarah ke My Bookings (di sana

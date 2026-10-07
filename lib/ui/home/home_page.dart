@@ -327,7 +327,9 @@ class _RecommendedSection extends StatelessWidget {
                 location: hotel.location,
                 price: hotel.price,
                 rating: hotel.rating,
-                overlayBadgeLabel: index == 0 ? l10n.fun_badgeMostPopular : null,
+                overlayBadgeLabel: index == 0
+                    ? (state.isPersonalized ? '✨ Untuk kamu' : l10n.fun_badgeMostPopular)
+                    : null,
                 onTap: () => context.push(AppRouter.hotelDetailPath(hotel.id)),
               );
             },

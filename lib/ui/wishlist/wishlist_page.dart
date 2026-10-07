@@ -33,13 +33,17 @@ class _WishlistScreenState extends State<WishlistScreen> {
   final _repo = HotelRepository();
   List<HotelModel> _hotels = [];
   bool _loading = true;
- 
+  // F.3: mode pilih-banding. Aktif lewat tombol di header; pilih 2–3 hotel
+  // lalu dorong ke /compare. Sengaja tanpa state management baru — lokal saja.
+  bool _comparing = false;
+  final Set<String> _selected = {};
+
   @override
   void initState() {
     super.initState();
     _loadHotels();
   }
- 
+
   Future<void> _loadHotels() async {
     final ids = context.read<WishlistCubit>().state;
     setState(() => _loading = true);
@@ -47,12 +51,15 @@ class _WishlistScreenState extends State<WishlistScreen> {
     setState(() {
       _hotels = results.whereType<HotelModel>().toList();
       _loading = false;
+      _selected.removeWhere((id) => !_hotels.any((h) => h.id == id));
+      if (_hotels.length < 2) _comparing = false;
     });
   }
  
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isEn = Localizations.localeOf(context).languageCode == 'en';
     return BlocListener<WishlistCubit, Set<String>>(
       listener: (context, _) => _loadHotels(),
       child: Scaffold(
@@ -68,9 +75,37 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(l10n.fun_savedTitle, style: Theme.of(context).textTheme.headlineMedium),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(l10n.fun_savedTitle,
+                                      style: Theme.of(context).textTheme.headlineMedium),
+                                ),
+                                // F.3 entry point: bandingkan 2–3 hotel favorit
+                                if (_hotels.length >= 2)
+                                  TextButton.icon(
+                                    onPressed: () => setState(() {
+                                      _comparing = !_comparing;
+                                      _selected.clear();
+                                    }),
+                                    icon: Icon(
+                                      _comparing ? Icons.close : Icons.compare_arrows,
+                                      size: 16,
+                                    ),
+                                    label: Text(_comparing
+                                        ? (isEn ? 'Cancel' : 'Batal')
+                                        : (isEn ? 'Compare' : 'Bandingkan')),
+                                  ),
+                              ],
+                            ),
                             const SizedBox(height: 4),
-                            Text(l10n.fun_savedSubtitle,
+                            Text(
+                                _comparing
+                                    ? (isEn
+                                        ? 'Select 2–3 hotels to compare'
+                                        : 'Pilih 2–3 hotel untuk dibandingkan')
+                                    : l10n.fun_savedSubtitle,
                                 style: Theme.of(context).textTheme.bodyMedium),
                             const SizedBox(height: 16),
                           ],
@@ -101,11 +136,34 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               final hotel = _hotels[index];
+                              final checked = _selected.contains(hotel.id);
                               return _SavedDestinationCard(
                                 hotel: hotel,
+                                selecting: _comparing,
+                                selected: checked,
                                 onUnsave: () => context.read<WishlistCubit>().toggle(hotel.id),
-                                onTap: () =>
-                                    context.push(AppRouter.hotelDetailPath(hotel.id)),
+                                onTap: () {
+                                  if (_comparing) {
+                                    setState(() {
+                                      if (checked) {
+                                        _selected.remove(hotel.id);
+                                      } else if (_selected.length < 3) {
+                                        _selected.add(hotel.id);
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(isEn
+                                                ? 'Maximum 3 hotels'
+                                                : 'Maksimal 3 hotel'),
+                                            duration: const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      }
+                                    });
+                                  } else {
+                                    context.push(AppRouter.hotelDetailPath(hotel.id));
+                                  }
+                                },
                               );
                             },
                             childCount: _hotels.length,
@@ -115,6 +173,24 @@ class _WishlistScreenState extends State<WishlistScreen> {
                   ],
                 ),
         ),
+        // F.3: bar bawah muncul bila 2+ hotel dipilih
+        bottomNavigationBar: _comparing && _selected.length >= 2
+            ? SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push(
+                      AppRouter.compare,
+                      extra: _selected.toList(),
+                    ),
+                    icon: const Icon(Icons.compare_arrows, size: 18),
+                    label: Text(isEn
+                        ? 'Compare (${_selected.length})'
+                        : 'Bandingkan (${_selected.length})'),
+                  ),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -143,8 +219,17 @@ class _SavedDestinationCard extends StatelessWidget {
   final HotelModel hotel;
   final VoidCallback onUnsave;
   final VoidCallback onTap;
+  // F.3: mode pilih-banding — tampilkan checkbox, sembunyikan tombol love/book
+  final bool selecting;
+  final bool selected;
 
-  const _SavedDestinationCard({required this.hotel, required this.onUnsave, required this.onTap});
+  const _SavedDestinationCard({
+    required this.hotel,
+    required this.onUnsave,
+    required this.onTap,
+    this.selecting = false,
+    this.selected = false,
+  });
  
   @override
   Widget build(BuildContext context) {
@@ -157,6 +242,9 @@ class _SavedDestinationCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           boxShadow: AppTheme.softCardShadow,
+          border: selecting && selected
+              ? Border.all(color: AppTheme.primaryColor, width: 2)
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,17 +290,30 @@ class _SavedDestinationCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: GestureDetector(
-                    onTap: onUnsave,
-                    child: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.85),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.favorite_rounded, size: 18, color: AppTheme.loveColor),
-                    ),
-                  ),
+                  child: selecting
+                      ? Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                            size: 24,
+                            color: selected ? AppTheme.primaryColor : Colors.grey,
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: onUnsave,
+                          child: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.85),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.favorite_rounded, size: 18, color: AppTheme.loveColor),
+                          ),
+                        ),
                 ),
               ],
             ),

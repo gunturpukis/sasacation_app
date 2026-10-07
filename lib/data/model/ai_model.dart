@@ -181,15 +181,29 @@ class ChatMessage {
       );
 
   // Dipakai untuk restore riwayat chat dari backend (chat_messages row:
-  // {role, content, created_at}). Beda dari toJson() yang cuma kirim
+  // {role, content, trip_plan, created_at}). Beda dari toJson() yang cuma kirim
   // {role, content} — created_at cuma dipakai saat baca, tidak pernah dikirim.
-  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-        role: json['role'] as String,
-        content: json['content'] as String,
-        timestamp: json['created_at'] != null
-            ? DateTime.parse(json['created_at'] as String)
-            : DateTime.now(),
-      );
+  // F.5: trip_plan ikut di-restore supaya kartu itinerary persisten setelah
+  // app restart (sebelumnya hilang — keterbatasan v1 yang disengaja).
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    TripPlan? plan;
+    final rawPlan = json['trip_plan'] ?? json['tripPlan'];
+    if (rawPlan is Map<String, dynamic>) {
+      try {
+        plan = TripPlan.fromJson(rawPlan);
+      } catch (_) {
+        plan = null;
+      }
+    }
+    return ChatMessage(
+      role: json['role'] as String,
+      content: json['content'] as String,
+      timestamp: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      tripPlan: plan,
+    );
+  }
 
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
 
@@ -197,13 +211,17 @@ class ChatMessage {
   bool get isAssistant => role == 'assistant';
 }
 
-// ─── Smart Search Result ─────────────────────────────────────────────────────
+// ─── Smart Search Result (F.1: + filter terstruktur & explanation) ──────────
 class SmartSearchResult {
   final String interpretation;
   final String category;
   final List<String> suggestions;
   final List<Map<String, dynamic>> results;
   final int totalResults;
+  // F.1: gema filter yang dipahami BE dari query natural language.
+  // {maxPriceUSD, city, amenities[], vibe[], tripType, weekend}
+  final Map<String, dynamic> appliedFilters;
+  final bool needsClarification;
 
   const SmartSearchResult({
     required this.interpretation,
@@ -211,6 +229,8 @@ class SmartSearchResult {
     required this.suggestions,
     required this.results,
     required this.totalResults,
+    this.appliedFilters = const {},
+    this.needsClarification = false,
   });
 
   factory SmartSearchResult.fromJson(Map<String, dynamic> json) => SmartSearchResult(
@@ -220,6 +240,10 @@ class SmartSearchResult {
         results: List<Map<String, dynamic>>.from(json['results'] ?? []),
         // FIX: totalResults dari backend RAG mungkin String, aman pakai parseInt
         totalResults: parseInt(json['totalResults']),
+        appliedFilters: json['appliedFilters'] is Map
+            ? Map<String, dynamic>.from(json['appliedFilters'] as Map)
+            : const {},
+        needsClarification: json['needsClarification'] == true,
       );
 }
 

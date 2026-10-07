@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sasacation — Mockup Sesuai Fitur Terimplementasi (12 Frame)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#006565; --primary-container:#008080; --secondary:#AB3500;
+  --secondary-container:#FE6A34; --tertiary:#00665A;
+  --surface:#FCF9F8; --lowest:#FFFFFF; --low:#F6F3F2; --high:#EAE7E7;
+  --on:#1B1C1C; --variant:#3E4949; --outline:#6E7979; --outline-var:#BDC9C8;
+  --error:#BA1A1A; --success:#1B8A5A; --love:#EA4335; --star:#FFC107;
+  --r-btn:15px; --r-card:20px; --r-sheet:24px; --r-full:999px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',-apple-system,'Segoe UI',sans-serif;background:#0f2222;color:var(--on);padding:32px 20px 80px}
+.page{max-width:1560px;margin:0 auto}
+.hero{color:#fff;text-align:center;margin-bottom:8px}
+.hero h1{font-size:30px;font-weight:800}
+.hero h1 span{color:#7ad6d5}
+.hero p{color:#bcd9d8;font-size:14px;margin-top:6px;max-width:900px;margin-left:auto;margin-right:auto;line-height:1.6}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0 28px}
+.badge{font-size:11px;font-weight:700;padding:5px 12px;border-radius:var(--r-full);background:#ffffff18;color:#dff3f2;border:1px solid #ffffff2e}
+.badge.ok{background:#1B8A5A33;border-color:#1B8A5A88}
+.flow{background:#ffffff10;border:1px solid #ffffff22;border-radius:16px;padding:16px 20px;color:#dff3f2;font-size:13px;margin-bottom:32px;line-height:2}
+.flow b{color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:28px;justify-items:center}
+.frame-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.frame-tag{font-size:12px;font-weight:800;color:#7ad6d5;letter-spacing:.08em}
+.frame-tag small{display:block;color:#8aa9a8;font-weight:600;letter-spacing:0}
+.phone{width:340px;height:720px;background:var(--surface);border-radius:44px;border:10px solid #101a1a;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 24px 60px #00000088}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:24px;background:#101a1a;border-radius:20px;z-index:5}
+.screen{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:46px 18px 0}
+.statusbar{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--on);margin-bottom:8px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.wordmark{font-size:21px;font-weight:800;color:var(--primary)}
+.iconbtn{width:36px;height:36px;border-radius:12px;background:var(--low);display:flex;align-items:center;justify-content:center;font-size:17px}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary-container),var(--tertiary));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;border:2px solid var(--primary-container)}
+h2.hero-t{font-size:23px;font-weight:800;line-height:1.25}
+.sub{font-size:12.5px;color:var(--variant);margin-top:3px}
+.searchbar{margin-top:12px;background:var(--lowest);border-radius:var(--r-btn);box-shadow:0 4px 14px #00000014;display:flex;align-items:center;gap:8px;padding:7px 7px 7px 12px;font-size:12px;color:var(--outline)}
+.searchbar .go{margin-left:auto;background:var(--primary-container);color:#fff;border-radius:10px;padding:8px 10px;font-size:14px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px}
+.sec b{font-size:15px;font-weight:700}
+.sec a{font-size:11.5px;color:var(--primary);font-weight:600;text-decoration:none}
+.hscroll{display:flex;gap:12px;overflow:hidden}
+.hcard{flex:0 0 200px}
+.hcard .img{height:130px;border-radius:16px;background:linear-gradient(160deg,#0b6b6b,#02a89a 60%,#f4b942);position:relative;overflow:hidden}
+.hcard .img::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 40%,#00000088)}
+.pill{position:absolute;font-size:9px;font-weight:800;padding:4px 9px;border-radius:var(--r-full);z-index:2}
+.pill.dark{left:10px;bottom:10px;background:#000000aa;color:#fff}
+.pill.rate{right:10px;bottom:10px;background:#fff;color:var(--on)}
+.hcard b{display:block;font-size:13px;margin-top:7px}
+.hcard .loc{font-size:11px;color:var(--variant)}
+.price{color:var(--secondary-container);font-weight:800;font-size:13px}
+.price small{color:var(--outline);font-weight:400}
+.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cat{background:#00a89614;border-radius:14px;padding:12px 4px;text-align:center;font-size:11px;font-weight:700}
+.cat span{font-size:21px;display:block;margin-bottom:4px}
+.trow{display:flex;gap:12px;background:var(--lowest);border-radius:16px;padding:10px;margin-bottom:10px;box-shadow:0 3px 10px #00000010;align-items:center}
+.trow .th{width:74px;height:74px;border-radius:12px;flex:0 0 74px;background:linear-gradient(150deg,#134e4a,#0d9488 55%,#f59e0b)}
+.trow b{font-size:13px;display:block}
+.trow .loc{font-size:11px;color:var(--variant)}
+.ratebox{margin-left:auto;font-size:11px;font-weight:800;background:var(--low);border-radius:var(--r-full);padding:4px 9px;white-space:nowrap}
+.bottomnav{margin-top:auto;background:var(--lowest);border-top:1px solid var(--high);display:flex;padding:10px 6px 20px;position:relative}
+.tab{flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--outline);text-decoration:none}
+.tab span{display:block;font-size:19px}
+.tab.on{color:var(--primary)}
+.fab{position:absolute;left:50%;top:-22px;transform:translateX(-50%);width:52px;height:52px;border-radius:50%;background:var(--primary-container);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 18px #00808066;border:4px solid var(--surface);text-decoration:none}
+.btn{display:block;text-align:center;border-radius:var(--r-btn);padding:13px;font-weight:800;font-size:14px;text-decoration:none}
+.btn.teal{background:var(--primary-container);color:#fff}
+.btn.orange{background:var(--secondary-container);color:#fff}
+.btn.ghost{background:var(--low);color:var(--primary)}
+.field{background:var(--lowest);border-radius:12px;padding:12px;font-size:13px;margin-bottom:10px;border:1px solid var(--high)}
+.field small{display:block;color:var(--outline);font-size:10.5px;margin-bottom:2px}
+.card{background:var(--lowest);border-radius:var(--r-card);padding:14px;box-shadow:0 3px 12px #0000000d;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;color:var(--variant)}
+.row b{color:var(--on)}
+.total{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--outline-var);margin-top:8px;padding-top:10px;font-weight:800}
+.total .amt{color:var(--primary);font-size:19px}
+.chiprow{display:flex;gap:8px;margin:10px 0;overflow:hidden}
+.chip{font-size:11px;font-weight:700;padding:7px 13px;border-radius:var(--r-full);background:var(--lowest);border:1px solid var(--outline-var);white-space:nowrap;color:var(--variant)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.hero-img{height:220px;margin:0 -18px;border-radius:0 0 24px 24px;background:linear-gradient(170deg,#0f766e 0%,#14b8a6 45%,#fbbf24 100%);position:relative;overflow:hidden}
+.hero-img::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 45%,#00000099)}
+.hero-title{position:absolute;bottom:14px;left:18px;right:18px;color:#fff;z-index:2}
+.hero-title h2{font-size:22px;font-weight:800}
+.hero-title p{font-size:11.5px;opacity:.9}
+.badge-toggle{display:inline-block;font-size:10px;font-weight:800;padding:4px 10px;border-radius:var(--r-full)}
+.badge-toggle.teal{background:var(--primary-container);color:#fff}
+.badge-toggle.orange{background:var(--secondary-container);color:#fff}
+.badge-toggle.grey{background:var(--high);color:var(--variant)}
+.chat{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.bubble{max-width:82%;padding:10px 13px;border-radius:16px;font-size:12.5px;line-height:1.5}
+.bubble.ai{background:var(--primary-container);color:#fff;border-bottom-left-radius:5px;align-self:flex-start}
+.bubble.me{background:var(--high);color:var(--on);border-bottom-right-radius:5px;align-self:flex-end}
+.inputbar{margin-top:auto;display:flex;gap:8px;padding:10px 0 20px}
+.inputbar .box{flex:1;background:var(--lowest);border:1px solid var(--high);border-radius:var(--r-full);padding:11px 14px;font-size:12px;color:var(--outline)}
+.inputbar .send{width:42px;height:42px;border-radius:50%;background:var(--secondary-container);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px}
+.kv{display:flex;gap:10px;align-items:center;background:var(--lowest);border-radius:14px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;box-shadow:0 2px 8px #00000008}
+.kv .ic{width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:#0080801a;display:flex;align-items:center;justify-content:center;font-size:16px}
+.kv b{display:block;font-size:13px}
+.kv small{color:var(--variant);font-size:11px}
+.kv .chev{margin-left:auto;color:var(--outline)}
+.progress{height:8px;background:var(--high);border-radius:99px;overflow:hidden;margin-top:8px}
+.progress i{display:block;height:100%;background:var(--primary-container);border-radius:99px}
+.alertcard{border-radius:var(--r-card);padding:14px;margin-bottom:12px;border:1px solid}
+.alertcard.warn{background:#FE6A3414;border-color:#FE6A3466}
+.alertcard h4{font-size:13.5px;margin:6px 0 4px}
+.alertcard p{font-size:12px;color:var(--variant);line-height:1.5}
+.timeline{border-left:2px solid var(--outline-var);margin:6px 0 0 8px;padding-left:16px}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item::before{content:'';position:absolute;left:-23px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--primary-container);border:2px solid var(--surface)}
+.tl-item b{font-size:13px}
+.tl-item p{font-size:11.5px;color:var(--variant)}
+.bigcheck{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-container));color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;margin:26px auto 14px}
+.codebox{background:var(--low);border:1.5px dashed var(--primary-container);border-radius:14px;text-align:center;padding:12px;margin:12px 0}
+.codebox b{font-size:20px;letter-spacing:3px;color:var(--primary)}
+.dots{display:flex;gap:6px;justify-content:center;margin:14px 0}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--outline-var)}
+.dots i.on{background:var(--primary-container);width:22px;border-radius:99px}
+.splashbg{flex:1;margin:0 -18px -0;background:linear-gradient(160deg,#004D40,var(--primary-container) 55%,#00A896);border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px}
+.splashbg .logo{width:84px;height:84px;border-radius:50%;background:#ffffff30;font-size:40px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.splashbg h2{font-size:29px;font-weight:800;letter-spacing:1px}
+.splashbg p{font-size:13px;opacity:.85;margin-top:6px}
+.rec{max-width:1560px;margin:36px auto 0;background:#f3fbfb;border-radius:20px;padding:26px 28px;color:var(--on)}
+.rec h2{font-size:20px;font-weight:800;margin-bottom:4px}
+.rec p.lead{font-size:13.5px;color:var(--variant);margin-bottom:16px;line-height:1.6}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:12px 0 20px}
+th{background:var(--primary);color:#fff;text-align:left;padding:9px 12px}
+th:first-child{border-radius:10px 0 0 0}th:last-child{border-radius:0 10px 0 0}
+td{padding:9px 12px;border-bottom:1px solid var(--high);vertical-align:top;line-height:1.55}
+tr:last-child td{border-bottom:none}
+.tag{display:inline-block;font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px}
+.tag.go{background:#1B8A5A22;color:var(--success)}
+.tag.no{background:#BA1A1A18;color:var(--error)}
+.tag.wait{background:#FE6A3422;color:var(--secondary)}
+ol.rec-list{margin:8px 0 8px 20px;font-size:13px;line-height:1.9}
+a.toplink{color:#7ad6d5}
+@media(max-width:700px){.phone{width:320px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <h1>Sasacation <span>— Mockup Selaras Fitur</span></h1>
+    <p>12 frame di bawah digambar ulang dari <b>kode yang benar-benar terimplementasi</b> (bukan aspirasi): guest mode, search + filter server, detail hotel, checkout Midtrans 2 langkah, pending + resume, grup/poll/task, Sasa AI, loyalty pass. Token visual = <b>AppTheme</b> persis (#006565 / #008080 / #FE6A34 / Plus Jakarta Sans / radius 15·20·24). Klik tab bawah tiap frame untuk melompat antar-frame.</p>
+    <div class="badges">
+      <span class="badge ok">✓ Sesuai kode</span>
+      <span class="badge">Guest mode</span>
+      <span class="badge">Midtrans</span>
+      <span class="badge">ID / EN</span>
+      <span class="badge">Rp (kurs server)</span>
+    </div>
+  </div>
+
+  <div class="flow">ALUR YANG DIMOCKUP: <b>01 Splash</b> → <b>02 Onboarding</b> → <b>03 Login (+Tamu)</b> → <b>04 Home</b> ⇄ <b>05 Search</b> → <b>06 Hotel Detail</b> → <b>07 Review Checkout</b> → <b>08 Bayar</b> → <b>09 Berhasil</b> → <b>10 My Bookings</b> (Pending/resume/reschedule) + <b>11 Sasa AI Hub</b> + <b>12 Profil</b> (upcoming trips, grup, tasks, loyalty)</div>
+
+  <div class="grid">
+
+    <!-- 01 SPLASH -->
+    <div class="frame-wrap" id="f01"><div class="frame-tag">01 · SPLASH<small>splash_page.dart — guest langsung ke /home</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen" style="padding:0"><div class="splashbg">
+      <div class="logo">🌴</div><h2>Sasacation</h2><p>Explore the Beauty of Lombok</p>
+      <p style="font-size:11px;margin-top:26px;opacity:.75">guest → Home · user → Home · baru → Onboarding</p>
+    </div></div></div></div>
+
+    <!-- 02 ONBOARDING -->
+    <div class="frame-wrap" id="f02"><div class="frame-tag">02 · ONBOARDING<small>3 halaman — CTA: Jelajahi sebagai Tamu</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div style="text-align:center;margin-top:70px">
+        <div style="width:110px;height:110px;border-radius:50%;background:#0080801a;font-size:52px;display:flex;align-items:center;justify-content:center;margin:0 auto">🏨</div>
+        <h2 class="hero-t" style="margin-top:26px">Book Hotels &amp; Transport</h2>
+        <p class="sub">Easy booking for hotels, transport, and tour packages</p>
+      </div>
+      <div class="dots"><i></i><i class="on"></i><i></i></div>
+      <a class="btn teal" href="#f03">Jelajahi sebagai Tamu</a>
+      <div style="text-align:center;margin-top:10px"><a href="#f03" style="font-size:13px;color:var(--primary);font-weight:600;text-decoration:none">Skip</a></div>
+      <div class="bottomnav" style="visibility:hidden"></div>
+    </div></div></div>
+
+    <!-- 03 LOGIN -->
+    <div class="frame-wrap" id="f03"><div class="frame-tag">03 · LOGIN<small>email + Google/Apple + jalan keluar Tamu</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <h2 class="hero-t">Selamat Datang! 👋</h2><p class="sub">Masuk untuk melanjutkan ke Sasacation</p>
+      <div style="height:16px"></div>
+      <div class="field"><small>Email</small>alex@mail.com</div>
+      <div class="field"><small>Password</small>••••••••</div>
+      <div style="text-align:right;font-size:12px;color:var(--primary);font-weight:600">Lupa Password?</div>
+      <div style="height:12px"></div>
+      <a class="btn teal" href="#f04">Masuk</a>
+      <div style="height:10px"></div>
+      <a class="btn ghost" href="#f04">Lanjutkan dengan Google</a>
+      <div style="text-align:center;margin:12px 0;font-size:12px;color:var(--outline)">Belum punya akun? <b style="color:var(--primary)">Daftar</b></div>
+      <a href="#f04" style="display:flex;justify-content:center;gap:6px;font-size:13px;font-weight:700;color:var(--primary);text-decoration:none">🧭 Lanjutkan sebagai Tamu</a>
+    </div></div></div>
+
+    <!-- 04 HOME -->
+    <div class="frame-wrap" id="f04"><div class="frame-tag">04 · HOME<small>search → recommended → kategori → trending</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div class="iconbtn">☰</div><div class="wordmark">Sasacation</div><div class="avatar">A</div></div>
+      <h2 class="hero-t">Where to next?</h2><p class="sub">Find your dream vacation with AI assistance</p>
+      <div class="searchbar">🔍 Search destinations, villas, or activities...<span class="go">⚙️</span></div>
+      <div class="sec"><b>Recommended for You</b><a href="#f05">See all</a></div>
+      <div class="hscroll">
+        <div class="hcard"><div class="img"><span class="pill dark">MOST POPULAR</span><span class="pill rate">★ 4.9</span></div><b>Azure Bay Sanctuary</b><div class="loc">📍 Bora Bora</div><div class="price">$850 <small>/ night</small></div></div>
+        <div class="hcard"><div class="img" style="background:linear-gradient(160deg,#134e4a,#0ea5a4 60%,#f4b942)"><span class="pill rate">★ 4.8</span></div><b>Zenith Alps Lodge</b><div class="loc">📍 Zermatt</div><div class="price">$420 <small>/ night</small></div></div>
+      </div>
+      <div class="sec"><b>Popular Categories</b></div>
+      <div class="catgrid"><div class="cat"><span>🏖</span>Beach</div><div class="cat"><span>🏨</span>Hotels</div><div class="cat"><span>🍽</span>Culinary</div></div>
+      <div class="bottomnav"><a class="tab on" href="#f04"><span>🏠</span>Home</a><a class="tab" href="#f05"><span>🧭</span>Explore</a><a class="tab" href="#f10"><span>🎫</span>Bookings</a><a class="tab" href="#f12"><span>👤</span>Profile</a><a class="fab" href="#f11">✨</a></div>
+    </div></div></div>
+
+    <!-- 05 SEARCH -->
+    <div class="frame-wrap" id="f05"><div class="frame-tag">05 · SEARCH<small>recents + filter server + AI Pick</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="searchbar">←&nbsp;&nbsp;🔍 Bali, Indonesia<span class="go">⚙️</span></div>
+      <div class="chiprow"><span class="chip on">💲 Price</span><span class="chip">★ Rating</span><span class="chip">📈 Popularity</span><span class="chip">🏨 Amenities (2)</span></div>
+      <div class="sec" style="margin-top:4px"><b>Terakhir dicari</b><a href="#f05">Hapus Semua</a></div>
+      <div class="trow"><div class="th" style="background:linear-gradient(150deg,#f4b942,#b45309)"></div><div><b>Ubud Retreats</b><div class="loc">2 adults • 4 nights</div></div></div>
+      <div class="sec"><b>124 Results found</b></div>
+      <div class="trow"><div class="th"></div><div><b>The Hanging Gardens Villa</b><div class="loc">📍 Ubud, Bali</div><div class="price">$320 <small>/ night</small></div></div><span class="ratebox">★ 4.9</span></div>
+      <div class="card" style="background:#FE6A3422;border:1px solid #FE6A3466"><span class="badge-toggle orange">AI PICK FOR YOU</span><b style="display:block;margin:8px 0 4px">Private Island Escape</b><p class="sub">Rating tertinggi untuk pencarianmu.</p><a class="btn orange" style="margin-top:10px" href="#f06">Lihat Detail</a></div>
+      <div class="bottomnav"><a class="tab" href="#f04"><span>🏠</span>Home</a><a class="tab on" href="#f05"><span>🧭</span>Explore</a><a class="tab" href="#f10"><span>🎫</span>Bookings</a><a class="tab" href="#f12"><span>👤</span>Profile</a><a class="fab" href="#f11">✨</a></div>
+    </div></div></div>
+
+    <!-- 06 HOTEL DETAIL -->
+    <div class="frame-wrap" id="f06"><div class="frame-tag">06 · HOTEL DETAIL<small>hero + includes + galeri + review + Maps</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen" style="padding-top:34px">
+      <div class="hero-img"><div class="hero-title"><span class="badge-toggle teal">PREMIUM ESCAPE</span> ★ 4.9 (124 reviews)<h2>Azure Sands Retreat</h2><p>📍 Maldives, North Malé Atoll</p></div></div>
+      <div style="display:flex;gap:8px;margin:12px 0"><span class="chip">🌊 Ocean View</span><span class="chip">🍽 All-Inclusive</span></div>
+      <b>About the Experience</b><p class="sub">Private overwater villas with contemporary tropical aesthetics…</p>
+      <div class="sec"><b>Guest Reviews</b><a href="#f06">See all</a></div>
+      <div class="card"><b>Sarah Jenkins</b> ★★★★★<p class="sub" style="font-style:italic">"The most incredible vacation I've ever had…"</p></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:auto;padding-bottom:18px"><div><small style="color:var(--outline)">Price per night</small><div class="price" style="font-size:19px">$499 <small>/night</small></div></div><a class="btn orange" style="flex:1" href="#f07">Book Now</a></div>
+    </div></div></div>
+
+    <!-- 07 REVIEW CHECKOUT -->
+    <div class="frame-wrap" id="f07"><div class="frame-tag">07 · REVIEW CHECKOUT<small>ringkasan + rincian + kebijakan</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div class="iconbtn">←</div><b>Review Booking</b><div style="width:36px"></div></div>
+      <div class="card"><b>Azure Bay Luxury Villa</b><p class="sub">📍 Grand Cayman · ★ 4.9</p><div class="chiprow"><span class="chip">Private Pool</span><span class="chip">Beach Access</span></div></div>
+      <div class="card"><b>Stay Details</b><div class="row"><span>Check-in → Check-out</span><b>12 → 19 Oct</b></div><div class="row"><span>Guests</span><b>2 Adults, 1 Child</b></div></div>
+      <div class="card"><b>Rincian Harga</b><div class="row"><span>$450 × 7 nights</span><b>$3,150</b></div><div class="row"><span>Cleaning fee</span><b>$40</b></div><div class="row"><span>Sasa fee + tax</span><b>$130</b></div><div class="total"><span>Total (USD)</span><span class="amt">$3,400 <small style="font-size:10px;color:var(--outline)">(estimasi)</small></span></div></div>
+      <div class="card" style="background:var(--low)"><p class="sub">🛡 Dengan membayar, Anda menyetujui harga di atas. Reschedule hanya untuk booking confirmed; pembatalan ikut kebijakan properti.</p></div>
+      <a class="btn orange" href="#f08" style="margin-top:auto;margin-bottom:18px">Lanjutkan ke Pembayaran</a>
+    </div></div></div>
+
+    <!-- 08 PAYMENT -->
+    <div class="frame-wrap" id="f08"><div class="frame-tag">08 · PEMBAYARAN<small>grup lokal dulu · kartu tersimpan · save toggle</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div class="iconbtn">←</div><b>Pembayaran</b><div style="width:36px"></div></div>
+      <b>Kartu Tersimpan</b>
+      <div class="kv"><div class="ic">💳</div><div><b>VISA •• 4421 (Business)</b><small>Exp 12/26 · Utama</small></div><div class="chev">✏️</div></div>
+      <div style="height:6px"></div><b>Metode Pembayaran</b>
+      <div class="kv"><div class="ic">📱</div><div><b>QRIS</b></div><div class="chev">○</div></div>
+      <div class="kv"><div class="ic">👛</div><div><b>GoPay</b></div><div class="chev">○</div></div>
+      <div class="kv"><div class="ic">🏦</div><div><b>Transfer Bank</b></div><div class="chev">○</div></div>
+      <div class="kv" style="border:1.5px solid var(--primary-container)"><div class="ic">💳</div><div><b>Kartu Kredit / Debit</b></div><div class="chev">✅</div></div>
+      <div class="kv"><div class="ic">🅿️</div><div><b>PayPal</b></div><div class="chev">○</div></div>
+      <div class="kv"><div class="ic">💾</div><div><b>Simpan kartu ini</b><small>Opsi save muncul di Snap</small></div><div class="chev">🔘</div></div>
+      <div style="margin-top:auto;padding-bottom:18px"><div class="total"><span>Total Pembayaran</span><span class="amt">$3,400</span></div><a class="btn orange" style="margin-top:10px" href="#f09">Bayar Sekarang</a></div>
+    </div></div></div>
+
+    <!-- 09 SUCCESS -->
+    <div class="frame-wrap" id="f09"><div class="frame-tag">09 · BERHASIL<small>kode booking + langkah berikut</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen" style="text-align:center">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="bigcheck">✓</div>
+      <h2 class="hero-t">Pembayaran Berhasil! 🎉</h2><p class="sub">Booking kamu sudah dikonfirmasi.</p>
+      <div class="codebox"><small style="color:var(--outline)">Kode Booking</small><br><b>SAC-0U2RVC</b></div>
+      <div class="card" style="text-align:left"><div class="row"><span>Hotel</span><b>Qunci Villas</b></div><div class="row"><span>Tanggal</span><b>10 – 12 Nov 2026</b></div><div class="row"><span>Total</span><b>$452</b></div></div>
+      <a class="btn teal" href="#f04">Kembali ke Beranda</a><div style="height:8px"></div>
+      <a class="btn ghost" href="#f10">Lihat Semua Booking</a>
+    </div></div></div>
+
+    <!-- 10 MY BOOKINGS -->
+    <div class="frame-wrap" id="f10"><div class="frame-tag">10 · MY BOOKINGS<small>pending + countdown + resume + reschedule</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div style="width:36px"></div><b>My Bookings</b><div style="width:36px"></div></div>
+      <div class="chiprow"><span class="chip">Semua</span><span class="chip on">Pending</span><span class="chip">Aktif</span><span class="chip">Selesai</span><span class="chip">Batal</span></div>
+      <div class="card"><div class="trow" style="box-shadow:none;margin:0;padding:0"><div class="th"></div><div><b>Qunci Villas</b><div class="loc">SAC-0U2RVC · 2 malam</div><span class="badge-toggle orange">PENDING</span> <span class="badge-toggle grey">⏱ Bayar dalam 23:41:07</span></div></div>
+      <a class="btn orange" style="margin-top:10px" href="#f08">Complete Booking</a></div>
+      <div class="card"><div class="trow" style="box-shadow:none;margin:0;padding:0"><div class="th" style="background:linear-gradient(150deg,#7c3aed,#06b6d4)"></div><div><b>Oberoi Beach Resort</b><div class="loc">SAC-OEAT7F · 2 malam · $832</div><span class="badge-toggle teal">CONFIRMED</span></div></div>
+      <div style="display:flex;gap:8px;margin-top:10px"><a class="btn ghost" style="flex:1" href="#f10">📅 Jadwal Ulang</a><a class="btn ghost" style="flex:1;color:var(--error)" href="#f10">Batalkan</a></div></div>
+      <div class="bottomnav"><a class="tab" href="#f04"><span>🏠</span>Home</a><a class="tab" href="#f05"><span>🧭</span>Explore</a><a class="tab on" href="#f10"><span>🎫</span>Bookings</a><a class="tab" href="#f12"><span>👤</span>Profile</a><a class="fab" href="#f11">✨</a></div>
+    </div></div></div>
+
+    <!-- 11 AI HUB -->
+    <div class="frame-wrap" id="f11"><div class="frame-tag">11 · SASA AI HUB<small>chat + smart search + trip planner real</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div class="iconbtn">←</div><div><b>Sasa AI</b><div style="font-size:10px;color:var(--primary);font-weight:800;letter-spacing:1px">TRAVEL ASSISTANT</div></div><div class="iconbtn">⋮</div></div>
+      <div class="chat">
+        <div class="bubble ai">Hi Alex! I'm Sasa, your personal travel assistant. How can I help? 🌴</div>
+        <div class="bubble me">Villa pantai buat 3 orang bulan depan</div>
+        <div class="bubble ai">Ketemu 2 villa yang cocok — ketuk kartunya ya!</div>
+      </div>
+      <div class="hscroll" style="margin-top:10px">
+        <div class="hcard"><div class="img"><span class="pill rate">★ 4.9</span></div><b>Bora Bora Pearl</b><div class="price">$320</div></div>
+        <div class="hcard"><div class="img" style="background:linear-gradient(160deg,#0ea5a4,#f4b942)"><span class="pill rate">★ 4.8</span></div><b>Maldives Azure</b><div class="price">$245</div></div>
+      </div>
+      <div class="card" style="margin-top:10px"><b>🗓 Trip Planner</b><p class="sub">Durasi 3 hari · Budget $500 · Pantai, Kuliner</p><a class="btn teal" style="margin-top:8px" href="#f11">Buatkan Itinerary (AI real)</a></div>
+      <div class="inputbar"><div class="box">Tanya Sasa sesuatu…</div><div class="send">↑</div></div>
+    </div></div></div>
+
+    <!-- 12 PROFILE -->
+    <div class="frame-wrap" id="f12"><div class="frame-tag">12 · PROFIL<small>upcoming trips + grup/tasks + loyalty pass</small></div>
+    <div class="phone"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>09:41</span><span>●●● 🔋</span></div>
+      <div class="topbar"><div style="width:36px"></div><b>Profile</b><div style="width:36px"></div></div>
+      <div style="text-align:center"><div class="avatar" style="width:64px;height:64px;font-size:24px;margin:0 auto">A</div><b style="display:block;margin-top:8px">Alex Adventurer</b><p class="sub">alex@mail.com · ★ 12 Trips Completed</p></div>
+      <div class="sec"><b>Upcoming Trips</b><a href="#f10">Lihat semua</a></div>
+      <div class="trow"><div class="th"></div><div><b>Maldives Luxury Retreat</b><div class="loc">24 – 31 Oct 2024 · $2,450</div></div><span class="ratebox" style="background:var(--primary-container);color:#fff">CONFIRMED</span></div>
+      <div class="kv"><div class="ic">🎫</div><div><b>My Bookings</b></div><div class="chev">›</div></div>
+      <div class="kv"><div class="ic">👥</div><div><b>My Groups</b><small>Patungan budget trip</small></div><div class="chev">›</div></div>
+      <div class="kv"><div class="ic">✅</div><div><b>Travel Tasks</b><small>Check-in, dokumen</small></div><div class="chev">›</div></div>
+      <div class="kv"><div class="ic">💳</div><div><b>Travel Pass</b><small>Bronze · 0 pts · SC-00000000</small></div><div class="chev">›</div></div>
+      <div class="kv"><div class="ic">⚙️</div><div><b>Settings</b><small>Bahasa, notifikasi, keamanan</small></div><div class="chev">›</div></div>
+      <div class="bottomnav"><a class="tab" href="#f04"><span>🏠</span>Home</a><a class="tab" href="#f05"><span>🧭</span>Explore</a><a class="tab" href="#f10"><span>🎫</span>Bookings</a><a class="tab on" href="#f12"><span>👤</span>Profile</a><a class="fab" href="#f11">✨</a></div>
+    </div></div></div>
+
+  </div>
+
+  <!-- REKOMENDASI -->
+  <div class="rec" id="rekomendasi">
+    <h2>Rekomendasi Mockup (PO Senior) — adopsi, tolak, dan gap vs referensi</h2>
+    <p class="lead">Referensi <i>Mockup Alur</i> (12 frame tiket aktivitas: login no-HP, paket/orang, redeem poin, panduan, profil poin) dibaca penuh. Di bawah: apa yang layak diadopsi ke Sasacation hotel-OTA, apa yang ditolak beserta alasan bisnisnya, dan apa yang masih bolong di kedua sisi.</p>
+
+    <h3 style="font-size:15px;margin:6px 0">A. Pola referensi yang sebaiknya DIADOPSI ✅</h3>
+    <table>
+      <tr><th style="width:26%">Pola referensi</th><th>Status di app</th><th>Rekomendasi</th></tr>
+      <tr><td>Harga <b>Rp per orang/paket</b> di semua kartu</td><td><span class="tag wait">SEBAGIAN</span> — MoneyText siap, aktif setelah rate live</td><td><b>Adopsi penuh.</b> Wajib sebelum rilis domestik; Rp adalah syarat konversi, bukan kosmetik.</td></tr>
+      <tr><td><b>Redeem poin di checkout</b> ("Gunakan 3.200 poin = Rp 32.000")</td><td><span class="tag no">BELUM ADA</span></td><td><b>Adopsi setelah LOYALTY_DEFINITION disetujui.</b> Ini mesin retensi termurah — third-party OTA besar hidup dari ini. Butuh baris "Diskon poin" di pricing backend.</td></tr>
+      <tr><td><b>Poin earned terpampang</b> ("Kamu mendapat 868 poin!")</td><td><span class="tag no">BELUM ADA</span></td><td><b>Adopsi di layar Berhasil (frame 09).</b> Momen dopamin tertinggi; biaya implementasi kecil (teks dari kontrak loyalty).</td></tr>
+      <tr><td><b>Detail trip + kontak pemandu</b> (telepon/WA)</td><td><span class="tag no">BELUM ADA</span></td><td><b>Adopsi untuk segmen experience/aktivitas.</b> Untuk hotel murni, ganti dengan kontak properti + kebijakan check-in.</td></tr>
+      <tr><td><b>Profil berbasis poin</b> (saldo, riwayat, cara kumpul)</td><td><span class="tag wait">SEBAGIAN</span> — Travel Pass ada, earn/burn belum</td><td><b>Adopsi bertahap</b> mengikuti definisi loyalty; tambah "Cara kumpul poin" sebagai layar edukasi.</td></tr>
+      <tr><td><b>Tab Perjalanan terpadu</b> (Semua/Mendatang/Selesai/Dibatalkan)</td><td><span class="tag go">SUDAH ADA</span> — 5 tab + Pending</td><td>Pertahankan; tambah filter tanggal untuk musim liburan.</td></tr>
+      <tr><td><b>Form + langkah bernomor</b> ("Langkah 2 dari 4")</td><td><span class="tag go">SUDAH ADA</span> — Review → Bayar + step indicator</td><td>Pertahankan; tambahkan estimasi waktu ("±2 menit").</td></tr>
+    </table>
+
+    <h3 style="font-size:15px;margin:6px 0">B. Pola referensi yang sebaiknya DITOLAK ❌ (dengan alasan)</h3>
+    <table>
+      <tr><th style="width:26%">Pola referensi</th><th>Alasan penolakan</th></tr>
+      <tr><td>Login <b>nomor HP + OTP</b> sebagai utama</td><td>Butuh agregator OTP (biaya/sms, fraud SIM-swap) + backend session baru. Email + Google/Apple yang sudah ada mencakup 95% kasus domestik dengan biaya ~nol. Pertimbangkan ulang hanya bila data menunjukkan drop-off login &gt;30%.</td></tr>
+      <tr><td>Model <b>tiket per-orang + anak</b> sebagai arus utama</td><td>App ini hotel-OTA (per-malam/per-kamar). Dua model bisa hidup berdampingan, tapi arus tiket hanya dibangun bila segmen Experience/Activity dibuka — jangan campur ke checkout hotel.</td></tr>
+      <tr><td><b>Promo banner</b> di Home ("Diskon 20%")</td><td>Tanpa CMS/promo-engine backend, banner = hardcode yang basi dalam seminggu. Tolak sampai ada endpoint promo + tanggal berlaku.</td></tr>
+      <tr><td>Bottom-nav 5 tab versi referensi</td><td>Bertentangan dengan IA yang sudah disepakati (Home/Explore/Bookings/Profile + FAB AI). Konsistensi &gt; variasi.</td></tr>
+    </table>
+
+    <h3 style="font-size:15px;margin:6px 0">C. Gap di kedua sisi (tidak ada di referensi, belum ada di app)</h3>
+    <ol class="rec-list">
+      <li><b>Kebijakan pembatalan per properti sebelum bayar</b> — satu-satunya penangkal sengketa chargeback termurah. Referensi maupun app belum punya.</li>
+      <li><b>Countdown pending + nudge pembayaran</b> — app sudah punya countdown; referensi tidak punya. Pertahankan keunggulan ini, tambah push reminder.</li>
+      <li><b>Ulasan tamu terverifikasi</b> ("sudah menginap") — app: nunggu backend; referensi: rating tanpa bukti. Siapa yang lebih dulu punya badge "Verified Stay" memenangkan kepercayaan.</li>
+      <li><b>Aksesibilitas &amp; empty-state luring</b> — belum ada di keduanya; mode offline read-only untuk itinerary tersimpan adalah quick-win retensi.</li>
+    </ol>
+    <p style="font-size:12.5px;color:var(--variant)">Dokumen pendamping keputusan: <b>AUDIT_PO_2026-10-04.md</b> (repo Flutter) · kontrak backend: <b>FLUTTER_HANDOFF.md F1–F16</b> · definisi loyalty: <b>LOYALTY_DEFINITION.md</b>.</p>
+  </div>
+</div>
+</body>
+</html>

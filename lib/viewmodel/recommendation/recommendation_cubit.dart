@@ -10,7 +10,11 @@ class RecommendationLoading extends RecommendationState {}
 
 class RecommendationLoaded extends RecommendationState {
   final List<HotelModel> hotels;
-  RecommendationLoaded(this.hotels);
+  // F.4: profil traveler dari BE (null untuk guest / user baru).
+  // Kalau null → section tampil sebagai "Trending", kalau ada → "Paling cocok untuk kamu".
+  final Map<String, dynamic>? profile;
+  RecommendationLoaded(this.hotels, {this.profile});
+  bool get isPersonalized => profile != null;
 }
 
 class RecommendationError extends RecommendationState {
@@ -35,8 +39,8 @@ class RecommendationCubit extends Cubit<RecommendationState> {
   Future<void> load() async {
     emit(RecommendationLoading());
     try {
-      final hotels = await _repo.getRecommendations();
-      emit(RecommendationLoaded(hotels));
+      final r = await _repo.getRecommendationsWithProfile();
+      emit(RecommendationLoaded(r.hotels, profile: r.profile));
     } catch (e) {
       emit(RecommendationError(e.toString()));
     }

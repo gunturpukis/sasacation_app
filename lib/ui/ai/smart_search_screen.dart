@@ -486,6 +486,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   Widget _buildResults(AiSearchLoaded state) {
     final l10n = AppLocalizations.of(context);
     final result = state.result;
+    final filters = result.appliedFilters;
+    final chips = _filterChips(filters);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -509,6 +511,26 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
               ],
             ),
           ),
+          // F.1: tampilkan filter yang dipahami AI sebagai chips
+          if (chips.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, runSpacing: 8, children: chips),
+          ],
+          if (result.needsClarification) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Coba tambahkan budget, kota, atau fasilitas (mis. "bathtub", "pool") agar hasil lebih tepat.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           Text(l10n.ait_searchResultCount(result.totalResults),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -520,7 +542,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.75,
+              childAspectRatio: 0.68,
             ),
             itemCount: result.results.length,
             itemBuilder: (context, index) => _ResultCard(item: result.results[index]),
@@ -528,6 +550,39 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         ],
       ),
     );
+  }
+
+  List<Widget> _filterChips(Map<String, dynamic> f) {
+    final chips = <Widget>[];
+    Widget chip(IconData icon, String label) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: AppTheme.primaryColor),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ]),
+        );
+    if (f['maxPriceUSD'] != null) {
+      chips.add(chip(Icons.wallet_outlined, '≤ \$${f['maxPriceUSD']}'));
+    }
+    if (f['city'] != null && (f['city'] as String).isNotEmpty) {
+      chips.add(chip(Icons.location_on_outlined, f['city'] as String));
+    }
+    for (final a in (f['amenities'] as List? ?? [])) {
+      chips.add(chip(Icons.check_circle_outline, a.toString()));
+    }
+    for (final v in (f['vibe'] as List? ?? [])) {
+      chips.add(chip(Icons.mood_outlined, v.toString()));
+    }
+    if (f['tripType'] != null) {
+      chips.add(chip(Icons.people_outline, f['tripType'].toString()));
+    }
+    return chips;
   }
 
   void _doSearch(String query) {
@@ -559,6 +614,14 @@ class _ResultCard extends StatelessWidget {
     // akan crash kalau nilainya masih String.
     final price = parseDouble(item['price']);
     final rating = parseDouble(item['rating']);
+    // F.1: explanation 1 kalimat dari BE (grounded). Fallback ke lokasi.
+    final explanation = (item['explanation'] as String?)?.trim().isNotEmpty == true
+        ? item['explanation'] as String
+        : (item['location'] ?? '');
+    // F.1+: vibes dari hotel_vibes (BE) — tampilkan maks 3 sebagai chips.
+    final vibes = item['vibes'] is List
+        ? (item['vibes'] as List).map((e) => e.toString()).take(3).toList()
+        : <String>[];
 
     return GestureDetector(
       onTap: () {
@@ -600,6 +663,32 @@ class _ResultCard extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   Text(item['location'] ?? '',
                       style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  if (explanation.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(explanation,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                  ],
+                  if (vibes.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: vibes
+                          .map((v) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(v,
+                                    style: const TextStyle(
+                                        fontSize: 9, color: AppTheme.primaryColor)),
+                              ))
+                          .toList(),
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Row(
                     children: [

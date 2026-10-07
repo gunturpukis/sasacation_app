@@ -7,6 +7,7 @@ import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
 import 'package:sasacation/ui/ai/agent_trip_plan_result_screen.dart';
 import 'package:sasacation/ui/ai/ai_chat_screen.dart';
+import 'package:sasacation/ui/ai/compare_screen.dart';
 import 'package:sasacation/ui/ai/smart_search_screen.dart';
 import 'package:sasacation/ui/ai/trip_planner_screen.dart';
 import 'package:sasacation/ui/explore/destination_detail_screen.dart';
@@ -32,6 +33,7 @@ import 'package:sasacation/ui/poll/poll_detail_screen.dart';
 import 'package:sasacation/ui/settings/personal_info_screen.dart';
 import 'package:sasacation/ui/settings/security_screen.dart';
 import 'package:sasacation/ui/settings/setting_screen.dart';
+import 'package:sasacation/ui/profile/travel_profile_screen.dart';
 import 'package:sasacation/ui/splash/splash_page.dart';
 import 'package:sasacation/ui/onboarding/onboarding_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +50,7 @@ class AppRouter {
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String personalInfo = '/settings/personal-info';
+  static const String travelProfile = '/travel-profile';
   static const String security = '/settings/security';
   static const String paymentHistory = '/payment-history';
   static const String sustainability = '/sustainability';
@@ -60,6 +63,7 @@ class AppRouter {
   // AI
   static const String aiChat = '/ai-chat';
   static const String smartSearch = '/smart-search';
+  static const String compare = '/compare';
   static const String tripPlanner = '/trip-planner';
   static const String tripPlanResult = '/ai/trip-plan-result';
   // Explore
@@ -182,6 +186,11 @@ class Routes {
         path: AppRouter.personalInfo,
         builder: (_, _) => const PersonalInfoScreen(),
       ),
+      // F.4: butuh akun (tidak ada di guestAccessible).
+      GoRoute(
+        path: AppRouter.travelProfile,
+        builder: (_, _) => const TravelProfileScreen(),
+      ),
       GoRoute(
         path: AppRouter.security,
         builder: (_, _) => const SecurityScreen(),
@@ -194,6 +203,18 @@ class Routes {
       GoRoute(
         path: AppRouter.smartSearch,
         builder: (_, _) => const SmartSearchScreen(),
+      ),
+      GoRoute(
+        path: AppRouter.compare,
+        builder: (_, state) {
+          final ids = state.extra as List<String>?;
+          if (ids == null || ids.length < 2) {
+            return const _MissingExtraScreen(
+              message: 'Pilih minimal 2 hotel untuk dibandingkan.',
+            );
+          }
+          return CompareScreen(hotelIds: ids);
+        },
       ),
       GoRoute(
         path: AppRouter.tripPlanner,

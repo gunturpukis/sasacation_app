@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +24,48 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   bool _isGenerating = false;
   String? _errorMessage;
   TripPlan? _generatedPlan;
+
+  // F.5: progres bertahap — request bisa 120–150s+ di Ollama lokal.
+  // Timer 1 detik menggerakkan pesan tahap (hotel → resto → aktivitas →
+  // composer) + penghitung waktu, supaya layar tidak terasa mati.
+  // Tahap adalah ESTIMASI alur agent (bukan status real dari server).
+  Timer? _progressTimer;
+  int _elapsedSec = 0;
+
+  static const _stageThresholds = [0, 20, 45, 75, 120];
+
+  int get _stageIndex {
+    var idx = 0;
+    for (var i = 0; i < _stageThresholds.length; i++) {
+      if (_elapsedSec >= _stageThresholds[i]) idx = i;
+    }
+    return idx;
+  }
+
+  String _stageLabel(int idx, bool isEn) {
+    const id = [
+      '🔍 Mencari hotel yang cocok...',
+      '🍽️ Mencari restoran & kuliner...',
+      '🏝️ Mencari aktivitas & destinasi...',
+      '🧩 Menyusun itinerary hari per hari...',
+      '✨ Merapikan detail & estimasi biaya...',
+    ];
+    const en = [
+      '🔍 Finding matching hotels...',
+      '🍽️ Finding restaurants & food...',
+      '🏝️ Finding activities & spots...',
+      '🧩 Composing day-by-day itinerary...',
+      '✨ Polishing details & cost estimate...',
+    ];
+    return (isEn ? en : id)[idx.clamp(0, id.length - 1)];
+  }
+
+  @override
+  void dispose() {
+    _progressTimer?.cancel();
+    _budgetCtrl.dispose();
+    super.dispose();
+  }
 
   // S2.1: parameter terstruktur untuk POST /ai/trip-plan
   // (menggantikan input teks bebas + mock keyword-matching).
@@ -279,8 +323,40 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            l10n.ait_plannerGenerating,
+                            _stageLabel(
+                              _stageIndex,
+                              Localizations.localeOf(context).languageCode == 'en',
+                            ),
+                            textAlign: TextAlign.center,
                             style: const TextStyle(color: AppTheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _formatElapsed(_elapsedSec),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Indikator tahap 1–5
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              _stageThresholds.length,
+                              (i) => Container(
+                                width: 28,
+                                height: 4,
+                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(2),
+                                  color: i <= _stageIndex
+                                      ? AppTheme.primary
+                                      : AppTheme.onSurfaceVariant.withOpacity(0.2),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -356,6 +432,15 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       _isGenerating = true;
       _errorMessage = null;
       _generatedPlan = null;
+      _elapsedSec = 0;
+    });
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted || !_isGenerating) {
+        t.cancel();
+        return;
+      }
+      setState(() => _elapsedSec++);
     });
     FocusScope.of(context).unfocus();
 
@@ -365,6 +450,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       interests: _interests.toList(),
     );
     if (!mounted) return;
+    _progressTimer?.cancel();
     setState(() {
       _isGenerating = false;
       if (result['success'] == true) {
@@ -376,8 +462,13 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
     });
   }
 
-  Widget _buildResult(TripPlan plan) {
-    final l10n = AppLocalizations.of(context);
+  String _formatElapsed(int sec) {
+    final m = sec ~/ 60;
+    final s = sec % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildResult(TripPlan plan) {    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -639,11 +730,5 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _budgetCtrl.dispose();
-    super.dispose();
   }
 }
