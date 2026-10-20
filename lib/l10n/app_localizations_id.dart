@@ -215,9 +215,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get fun_aboutPlace => 'Tentang Tempat Ini';
-
-  @override
   String fun_aiPickDesc(String rating) {
     return 'Rating tertinggi ($rating) untuk pencarianmu saat ini.';
   }
@@ -338,6 +335,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get fun_continueToPayment => 'Lanjutkan ke Pembayaran';
+
+  @override
+  String get fun_cuisineFallback => 'Masakan Lokal';
 
   @override
   String get fun_cuisineType => 'Jenis Masakan';
@@ -537,6 +537,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get fun_openHours => 'Jam Buka';
 
   @override
+  String get fun_openHoursFallback => '10:00 - 22:00';
+
+  @override
   String get fun_paidTimeLabel => 'Waktu Bayar';
 
   @override
@@ -632,7 +635,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get fun_propertyTitle => 'The Property';
+  String get fun_propertyTitle => 'Tempat Ini';
 
   @override
   String get fun_quickMenuBookings => 'My Bookings';
@@ -648,11 +651,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String fun_ratingReviews(String rating, num count) {
-    return '$rating ($count reviews)';
+    return '$rating ($count ulasan)';
   }
 
   @override
   String get fun_recentSearches => 'Terakhir dicari';
+
+  @override
+  String fun_removedFavorite(String name) {
+    return '$name dihapus dari favorit';
+  }
 
   @override
   String get fun_renameCardFailed => 'Gagal mengganti nama kartu';
@@ -693,11 +701,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get fun_reviewBookingTitle => 'Review Booking';
 
   @override
-  String fun_reviewCountLabel(num count) {
-    return '($count ulasan)';
-  }
-
-  @override
   String get fun_saveCardSubtitle =>
       'Munculkan opsi simpan di halaman pembayaran untuk pemakaian berikutnya';
 
@@ -711,6 +714,9 @@ class AppLocalizationsId extends AppLocalizations {
   String fun_savedFavoriteSoon(String name) {
     return '$name disimpan ke favorit (segera hadir penuh)';
   }
+
+  @override
+  String get fun_savedExploreSection => 'Destinasi & Kuliner';
 
   @override
   String get fun_savedSubtitle =>
@@ -846,7 +852,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get fun_waitingPayment => 'Menunggu pembayaran...';
 
   @override
-  String get fun_whatsIncluded => 'What\'s Included';
+  String get fun_whatsIncluded => 'Apa Saja yang Termasuk';
 
   @override
   String get fun_resetFilters => 'Reset';

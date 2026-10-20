@@ -20,6 +20,7 @@ import 'package:sasacation/viewmodel/explore/explore_bloc.dart';
 import 'package:sasacation/viewmodel/hotel/hotel_bloc.dart';
 import 'package:sasacation/viewmodel/recommendation/recommendation_cubit.dart';
 import 'package:sasacation/viewmodel/trip/trip_bloc.dart';
+import 'package:sasacation/viewmodel/wishlist/explore_wishlist_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 
 class LombokApp extends StatelessWidget {
@@ -50,6 +51,9 @@ class LombokApp extends StatelessWidget {
         ),
         BlocProvider<WishlistCubit>(
           create: (_) => WishlistCubit(),
+        ),
+        BlocProvider<ExploreWishlistCubit>(
+          create: (_) => ExploreWishlistCubit(),
         ),
         BlocProvider<RecommendationCubit>(
           create: (_) => RecommendationCubit(repository: RecommendationRepository()),

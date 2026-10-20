@@ -85,7 +85,6 @@
       }
     }
   },
-  "fun_aboutPlace": "Tentang Tempat Ini",
   "fun_aiPickDesc": "Rating tertinggi ({rating}) untuk pencarianmu saat ini.",
   "@fun_aiPickDesc": {
     "placeholders": {
@@ -152,6 +151,7 @@
   },
   "fun_completeBooking": "Complete Booking",
   "fun_continueToPayment": "Lanjutkan ke Pembayaran",
+  "fun_cuisineFallback": "Masakan Lokal",
   "fun_cuisineType": "Jenis Masakan",
   "fun_dialogNo": "Tidak",
   "fun_dialogYesCancel": "Ya, Batalkan",
@@ -273,6 +273,7 @@
   "fun_notesHint": "Mis: kamar di lantai atas, dekat kolam...",
   "fun_notesLabel": "Catatan",
   "fun_openHours": "Jam Buka",
+  "fun_openHoursFallback": "10:00 - 22:00",
   "fun_paidTimeLabel": "Waktu Bayar",
   "fun_payGroupCard": "Kartu",
   "fun_payGroupEWallet": "E-Wallet",
@@ -332,12 +333,12 @@
       }
     }
   },
-  "fun_propertyTitle": "The Property",
+  "fun_propertyTitle": "Tempat Ini",
   "fun_quickMenuBookings": "My Bookings",
   "fun_quickMenuNotifications": "Notifications",
   "fun_quickMenuSaved": "Saved Destinations",
   "fun_quickMenuSettings": "Settings",
-  "fun_ratingReviews": "{rating} ({count} reviews)",
+  "fun_ratingReviews": "{rating} ({count} ulasan)",
   "@fun_ratingReviews": {
     "placeholders": {
       "rating": {
@@ -349,6 +350,14 @@
     }
   },
   "fun_recentSearches": "Terakhir dicari",
+  "fun_removedFavorite": "{name} dihapus dari favorit",
+  "@fun_removedFavorite": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "fun_renameCardFailed": "Gagal mengganti nama kartu",
   "fun_reopenPayment": "Buka Lagi Halaman Pembayaran",
   "fun_rescheduleAction": "Jadwal Ulang",
@@ -380,14 +389,6 @@
   "fun_reservationSoon": "Fitur reservasi akan segera hadir!",
   "fun_reserveAction": "Reservasi",
   "fun_reviewBookingTitle": "Review Booking",
-  "fun_reviewCountLabel": "({count} ulasan)",
-  "@fun_reviewCountLabel": {
-    "placeholders": {
-      "count": {
-        "type": "num"
-      }
-    }
-  },
   "fun_saveCardSubtitle": "Munculkan opsi simpan di halaman pembayaran untuk pemakaian berikutnya",
   "fun_saveCardTitle": "Simpan kartu ini",
   "fun_saveCodeHint": "Simpan kode ini untuk referensi kamu",
@@ -399,6 +400,7 @@
       }
     }
   },
+  "fun_savedExploreSection": "Destinasi & Kuliner",
   "fun_savedSubtitle": "Discover your dream vacations waiting for you.",
   "fun_savedTitle": "Saved Destinations",
   "fun_savedCardsTitle": "Kartu Tersimpan",
@@ -465,7 +467,7 @@
   "fun_viewAllBookings": "Lihat Semua Booking",
   "fun_viewDetail": "Lihat Detail",
   "fun_waitingPayment": "Menunggu pembayaran...",
-  "fun_whatsIncluded": "What's Included",
+  "fun_whatsIncluded": "Apa Saja yang Termasuk",
   "fun_resetFilters": "Reset",
   "fun_serviceFeeLabel": "Biaya layanan",
   "fun_sortRecommended": "Rekomendasi",

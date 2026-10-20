@@ -482,12 +482,6 @@ abstract class AppLocalizations {
   /// **'Nikmati pengalaman menginap yang tak terlupakan di {name}. Dengan fasilitas lengkap dan layanan prima, hotel ini menawarkan kenyamanan terbaik.'**
   String fun_aboutFallback(String name);
 
-  /// No description provided for @fun_aboutPlace.
-  ///
-  /// In id, this message translates to:
-  /// **'Tentang Tempat Ini'**
-  String get fun_aboutPlace;
-
   /// No description provided for @fun_aiPickDesc.
   ///
   /// In id, this message translates to:
@@ -715,6 +709,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Lanjutkan ke Pembayaran'**
   String get fun_continueToPayment;
+
+  /// No description provided for @fun_cuisineFallback.
+  ///
+  /// In id, this message translates to:
+  /// **'Masakan Lokal'**
+  String get fun_cuisineFallback;
 
   /// No description provided for @fun_cuisineType.
   ///
@@ -1064,6 +1064,12 @@ abstract class AppLocalizations {
   /// **'Jam Buka'**
   String get fun_openHours;
 
+  /// No description provided for @fun_openHoursFallback.
+  ///
+  /// In id, this message translates to:
+  /// **'10:00 - 22:00'**
+  String get fun_openHoursFallback;
+
   /// No description provided for @fun_paidTimeLabel.
   ///
   /// In id, this message translates to:
@@ -1235,7 +1241,7 @@ abstract class AppLocalizations {
   /// No description provided for @fun_propertyTitle.
   ///
   /// In id, this message translates to:
-  /// **'The Property'**
+  /// **'Tempat Ini'**
   String get fun_propertyTitle;
 
   /// No description provided for @fun_quickMenuBookings.
@@ -1265,7 +1271,7 @@ abstract class AppLocalizations {
   /// No description provided for @fun_ratingReviews.
   ///
   /// In id, this message translates to:
-  /// **'{rating} ({count} reviews)'**
+  /// **'{rating} ({count} ulasan)'**
   String fun_ratingReviews(String rating, num count);
 
   /// No description provided for @fun_recentSearches.
@@ -1273,6 +1279,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Terakhir dicari'**
   String get fun_recentSearches;
+
+  /// No description provided for @fun_removedFavorite.
+  ///
+  /// In id, this message translates to:
+  /// **'{name} dihapus dari favorit'**
+  String fun_removedFavorite(String name);
 
   /// No description provided for @fun_renameCardFailed.
   ///
@@ -1340,12 +1352,6 @@ abstract class AppLocalizations {
   /// **'Review Booking'**
   String get fun_reviewBookingTitle;
 
-  /// No description provided for @fun_reviewCountLabel.
-  ///
-  /// In id, this message translates to:
-  /// **'({count} ulasan)'**
-  String fun_reviewCountLabel(num count);
-
   /// No description provided for @fun_saveCardSubtitle.
   ///
   /// In id, this message translates to:
@@ -1369,6 +1375,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'{name} disimpan ke favorit (segera hadir penuh)'**
   String fun_savedFavoriteSoon(String name);
+
+  /// No description provided for @fun_savedExploreSection.
+  ///
+  /// In id, this message translates to:
+  /// **'Destinasi & Kuliner'**
+  String get fun_savedExploreSection;
 
   /// No description provided for @fun_savedSubtitle.
   ///
@@ -1625,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @fun_whatsIncluded.
   ///
   /// In id, this message translates to:
-  /// **'What\'s Included'**
+  /// **'Apa Saja yang Termasuk'**
   String get fun_whatsIncluded;
 
   /// No description provided for @fun_resetFilters.

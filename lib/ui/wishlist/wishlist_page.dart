@@ -4,11 +4,14 @@ import 'package:sasacation/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sasacation/core/apptheme.dart';
+import 'package:sasacation/data/model/explore_model.dart';
 import 'package:sasacation/data/model/hotel_model.dart';
+import 'package:sasacation/data/repo/explore_repository.dart';
 import 'package:sasacation/data/repo/hotel_repository.dart';
 import 'package:sasacation/route/approuter.dart';
 import 'package:sasacation/ui/widget/pill_badge.dart';
 import 'package:sasacation/utils/money.dart';
+import 'package:sasacation/viewmodel/wishlist/explore_wishlist_cubit.dart';
 import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
  
 /// WishlistScreen — restyle mengikuti mockup `saved_destinations`.
@@ -22,6 +25,12 @@ import 'package:sasacation/viewmodel/wishlist/wishlist_cubit.dart';
 /// heuristik deterministik dari field nyata HotelModel — tanpa mengarang:
 /// rating >= 4.8 → BEST SELLER; featured → SPECIAL OFFER; review >= 100 →
 /// TRENDING. Hotel yang tidak memenuhi ketiganya tampil tanpa badge.
+///
+/// Destinasi & kuliner (EXPLORE) ikut tampil di sini lewat
+/// [ExploreWishlistCubit] — dulu key `explore_wishlist_ids_cache` hanya
+/// dibaca layar detailnya sendiri, sehingga hati "tersimpan" menyesatkan
+/// (tab Saved kosong). Sekarang state berbagi; catatan tetap: simpan
+/// lokal, belum sinkron server (kontrak `/wishlist` baru mengenal hotelId).
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
  
@@ -31,25 +40,38 @@ class WishlistScreen extends StatefulWidget {
  
 class _WishlistScreenState extends State<WishlistScreen> {
   final _repo = HotelRepository();
+  final _exploreRepo = ExploreRepository();
   List<HotelModel> _hotels = [];
+  List<ExploreItemModel> _explore = [];
   bool _loading = true;
   // F.3: mode pilih-banding. Aktif lewat tombol di header; pilih 2–3 hotel
   // lalu dorong ke /compare. Sengaja tanpa state management baru — lokal saja.
   bool _comparing = false;
   final Set<String> _selected = {};
-
+ 
   @override
   void initState() {
     super.initState();
-    _loadHotels();
+    _loadSaved();
   }
 
-  Future<void> _loadHotels() async {
-    final ids = context.read<WishlistCubit>().state;
+  Future<void> _loadSaved() async {
+    final hotelIds = context.read<WishlistCubit>().state;
+    final exploreIds = context.read<ExploreWishlistCubit>().state;
     setState(() => _loading = true);
-    final results = await Future.wait(ids.map((id) => _repo.getHotelById(id)));
+    final hotelResults =
+        await Future.wait(hotelIds.map((id) => _repo.getHotelById(id)));
+    // Backend `/explore` belum punya fetch-by-id → ambil daftar lalu saring
+    // di klien (daftar explore jauh lebih kecil daripada katalog hotel).
+    final exploreResults = exploreIds.isEmpty
+        ? <ExploreItemModel>[]
+        : (await _exploreRepo.getExplore())
+            .where((e) => exploreIds.contains(e.id))
+            .toList();
+    if (!mounted) return;
     setState(() {
-      _hotels = results.whereType<HotelModel>().toList();
+      _hotels = hotelResults.whereType<HotelModel>().toList();
+      _explore = exploreResults;
       _loading = false;
       _selected.removeWhere((id) => !_hotels.any((h) => h.id == id));
       if (_hotels.length < 2) _comparing = false;
@@ -60,8 +82,16 @@ class _WishlistScreenState extends State<WishlistScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isEn = Localizations.localeOf(context).languageCode == 'en';
-    return BlocListener<WishlistCubit, Set<String>>(
-      listener: (context, _) => _loadHotels(),
+    final empty = _hotels.isEmpty && _explore.isEmpty;
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<WishlistCubit, Set<String>>(
+          listener: (context, _) => _loadSaved(),
+        ),
+        BlocListener<ExploreWishlistCubit, Set<String>>(
+          listener: (context, _) => _loadSaved(),
+        ),
+      ],
       child: Scaffold(
         backgroundColor: AppTheme.surface,
         body: SafeArea(
@@ -112,7 +142,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         ),
                       ),
                     ),
-                    if (_hotels.isEmpty)
+                    if (empty)
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
@@ -129,7 +159,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           ),
                         ),
                       )
-                    else
+                    else ...[
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                         sliver: SliverList(
@@ -170,6 +200,35 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           ),
                         ),
                       ),
+                      // Destinasi & kuliner tersimpan (explore) — lokal.
+                      if (_explore.isNotEmpty) ...[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                            child: Text(l10n.fun_savedExploreSection,
+                                style: Theme.of(context).textTheme.titleLarge),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final item = _explore[index];
+                                return _SavedExploreCard(
+                                  item: item,
+                                  onUnsave: () =>
+                                      context.read<ExploreWishlistCubit>().toggle(item.id),
+                                  onTap: () => context
+                                      .push(AppRouter.destinationDetail, extra: item),
+                                );
+                              },
+                              childCount: _explore.length,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ],
                 ),
         ),
@@ -368,6 +427,155 @@ class _SavedDestinationCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusFull)),
                     ),
                     child: Text(l10n.common_bookNow, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu destinasi/kuliner tersimpan (explore) — gaya mengikuti
+/// [_SavedDestinationCard] (image + gradient overlay + judul di foto).
+/// Tanpa badge heuristik hotel (field-nya beda) dan tanpa tombol "Book
+/// Now": CTA sebenarnya ada di layar detail (reservasi / Google Maps).
+class _SavedExploreCard extends StatelessWidget {
+  final ExploreItemModel item;
+  final VoidCallback onUnsave;
+  final VoidCallback onTap;
+
+  const _SavedExploreCard({
+    required this.item,
+    required this.onUnsave,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isRestaurant = item.type == 'restaurant';
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          boxShadow: AppTheme.softCardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppTheme.radiusCard)),
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    foregroundDecoration:
+                        const BoxDecoration(gradient: AppTheme.imageOverlayGradient),
+                    child: Image.network(
+                      item.image,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        color: AppTheme.surfaceContainerHigh,
+                        child: const Icon(Icons.image_not_supported_outlined,
+                            color: AppTheme.outline),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: onUnsave,
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.85),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.favorite_rounded,
+                          size: 18, color: AppTheme.loveColor),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 14,
+                  bottom: 12,
+                  right: 12,
+                  child: Text(item.name,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(AppTheme.radiusCard)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 14, color: AppTheme.onSurfaceVariant),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(item.location,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        item.price > 0
+                            ? MoneyText(
+                                item.price,
+                                style: const TextStyle(
+                                    color: AppTheme.secondary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15),
+                                suffix: isRestaurant ? l10n.fun_perPerson : '',
+                                suffixStyle: const TextStyle(
+                                    color: AppTheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12),
+                              )
+                            : Text(
+                                isRestaurant
+                                    ? l10n.fun_priceVaried
+                                    : l10n.fun_freeLabel,
+                                style: const TextStyle(
+                                    color: AppTheme.secondary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15),
+                              ),
+                      ],
+                    ),
+                  ),
+                  PillBadge(
+                    label: (item.subCategory ?? item.category).toUpperCase(),
+                    backgroundColor: AppTheme.primaryContainer,
+                    foregroundColor: Colors.white,
                   ),
                 ],
               ),

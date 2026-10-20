@@ -217,9 +217,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get fun_aboutPlace => 'About This Place';
-
-  @override
   String fun_aiPickDesc(String rating) {
     return 'Top rated ($rating) for your current search.';
   }
@@ -343,6 +340,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fun_continueToPayment => 'Continue to Payment';
 
   @override
+  String get fun_cuisineFallback => 'Local Cuisine';
+
+  @override
   String get fun_cuisineType => 'Cuisine Type';
 
   @override
@@ -391,7 +391,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fun_emptyWishlistTitle => 'No saved hotels yet';
 
   @override
-  String get fun_entryTicket => 'Tiket Masuk';
+  String get fun_entryTicket => 'Entrance Ticket';
 
   @override
   String get fun_estimateRateNote => 'Estimated rate — charges follow Midtrans';
@@ -539,6 +539,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fun_openHours => 'Opening Hours';
 
   @override
+  String get fun_openHoursFallback => '10:00 - 22:00';
+
+  @override
   String get fun_paidTimeLabel => 'Paid At';
 
   @override
@@ -657,6 +660,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fun_recentSearches => 'Recent searches';
 
   @override
+  String fun_removedFavorite(String name) {
+    return '$name removed from favorites';
+  }
+
+  @override
   String get fun_renameCardFailed => 'Failed to rename card';
 
   @override
@@ -694,11 +702,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fun_reviewBookingTitle => 'Review Booking';
 
   @override
-  String fun_reviewCountLabel(num count) {
-    return '($count reviews)';
-  }
-
-  @override
   String get fun_saveCardSubtitle =>
       'Show a save option on the payment page for next time';
 
@@ -712,6 +715,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String fun_savedFavoriteSoon(String name) {
     return '$name saved to favorites (full support coming soon)';
   }
+
+  @override
+  String get fun_savedExploreSection => 'Destinations & Dining';
 
   @override
   String get fun_savedSubtitle =>
